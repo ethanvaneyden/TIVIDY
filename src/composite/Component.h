@@ -1,7 +1,8 @@
 #include <string>
 #include <vector>
 
-class Colleague;
+#include "mediator/Colleague.h"
+
 class Iterator;
 class Command;
 
@@ -27,7 +28,6 @@ class Component : public Colleague {
     Component* getParent() const;
     void setParent(Component* p);
 
-
-    virtual void execute(Command* cmd) = 0
+    virtual void execute(Command* cmd) = 0;
 
 };
