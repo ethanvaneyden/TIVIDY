@@ -1,10 +1,10 @@
 class Mediator;
 
-class Colleague {
-    private:
-    Mediator* mediator;
+class Colleague
+{
+private:
+    Mediator *mediator;
 
-    public:
-    void setMediator(Mediator* m);
-
+public:
+    void setMediator(Mediator *m);
 };
