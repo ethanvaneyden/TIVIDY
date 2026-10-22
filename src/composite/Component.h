@@ -28,6 +28,4 @@ class Component : public Colleague {
     Component* getParent() const;
     void setParent(Component* p);
 
-    virtual void execute(Command* cmd) = 0;
-
 };
