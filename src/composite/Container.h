@@ -1,24 +1,27 @@
-#include "Component.h"
+#pragma once
+#include "composite/Component.h"
 #include <vector>
 #include <memory>
 
 class WorkflowPhase;
-class Composite : public Component {
-    private:
+
+class Container : public Component {
+private:
     std::vector<Component*> children;
     std::unique_ptr<WorkflowPhase> phase;
 
-    public:
+public:
+    Container(std::string id, std::string type, std::string name, Component* parent = nullptr);
+    ~Container() override;
+
     void add(Component* c) override;
     void remove(const std::string& id) override;
-    std::vector<Component*> getChildren() override;
-    void execute(Command* cmd) override;
+    std::vector<Component*> getChildren() const override;
+    Iterator* createIterator() override;
+    bool isCompleted() const override;
 
     void advancePhase();
     void approve();
     void reject();
-    bool allItemsComplete();
-    const std::string& getPhaseName() const;
-
-
+    std::string getPhaseName() const;
 };
