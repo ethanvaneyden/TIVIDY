@@ -1,4 +1,3 @@
-#pragma once
 #include "composite/Component.h"
 #include <memory>
 
