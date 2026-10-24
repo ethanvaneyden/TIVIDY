@@ -1,10 +1,13 @@
-class Mediator;
+class WorkflowMediator;
 
-class Colleague
-{
-private:
-    Mediator *mediator;
+class Colleague {
+protected:
+    WorkflowMediator* mediator;
 
 public:
-    void setMediator(Mediator *m);
+    Colleague();
+    virtual ~Colleague();
+
+    void setMediator(WorkflowMediator* m);
+    WorkflowMediator* getMediator() const;
 };

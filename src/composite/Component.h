@@ -1,32 +1,32 @@
+#pragma once
 #include <string>
 #include <vector>
-
 #include "mediator/Colleague.h"
 
 class Iterator;
-class Command;
 
-class Component : public Colleague
-{
-private:
+class Component : public Colleague {
+protected:
     std::string id;
     std::string type;
     std::string name;
-    Component *parent;
+    Component* parent;
 
 public:
-    Component(std::string id, std::string type, std::string name, Component *parent);
-    ~Component() = default;
+    Component(std::string id, std::string type, std::string name, Component* parent = nullptr);
+    virtual ~Component();
 
-    virtual void add(Component *c);
-    virtual void remove(const std::string &id);
-    virtual std::vector<Component *> getChildren();
-    virtual Iterator *createIterator() = 0;
+    virtual void add(Component* c);
+    virtual void remove(const std::string& id);
+    virtual std::vector<Component*> getChildren() const;
 
-    const std::string &getId() const;
-    const std::string &getType() const;
-    const std::string &getName() const;
+    virtual Iterator* createIterator() = 0;
+    virtual bool isCompleted() const = 0;
 
-    Component *getParent() const;
-    void setParent(Component *p);
+    const std::string& getId() const;
+    const std::string& getType() const;
+    const std::string& getName() const;
+
+    Component* getParent() const;
+    void setParent(Component* p);
 };

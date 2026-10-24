@@ -1,24 +1,37 @@
-#include "Component.h"
+#pragma once
+#include "composite/Component.h"
 #include <memory>
 
 class ItemState;
 class Participant;
 
-class Item : public Component
-{
-private:
+class Item : public Component {
+protected:
     std::unique_ptr<ItemState> state;
-    Participant *assignee;
+    Participant* assignee;
+    int rejectionCount;
 
 public:
-    Item();
-    ~Item() = default;
+    Item(std::string id, std::string type, std::string name, Component* parent = nullptr);
+    ~Item() override;
 
-    void add(Component *c) override;
-    void remove(const std::string &id) override;
-    std::vector<Component *> getChildren();
-    Iterator *createIterator();
+    Iterator* createIterator() override;
+    bool isCompleted() const override;
 
-    std::string getStateName();
-    void setState(std::unique_ptr<ItemState> state);
+    void assign(const std::string& who);
+    void start();
+    void complete(int value);
+    void reject(const std::string& reason);
+    void escalate();
+    void fail(const std::string& reason);
+    void cancel();
+
+    std::string getStateName() const;
+    void setState(std::unique_ptr<ItemState> s);
+
+    Participant* getAssignee() const;
+    void setAssignee(Participant* p);
+
+    int getRejectionCount() const;
+    void incrementRejectionCount();
 };
