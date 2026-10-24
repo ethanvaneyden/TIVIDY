@@ -1,3 +1,5 @@
+#ifndef WORKFLOWMEDIATOR_H
+#define WORKFLOWMEDIATOR_H
 class WorkflowMediator;
 
 class Colleague {
@@ -11,3 +13,5 @@ public:
     void setMediator(WorkflowMediator* m);
     WorkflowMediator* getMediator() const;
 };
+
+#endif

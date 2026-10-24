@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ITEM_H
+#define ITEM_H
 #include "composite/Component.h"
 #include <memory>
 
@@ -35,3 +36,5 @@ public:
     int getRejectionCount() const;
     void incrementRejectionCount();
 };
+
+#endif

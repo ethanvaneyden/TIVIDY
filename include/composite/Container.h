@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CONTAINER_H
+#define CONTAINER_H
 #include "composite/Component.h"
 #include <vector>
 #include <memory>
@@ -25,3 +26,5 @@ public:
     void reject();
     std::string getPhaseName() const;
 };
+
+#endif

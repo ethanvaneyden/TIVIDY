@@ -1,4 +1,6 @@
-#pragma once
+#ifndef COMPONENT_H
+#define COMPONENT_H
+
 #include <string>
 #include <vector>
 #include "mediator/Colleague.h"
@@ -30,3 +32,5 @@ public:
     Component* getParent() const;
     void setParent(Component* p);
 };
+
+#endif
