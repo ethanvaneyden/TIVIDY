@@ -16,10 +16,11 @@ private:
 
 public:
     Component(std::string id, std::string type, std::string name, Component *parent);
+    ~Component() = default;
 
-    virtual void add(Component *c) = 0;
+    virtual void add(Component *c);
     virtual void remove(const std::string &id);
-    virtual std::vector<Component *> getChildren() = 0;
+    virtual std::vector<Component *> getChildren();
     virtual Iterator *createIterator() = 0;
 
     const std::string &getId() const;
