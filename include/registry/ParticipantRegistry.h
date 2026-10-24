@@ -1,3 +1,6 @@
+#ifndef PARTICIPANTREGISTRY_H
+#define PARTICIPANTREGISTRY_H
+
 #include "participant/Participant.h"
 
 #include <unordered_map>
@@ -22,3 +25,5 @@ public:
     size_t size() const;
     std::vector<std::string> getAllIds() const;
 };
+
+#endif
