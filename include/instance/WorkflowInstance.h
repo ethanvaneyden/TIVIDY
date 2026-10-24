@@ -10,6 +10,7 @@ class WorkflowMediator;
 class AssignmentStrategy;
 class ParticipantRegistry;
 class WorkflowBuilder;
+class Root;
 
 class WorkflowInstance
 {
@@ -22,7 +23,7 @@ private:
     std::unique_ptr<AssignmentStrategy> strategy;
     std::unique_ptr<WorkflowBuilder> builder;
     ParticipantRegistry *participants;
-    Container *root;
+    Root *root;
 
 public:
     WorkflowInstance(
