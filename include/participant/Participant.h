@@ -17,6 +17,7 @@ private:
     const std::string &getRole() const;
 
     void setName(const std::string& name);
+    int getPendingTasks();
     void incrementPendingTasks();
     void decrementPendingTasks();
 
