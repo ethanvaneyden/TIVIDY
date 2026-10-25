@@ -13,7 +13,7 @@ private:
 
 public:
     Container(std::string id, std::string type, std::string name, Component* parent = nullptr);
-    ~Container() override;
+    virtual ~Container() override;
 
     void add(Component* c) override;
     void remove(const std::string& id) override;
@@ -22,8 +22,6 @@ public:
     bool isCompleted() const override;
 
     void advancePhase();
-    void approve();
-    void reject();
     std::string getPhaseName() const;
 };
 
