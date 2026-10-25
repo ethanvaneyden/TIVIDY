@@ -7,7 +7,7 @@
 class WorkRegistry
 {
 private:
-    std::unordered_map<std::string, std::unique_ptr<Component>> items;
+    std::unordered_map<std::string, std::unique_ptr<Component>> components;
 
 public:
     WorkRegistry();

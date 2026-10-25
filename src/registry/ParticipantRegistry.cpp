@@ -21,12 +21,12 @@ Participant *ParticipantRegistry::add(std::string name, std::string role)
 
 Participant *ParticipantRegistry::get(const std::string &id) const
 {
-    auto participant = participants.find(id);
-    if (participant == participants.end())
+    auto pair = participants.find(id);
+    if (pair == participants.end())
     {
         return nullptr;
     }
-    return participant->second.get();
+    return pair->second.get();
 }
 
 void ParticipantRegistry::remove(const std::string &id)
