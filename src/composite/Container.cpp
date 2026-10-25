@@ -8,10 +8,12 @@ Container::Container(std::string id, std::string type, std::string name, Compone
 
 void Container::add(Component *c)
 {
-    if (c)
+    if (!c)
     {
-        children.push_back(c);
+        return;
     }
+    c->setParent(this);
+    children.push_back(c);
 }
 
 void Container::remove(const std::string &id)
@@ -40,15 +42,20 @@ Iterator *Container::createIterator()
 
 bool Container::isCompleted() const
 {
-    for(auto it = children.begin(); it != children.end(); it++) {
+    if(children.empty()) {
+        return false;
+    }
+    
+    for (auto it = children.begin(); it != children.end(); it++)
+    {
 
-        if((*it)->isCompleted() == false) {
+        if ((*it)->isCompleted() == false)
+        {
             return false;
         }
     }
     return true;
 }
-
 
 std::string Container::getPhaseName() const
 {
