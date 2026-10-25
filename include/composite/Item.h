@@ -10,22 +10,20 @@ class Item : public Component {
 protected:
     std::unique_ptr<ItemState> state;
     Participant* assignee;
-    int rejectionCount;
+    Participant* reviewer;
+    std::string reviewMethod; // Batch / Personal
 
 public:
     Item(std::string id, std::string type, std::string name, Component* parent = nullptr);
-    ~Item() override;
+    virtual ~Item() = default;
 
     Iterator* createIterator() override;
     bool isCompleted() const override;
 
-    void assign(const std::string& who);
+    void assign(Participant* p);
     void start();
     void complete(int value);
     void reject(const std::string& reason);
-    void escalate();
-    void fail(const std::string& reason);
-    void cancel();
 
     std::string getStateName() const;
     void setState(std::unique_ptr<ItemState> s);
@@ -33,8 +31,10 @@ public:
     Participant* getAssignee() const;
     void setAssignee(Participant* p);
 
-    int getRejectionCount() const;
-    void incrementRejectionCount();
+    Participant* getReviewer() const;
+    const std::string& getReviewMethod() const;
+    void recordReview(Participant* p, const std::string& method);
+
 };
 
 #endif

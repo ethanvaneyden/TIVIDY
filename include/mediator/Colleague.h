@@ -2,16 +2,17 @@
 #define WORKFLOWMEDIATOR_H
 class WorkflowMediator;
 
-class Colleague {
+class Colleague
+{
 protected:
-    WorkflowMediator* mediator;
+    WorkflowMediator *mediator = nullptr;
 
 public:
-    Colleague();
-    virtual ~Colleague();
+    Colleague() = default;
+    virtual ~Colleague() = default;
 
-    void setMediator(WorkflowMediator* m);
-    WorkflowMediator* getMediator() const;
+    void setMediator(WorkflowMediator *m);
+    WorkflowMediator *getMediator() const;
 };
 
 #endif
