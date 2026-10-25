@@ -1,4 +1,4 @@
-#include "registry/WorkRegistry.h"
+#include "WorkRegistry.h"
 #include <stdexcept>
 
 Component *WorkRegistry::add(std::unique_ptr<Component> item)

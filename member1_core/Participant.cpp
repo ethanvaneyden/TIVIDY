@@ -1,4 +1,4 @@
-#include "participant/Participant.h"
+#include "Participant.h"
 
 Participant::Participant(std::string id, std::string name, std::string role) : id(id), name(name), role(role), pendingTasks(0)
 {

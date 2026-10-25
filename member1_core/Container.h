@@ -1,6 +1,6 @@
 #ifndef CONTAINER_H
 #define CONTAINER_H
-#include "composite/Component.h"
+#include "Component.h"
 #include <vector>
 #include <memory>
 

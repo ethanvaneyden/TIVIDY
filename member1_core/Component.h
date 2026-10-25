@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include "mediator/Colleague.h"
+#include "Colleague.h"
 
 class Iterator;
 

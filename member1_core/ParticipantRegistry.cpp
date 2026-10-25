@@ -1,4 +1,4 @@
-#include "registry/ParticipantRegistry.h"
+#include "ParticipantRegistry.h"
 #include <utility>
 #include <stdexcept>
 

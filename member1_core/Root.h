@@ -1,6 +1,6 @@
 #ifndef ROOT_H
 #define ROOT_H
-#include "composite/Component.h"
+#include "Component.h"
 #include <vector>
 #include <memory>
 
