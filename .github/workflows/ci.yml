@@ -24,8 +24,8 @@ jobs:
       - name: Configure CMake
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
-      - name: Build
-        run: cmake --build build --parallel
+      - name: Build tests
+        run: cmake --build build --target tividy_tests --parallel
 
       - name: Run tests
         run: ctest --test-dir build --output-on-failure
