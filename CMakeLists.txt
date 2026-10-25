@@ -17,15 +17,14 @@ FetchContent_MakeAvailable(googletest)
 # All production code except app/main.cpp.
 add_library(tividy_core
     # --- Member 1: core model ---
-    # member1_core/WorkItem.cpp # # uncomment this line & more
-    # member1_core/Colleague.cpp
-    # member1_core/Component.cpp
-    # member1_core/Container.cpp
-    # member1_core/Item.cpp
+    member1_core/Colleague.cpp # # uncomment this line & more
+    member1_core/Component.cpp
+    member1_core/Container.cpp
+    member1_core/Item.cpp
     member1_core/Participant.cpp
     member1_core/ParticipantRegistry.cpp
-    # member1_core/Root.cpp
-    # member1_core/WorkRegistry.cpp
+    member1_core/Root.cpp
+    member1_core/WorkRegistry.cpp
 
     # --- Member 2: execution & lifecycle ---
     # member2_execution/WorkflowInstance.cpp # # uncomment this line & more
@@ -44,7 +43,6 @@ add_library(tividy_core
 
     # --- Member 7: integration, factories, decorators ---
     # member7_integration/WorkflowDirector.cpp # # uncomment this line & more
-    # testing
 )
 
 # Every member folder is on the include path, so `#include "Header.h"`
@@ -83,9 +81,9 @@ add_executable(tividy_tests
     tests/test_hospital.cpp
     tests/test_integration.cpp
 
-    # tests/test_participants.cpp
-    # member1_core/Participant.cpp
-    # member1_core/ParticipantRegistry.cpp
+    tests/test_participants.cpp
+    member1_core/Participant.cpp
+    member1_core/ParticipantRegistry.cpp
 
     tests/test_smoke.cpp        # one trivial test so ctest has something to run
 )
