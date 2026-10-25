@@ -1,6 +1,6 @@
 #ifndef ROOT_H
 #define ROOT_H
-#include "composite/Component.h"
+#include "Component.h"
 #include <vector>
 #include <memory>
 
@@ -11,7 +11,7 @@ private:
 
 public:
     Root(std::string id, std::string type, std::string name, Component* parent = nullptr);
-    ~Root() override;
+    virtual ~Root() = default;
 
     void add(Component* c) override;
     void remove(const std::string& id) override;

@@ -2,12 +2,12 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "composite/Component.h"
+#include "Component.h"
 
 class WorkRegistry
 {
 private:
-    std::unordered_map<std::string, std::unique_ptr<Component>> items;
+    std::unordered_map<std::string, std::unique_ptr<Component>> components;
 
 public:
     WorkRegistry();

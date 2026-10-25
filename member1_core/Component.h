@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include "mediator/Colleague.h"
+#include "Colleague.h"
 
 class Iterator;
 
@@ -16,7 +16,7 @@ protected:
 
 public:
     Component(std::string id, std::string type, std::string name, Component* parent = nullptr);
-    virtual ~Component();
+    virtual ~Component() = default;
 
     virtual void add(Component* c);
     virtual void remove(const std::string& id);
