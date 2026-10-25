@@ -1,7 +1,7 @@
 #ifndef PARTICIPANTREGISTRY_H
 #define PARTICIPANTREGISTRY_H
 
-#include "participant/Participant.h"
+#include "Participant.h"
 
 #include <map>
 #include <string>

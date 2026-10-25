@@ -1,4 +1,4 @@
-#include "composite/Root.h"
+#include "Root.h"
 
 Root::Root(std::string id, std::string type, std::string name, Component *parent) : Component(id, type, name, parent)
 {

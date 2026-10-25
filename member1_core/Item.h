@@ -1,6 +1,6 @@
 #ifndef ITEM_H
 #define ITEM_H
-#include "composite/Component.h"
+#include "Component.h"
 #include <memory>
 
 class ItemState;

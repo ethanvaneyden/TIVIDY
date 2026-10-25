@@ -1,4 +1,4 @@
-#include "mediator/Colleague.h"
+#include "Colleague.h"
 
 void Colleague::setMediator(WorkflowMediator *m)
 {

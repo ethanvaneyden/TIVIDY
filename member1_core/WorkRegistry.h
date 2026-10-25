@@ -2,7 +2,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "composite/Component.h"
+#include "Component.h"
 
 class WorkRegistry
 {

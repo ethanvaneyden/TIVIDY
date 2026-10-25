@@ -1,4 +1,4 @@
-#include "composite/Component.h"
+#include "Component.h"
 #include <stdexcept>
 
 Component::Component(std::string id, std::string type, std::string name, Component *parent) : id(id), type(type), name(name), parent(parent)

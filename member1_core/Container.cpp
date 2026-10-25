@@ -1,4 +1,4 @@
-#include "composite/Container.h"
+#include "Container.h"
 
 Container::Container(std::string id, std::string type, std::string name, Component *parent) : Component(id, type, name, parent)
 {
