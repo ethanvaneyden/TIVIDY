@@ -44,7 +44,7 @@ add_library(tividy_core
 
     # --- Member 7: integration, factories, decorators ---
     # member7_integration/WorkflowDirector.cpp # # uncomment this line & more
-    #...
+    # testing
 )
 
 # Every member folder is on the include path, so `#include "Header.h"`
