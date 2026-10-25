@@ -92,6 +92,7 @@ target_link_libraries(tividy_tests PRIVATE tividy_core gtest_main)
 
 target_include_directories(tividy_tests PRIVATE
     member1_core
+    member1_core/include
     member2_execution
     member3_routing
     member4_services
