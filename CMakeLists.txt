@@ -18,14 +18,14 @@ FetchContent_MakeAvailable(googletest)
 add_library(tividy_core
     # --- Member 1: core model ---
     # member1_core/WorkItem.cpp # # uncomment this line & more
-    member1_core/Colleague.cpp
-    member1_core/Component.cpp
-    member1_core/Container.cpp
-    member1_core/Item.cpp
+    # member1_core/Colleague.cpp
+    # member1_core/Component.cpp
+    # member1_core/Container.cpp
+    # member1_core/Item.cpp
     member1_core/Participant.cpp
     member1_core/ParticipantRegistry.cpp
-    member1_core/Root.cpp
-    member1_core/WorkRegistry.cpp
+    # member1_core/Root.cpp
+    # member1_core/WorkRegistry.cpp
 
     # --- Member 2: execution & lifecycle ---
     # member2_execution/WorkflowInstance.cpp # # uncomment this line & more
