@@ -10,6 +10,7 @@ class Item : public Component {
 protected:
     std::unique_ptr<ItemState> state;
     Participant* assignee;
+    Participant* reviewer;
     int rejectionCount;
 
 public:
