@@ -17,8 +17,7 @@ FetchContent_MakeAvailable(googletest)
 # All production code except app/main.cpp.
 add_library(tividy_core
     # --- Member 1: core model ---
-    member1_core/WorkItem.cpp # # uncomment this line & more
-    member1_core/Colleague.cpp
+    member1_core/Colleague.cpp # # uncomment this line & more
     member1_core/Component.cpp
     member1_core/Container.cpp
     member1_core/Item.cpp
