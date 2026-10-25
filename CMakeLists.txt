@@ -17,6 +17,7 @@ FetchContent_MakeAvailable(googletest)
 # All production code except app/main.cpp.
 add_library(tividy_core
     # --- Member 1: core model ---
+    # member1_core/WorkItem.cpp # # uncomment this line & more
     member1_core/Colleague.cpp
     member1_core/Component.cpp
     member1_core/Container.cpp
@@ -48,7 +49,7 @@ add_library(tividy_core
 # Every member folder is on the include path, so `#include "Header.h"`
 # finds any header regardless of which folder it lives in.
 target_include_directories(tividy_core PUBLIC
-    member1_core/include
+    member1_core
     member2_execution
     member3_routing
     member4_services
@@ -58,23 +59,39 @@ target_include_directories(tividy_core PUBLIC
 )
 
 # ----------------- Application -----------------
-add_executable(tividy app/main.cpp)
+add_executable(tividy app/main_web.cpp)
 target_link_libraries(tividy PRIVATE tividy_core)
 
 # ----------------- Tests -----------------
 enable_testing()
 
 add_executable(tividy_tests
-    tests/test_smoke.cpp
-    tests/test_participants.cpp
-    member1_core/Participant.cpp
-    member1_core/ParticipantRegistry.cpp
+    tests/test_workitem.cpp
+    tests/test_workcontainer.cpp
+    tests/test_workflowdefinition.cpp
+    tests/test_workflowinstance.cpp
+    tests/test_states.cpp
+    tests/test_workflowengine.cpp
+    tests/test_assignment.cpp
+    tests/test_iterators.cpp
+    tests/test_commands.cpp
+    tests/test_events.cpp
+    tests/test_history.cpp
+    tests/test_education.cpp
+    tests/test_hospital.cpp
+    tests/test_integration.cpp
+
+    # tests/test_participants.cpp
+    # member1_core/Participant.cpp
+    # member1_core/ParticipantRegistry.cpp
+
+    tests/test_smoke.cpp        # one trivial test so ctest has something to run
 )
 
-target_link_libraries(tividy_tests PRIVATE gtest_main)
+target_link_libraries(tividy_tests PRIVATE tividy_core gtest_main)
 
 target_include_directories(tividy_tests PRIVATE
-    member1_core/include
+    member1_core
     member2_execution
     member3_routing
     member4_services
