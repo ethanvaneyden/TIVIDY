@@ -50,6 +50,7 @@ add_library(tividy_core
 # finds any header regardless of which folder it lives in.
 target_include_directories(tividy_core PUBLIC
     member1_core
+    member1_core/include
     member2_execution
     member3_routing
     member4_services
