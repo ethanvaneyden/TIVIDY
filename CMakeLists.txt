@@ -41,7 +41,7 @@ add_library(tividy_core
 # Every member folder is on the include path, so `#include "Header.h"`
 # finds any header regardless of which folder it lives in.
 target_include_directories(tividy_core PUBLIC
-    member1_core
+    member1_core/include
     member2_execution
     member3_routing
     member4_services
@@ -78,7 +78,7 @@ add_executable(tividy_tests
 target_link_libraries(tividy_tests PRIVATE tividy_core gtest_main)
 
 target_include_directories(tividy_tests PRIVATE
-    member1_core
+    member1_core/include
     member2_execution
     member3_routing
     member4_services
