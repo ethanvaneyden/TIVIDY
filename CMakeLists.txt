@@ -18,6 +18,7 @@ FetchContent_MakeAvailable(googletest)
 add_library(tividy_core
     # --- Member 1: core model ---
     # member1_core/WorkItem.cpp # # uncomment this line & more
+    member1_core/Colleague.cpp
 
     # --- Member 2: execution & lifecycle ---
     # member2_execution/WorkflowInstance.cpp # # uncomment this line & more
