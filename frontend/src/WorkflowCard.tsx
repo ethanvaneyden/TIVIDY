@@ -1,4 +1,5 @@
 import './WorkflowCard.css';
+import { useNavigate } from 'react-router';
 
 interface WorkflowCardProps {
     title: string;
@@ -6,6 +7,7 @@ interface WorkflowCardProps {
     image: string;
     accent: 'blue' | 'violet';
     features: string[];
+    link: string;
 }
 
 function WorkflowCard({
@@ -14,7 +16,9 @@ function WorkflowCard({
     image,
     accent,
     features,
+    link,
 }: WorkflowCardProps) {
+    const navigate = useNavigate();
     return (
         <div className={`WorkflowCard accent-${accent} d-flex flex-column h-100`}>
             <div className="CardImage">
@@ -43,7 +47,8 @@ function WorkflowCard({
                 </ul>
             </div>
 
-            <div className="CardFooter p-4 pt-0 mt-auto">
+            <div className="CardFooter p-4 pt-0 mt-auto"
+            onClick={() => navigate(link)}>
                 <button className="CardButton w-100">
                     Start workflow
                 </button>

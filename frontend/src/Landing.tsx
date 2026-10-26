@@ -5,11 +5,11 @@ import WorkflowCard from "./WorkflowCard";
 function Landing() {
     return (
         <Container className="py-5">
-            <div className="d-flex flex-column align-items-center gap-3 mb-3">
+            <div className="d-flex flex-column align-items-center gap-3">
                 <h2 className="text-center landing-subtitle">
                     Workflow Management
                 </h2>
-                <h1 className="text-center landing-header">
+                <h1 className="text-center landing-header mb-5">
                     Welcome to TIVIDY
                 </h1>
             </div>
@@ -26,6 +26,7 @@ function Landing() {
                             'Track admission status',
                             'Organise patient workflows',
                         ]}
+                        link="#"
                     ></WorkflowCard>
                 </Col>
                 <Col md={6}>
@@ -39,6 +40,7 @@ function Landing() {
                             'Coordinate marking and assessment',
                             'Track progress and feedback',
                         ]}
+                        link="/education/instances"
                     />
                 </Col>
             </Row>
