@@ -31,9 +31,6 @@ function EducationInstanceSelect({ ids }: EducationInstanceSelectProps) {
                                 type="button"
                                 className="instance-card w-100 d-flex align-items-center gap-3 p-4 text-start"
                             >
-                                <div className="instance-icon">
-                                    <span className="fw-semibold">AM</span>
-                                </div>
 
                                 <div className="flex-grow-1">
                                     <h2 className="h5 mb-1">{id}</h2>
