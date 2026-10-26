@@ -29,17 +29,8 @@ function EducationInstanceSelect({ ids }: EducationInstanceSelectProps) {
                         <div className="instance-wrapper">
                             <button
                                 type="button"
-                                className="instance-card w-100 d-flex align-items-center gap-3 p-4 text-start"
-                            >
-
-                                <div className="flex-grow-1">
-                                    <h2 className="h5 mb-1">{id}</h2>
-                                    <p className="text-secondary small mb-0">
-                                        Assignment marking
-                                    </p>
-                                </div>
-
-                                <span aria-hidden="true">→</span>
+                                className="instance-card w-100 d-flex align-items-center gap-3 p-4 text-start">
+                                <h2 className="h5 mb-1">{id}</h2>
                             </button>
 
                             <button
