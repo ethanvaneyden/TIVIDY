@@ -1,102 +1,35 @@
+/**
+ * @file main_web.cpp
+ * @brief Entry point for the TIVIDY REST server.
+*/
 
-#include "httplib.h"
-#include <mutex>
+#include "RestServer.h"
+
+#include <cstdlib>
+#include <iostream>
 #include <string>
 
-int main()
+int main(int argc, char** argv)
 {
-    httplib::Server svr;
-    std::mutex engineMutex;
+    std::string host = "0.0.0.0";
+    int port = 8080;
 
-    svr.set_default_headers({
-        {"Access-Control-Allow-Origin", "*"},
-        {"Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS"},
-        {"Access-Control-Allow-Headers", "Content-Type"}
-    });
-
-    svr.Options(R"(.*)", [](const httplib::Request &, httplib::Response &res)
+    if(argc > 1)
     {
-        res.status = 200;
-    });
-
-    svr.Get("/health", [](const httplib::Request &, httplib::Response &res)
+        port = std::atoi(argv[1]);
+    }
+    if(argc > 2)
     {
-        res.status = 200;
-        res.set_content("OK", "text/plain");
-    });
+        host = argv[2];
+    }
 
-    // Education
-    svr.Post("/api/education/start",
-        [](const httplib::Request &, httplib::Response &) {});
+    std::cout << "TIVIDY REST server on http://" << host << ":" << port << std::endl;
 
-    svr.Get("/api/education/instances",
-        [](const httplib::Request &, httplib::Response &) {});
-
-    svr.Get("/api/education/:instanceId/state",
-        [](const httplib::Request &req, httplib::Response &)
-        {
-            std::string id = req.path_params.at("instanceId");
-        });
-
-    svr.Get("/api/education/:instanceId/history",
-        [](const httplib::Request &req, httplib::Response &)
-        {
-            std::string id = req.path_params.at("instanceId");
-        });
-
-    svr.Post("/api/education/:instanceId/submit",
-        [](const httplib::Request &req, httplib::Response &)
-        {
-            std::string id = req.path_params.at("instanceId");
-        });
-
-    svr.Post("/api/education/:instanceId/items/:itemId/start",
-        [](const httplib::Request &req, httplib::Response &)
-        {
-            std::string instanceId = req.path_params.at("instanceId");
-            std::string itemId = req.path_params.at("itemId");
-        });
-
-    svr.Post("/api/education/:instanceId/items/:itemId/complete",
-        [](const httplib::Request &req, httplib::Response &)
-        {
-            std::string instanceId = req.path_params.at("instanceId");
-            std::string itemId = req.path_params.at("itemId");
-        });
-
-    svr.Post("/api/education/:instanceId/containers/:containerId/approve",
-        [](const httplib::Request &, httplib::Response &) {});
-
-    svr.Post("/api/education/:instanceId/items/:itemId/override",
-        [](const httplib::Request &, httplib::Response &) {});
-
-    // Healthcare
-    svr.Post("/api/healthcare/start",
-        [](const httplib::Request &, httplib::Response &) {});
-
-    svr.Get("/api/healthcare/instances",
-        [](const httplib::Request &, httplib::Response &) {});
-
-    svr.Get("/api/healthcare/:instanceId/state",
-        [](const httplib::Request &, httplib::Response &) {});
-
-    svr.Get("/api/healthcare/:instanceId/history",
-        [](const httplib::Request &, httplib::Response &) {});
-
-    svr.Post("/api/healthcare/:instanceId/admit",
-        [](const httplib::Request &, httplib::Response &) {});
-
-    svr.Post("/api/healthcare/:instanceId/items/:itemId/start",
-        [](const httplib::Request &, httplib::Response &) {});
-
-    svr.Post("/api/healthcare/:instanceId/items/:itemId/complete",
-        [](const httplib::Request &, httplib::Response &) {});
-
-    svr.Post("/api/healthcare/:instanceId/containers/:containerId/approve",
-        [](const httplib::Request &, httplib::Response &) {});
-
-    svr.Post("/api/healthcare/:instanceId/items/:itemId/override",
-        [](const httplib::Request &, httplib::Response &) {});
-
+    RestServer server;
+    if(!server.run(host, port))
+    {
+        std::cerr << "Failed to start server" << std::endl;
+        return 1;
+    }
     return 0;
 }
