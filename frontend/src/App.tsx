@@ -1,8 +1,8 @@
 import { Routes, Route } from 'react-router';
 
 import Landing from './Landing';
-import EducationInstanceSelect from './EducationInstanceSelect';
-import EducationWorkflow from './EducationWorkflow';
+import ScenarioInstanceSelect from './ScenarioInstanceSelect';
+import ScenarioWorkflow from './ScenarioWorkflow';
 
 function App() {
     return (
@@ -13,12 +13,12 @@ function App() {
             />
 
             <Route
-                path="/education/instances"
-                element={<EducationInstanceSelect/>}
+                path="/:scenario/instances"
+                element={<ScenarioInstanceSelect />}
             />
             <Route
-                path="education/:instanceid"
-                element={<EducationWorkflow />}
+                path="/:scenario/:instanceId"
+                element={<ScenarioWorkflow />}
             />
         </Routes>
     );

@@ -1,17 +1,18 @@
+import { Container, Row, Col } from 'react-bootstrap';
+import { useNavigate, useParams } from 'react-router';
+import './ScenarioInstanceSelect.css';
 
-import { Container, Row, Col } from "react-bootstrap";
-import { useNavigate } from "react-router";
-import "./EducationInstanceSelect.css";
+const instanceIds = ['INS001', 'INS002'];
 
-const ids : string[] = ["INS001", "INS002"]
+function ScenarioInstanceSelect() {
+    const { scenario: scenarioId } = useParams();
+    const navigate = useNavigate();
 
-function EducationInstanceSelect() {
-    const navigate = useNavigate()
     return (
         <Container className="py-5">
             <div className="mb-5">
                 <p className="text-primary fw-semibold text-uppercase small mb-2">
-                    Assignment Marking
+                    {scenarioId}
                 </p>
 
                 <h1 className="landing-header mb-3">
@@ -24,20 +25,21 @@ function EducationInstanceSelect() {
             </div>
 
             <Row className="g-3">
-                {ids.map((id) => (
-                    <Col key={id} xs={12} md={6} lg={4}>
-                        <div className="instance-wrapper">
+                {instanceIds.map((instanceId) => (
+                    <Col key={instanceId} xs={12} md={6} lg={4}>
+                        <div className="scenario-instance-wrapper">
                             <button
                                 type="button"
-                                className="instance-card w-100 d-flex align-items-center gap-3 p-4 text-start"
-                                onClick={() => navigate(`/education/${id}`)} >
-                                <h2 className="h5 mb-1">{id}</h2>
+                                className="scenario-instance-card w-100 d-flex align-items-center gap-3 p-4 text-start"
+                                onClick={() => navigate(`/${scenarioId}/${instanceId}`)}
+                            >
+                                <h2 className="h5 mb-1">{instanceId}</h2>
                             </button>
 
                             <button
                                 type="button"
-                                className="instance-delete"
-                                aria-label={`Delete instance ${id}`}
+                                className="scenario-instance-delete"
+                                aria-label={`Delete instance ${instanceId}`}
                             >
                                 ×
                             </button>
@@ -57,4 +59,4 @@ function EducationInstanceSelect() {
     );
 }
 
-export default EducationInstanceSelect;
+export default ScenarioInstanceSelect;

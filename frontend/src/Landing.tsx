@@ -26,7 +26,7 @@ function Landing() {
                             'Track admission status',
                             'Organise patient workflows',
                         ]}
-                        link="#"
+                        link="healthcare/instances"
                     ></WorkflowCard>
                 </Col>
                 <Col md={6}>
