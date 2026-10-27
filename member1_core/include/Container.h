@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 
-class WorkflowPhase;
+#include "WorkflowPhase.h"
 
 class Container : public Component {
 private:
