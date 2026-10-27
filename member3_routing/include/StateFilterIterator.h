@@ -1,3 +1,6 @@
+#ifndef STATEFILTERITERATOR_H
+#define STATEFILTERITERATOR_H
+
 #include "DepthFirstIterator.h"
 #include "Component.h"
 #include "Item.h"
@@ -13,3 +16,5 @@ public:
     virtual Component *first();
     virtual Component *next();
 };
+
+#endif

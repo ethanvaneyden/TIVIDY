@@ -1,4 +1,5 @@
-
+#ifndef WORKITERATORITERATOR_H
+#define WORKITERATORITERATOR_H
 class Component;
 
 class WorkIterator
@@ -11,3 +12,5 @@ public:
     virtual bool isDone() = 0;
     virtual Component *current() = 0;
 };
+
+#endif

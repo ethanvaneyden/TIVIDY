@@ -1,3 +1,6 @@
+#ifndef DEPTHFIRSTITERATOR_H
+#define DEPTHFIRSTITERATOR_H
+
 #include "WorkIterator.h"
 #include "Component.h"
 
@@ -15,3 +18,5 @@ public:
     virtual bool isDone();
     virtual Component *current();
 };
+
+#endif;
