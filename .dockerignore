@@ -1,0 +1,24 @@
+# Build artifacts
+build/
+**/build/
+cmake-build-*/
+
+# Frontend has its own Dockerfile and context
+frontend/
+node_modules/
+**/node_modules/
+
+# Docs, report, IDE files
+docs/
+report/
+.vscode/
+.idea/
+*.swp
+
+# Git
+.git/
+.gitignore
+
+# Other CI / dev files not needed at build time
+.github/
+*.md
