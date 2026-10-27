@@ -6,6 +6,8 @@ Container::Container(std::string id, std::string type, std::string name, Compone
     children = {};
 }
 
+Container::~Container() = default;
+
 void Container::add(Component *c)
 {
     if (!c)

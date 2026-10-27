@@ -1,5 +1,5 @@
-#ifndef WORKFLOWMEDIATOR_H
-#define WORKFLOWMEDIATOR_H
+#ifndef COLLEAGUE_H
+#define COLLEAGUE_H
 class WorkflowMediator;
 
 class Colleague

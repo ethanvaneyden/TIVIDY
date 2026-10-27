@@ -1,4 +1,5 @@
 #include "Item.h"
+#include "ItemState.h"
 
 Item::Item(std::string id, std::string type, std::string name, Component *parent) : Component(id, type, name, parent)
 {
@@ -46,3 +47,10 @@ void Item::recordReview(Participant *p, const std::string &method)
     reviewer = p;
     reviewMethod = method;
 }
+
+void  Item::assign(Participant* p){/*STUB*/}
+void  Item::start(){/*STUB*/}
+void  Item::complete(int value){/*STUB*/}
+void  Item::reject(const std::string& reason){/*STUB*/}
+std::string  Item::getStateName() const{/*STUB*/ return "";}
+void  Item::setState(std::unique_ptr<ItemState> s){/*STUB*/}
