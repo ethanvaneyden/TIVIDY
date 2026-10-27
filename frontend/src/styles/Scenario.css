@@ -1,0 +1,80 @@
+.scenario-page {
+    --scenario-accent: #7654d6;
+    --scenario-accent-soft: #f1edff;
+    --scenario-accent-shadow: rgba(112, 78, 208, 0.15);
+    --scenario-accent-ring: rgba(112, 78, 208, 0.3);
+    max-width: 1120px;
+    min-height: 100vh;
+    padding-top: clamp(3rem, 8vh, 6rem) !important;
+}
+
+.scenario-page[data-scenario="healthcare"] {
+    --scenario-accent: #2878df;
+    --scenario-accent-soft: #eaf3ff;
+    --scenario-accent-shadow: rgba(31, 111, 218, 0.15);
+    --scenario-accent-ring: rgba(31, 111, 218, 0.3);
+}
+
+.scenario-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: var(--radius-full);
+    background: var(--scenario-accent-soft);
+    color: var(--scenario-accent);
+    font-size: 0.68rem;
+    font-weight: 750;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.scenario-workflow-back {
+    display: flex;
+    width: fit-content;
+    margin-bottom: 1.75rem;
+}
+
+.scenario-workflow-header {
+    margin-bottom: 0.5rem;
+}
+
+.scenario-workflow-header .scenario-eyebrow {
+    margin-bottom: 0.8rem;
+}
+
+.scenario-page .landing-header {
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+}
+
+.scenario-description {
+    color: #68748a;
+    font-size: 1.05rem;
+    line-height: 1.7;
+}
+
+.scenario-instance-id {
+    display: inline-flex;
+    margin-top: 0.75rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--scenario-accent);
+    font-weight: 700;
+    box-shadow: 0 8px 22px rgba(26, 38, 67, 0.05);
+}
+
+.scenario-page .cta-button {
+    background-color: var(--scenario-accent);
+}
+
+.scenario-page .cta-button:hover {
+    filter: brightness(0.94);
+}
+
+.instance-text {
+    color: var(--scenario-accent);
+    font-weight: bold;
+    font-size: large;
+}
