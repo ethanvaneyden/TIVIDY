@@ -1,6 +1,6 @@
 /**
  * @file ItemState.h
- * @brief STUB — replaced by Member 2's full implementation.
+ * @brief Shared, scenario-independent item lifecycle.
 */
 
 #ifndef ITEMSTATE_H
@@ -16,11 +16,13 @@ class ItemState
         ItemState() = default;
         virtual ~ItemState() = default;
 
-        virtual void assign(Item& item) = 0;
-        virtual void start(Item& item) = 0;
-        virtual void complete(Item& item, int value) = 0;
-        virtual void reject(Item& item, const std::string& reason) = 0;
+        virtual void assign(Item& item);
+        virtual void start(Item& item);
+        virtual void complete(Item& item, int value);
+        virtual void reject(Item& item, const std::string& reason);
         virtual std::string name() const = 0;
+        virtual bool isCompleted() const { return false; }
+        virtual bool isRejected() const { return false; }
 };
 
 #endif

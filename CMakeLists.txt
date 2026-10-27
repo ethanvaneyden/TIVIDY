@@ -28,6 +28,7 @@ add_library(tividy_core
 
     # --- Member 2: execution & lifecycle ---
     member2_execution/WorkflowInstance.cpp # # uncomment this line & more
+    member2_execution/ItemState.cpp
     member2_execution/CreatedState.cpp
     member2_execution/AssignedState.cpp
     member2_execution/InProgressState.cpp

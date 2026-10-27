@@ -1,18 +1,11 @@
 #include "RejectedState.h"
+#include "CompletedState.h"
 #include "Item.h"
+#include <memory>
 
-/* STUB — real transitions belong to Member 2. */
-
-void RejectedState::assign(Item& item)
+void RejectedState::complete(Item& item, int)
 {
-    
+    item.setState(std::unique_ptr<ItemState>(new CompletedState()));
 }
 
-void RejectedState::start(Item& item) { /* [TBD] */ }
-void RejectedState::complete(Item& item, int value) { /* [TBD] */ }
-void RejectedState::reject(Item& item, const std::string& reason) { /* [TBD] */ }
-
-std::string RejectedState::name() const
-{
-    return "";
-}
+std::string RejectedState::name() const { return "Rejected"; }
