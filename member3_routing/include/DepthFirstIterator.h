@@ -19,4 +19,4 @@ public:
     virtual Component *current();
 };
 
-#endif;
+#endif
