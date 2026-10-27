@@ -1,4 +1,4 @@
-import './WorkflowCard.css';
+import '../../styles/WorkflowCard.css';
 import { useNavigate } from 'react-router';
 
 interface WorkflowCardProps {

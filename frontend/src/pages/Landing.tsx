@@ -1,6 +1,6 @@
 import { Container, Row, Col } from "react-bootstrap";
-import "./Landing.css"
-import WorkflowCard from "./WorkflowCard";
+import '../styles/Landing.css';
+import WorkflowCard from '../components/home/WorkflowCard';
 
 function Landing() {
     return (

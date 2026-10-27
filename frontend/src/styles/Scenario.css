@@ -32,6 +32,15 @@
 .scenario-workflow-back {
     display: flex;
     width: fit-content;
+    margin-bottom: 1.75rem;
+}
+
+.scenario-workflow-header {
+    margin-bottom: 0.5rem;
+}
+
+.scenario-workflow-header .scenario-eyebrow {
+    margin-bottom: 0.8rem;
 }
 
 .scenario-page .landing-header {
