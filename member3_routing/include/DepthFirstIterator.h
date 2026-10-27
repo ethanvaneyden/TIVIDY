@@ -5,13 +5,13 @@ class DepthFirstIterator : WorkIterator
 {
 private:
     Component *root;
-    Component *current;
+    Component *curr;
 
 public:
     DepthFirstIterator(Component *root);
-    virtual bool hasNext() const;
+
     virtual Component *first();
     virtual Component *next();
-    virtual Component *isDone();
+    virtual bool isDone();
     virtual Component *current();
 };
