@@ -28,7 +28,7 @@ public:
     bool isCompleted() const override { return false; }
 };
 
-TEST(Iterator, DepthFirst)
+TEST(IteratorTest, DepthFirst)
 {
     TestNode root("Root"), c1("C1"), c2("C2"), a("A"), b("B"), c("C");
     root.add(&c1);

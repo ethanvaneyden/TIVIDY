@@ -41,7 +41,7 @@ add_library(tividy_core
 
     # --- Member 3: assignment & traversal ---
     # member3_routing/AssignmentEngine.cpp # # uncomment this line & more
-    member3_routing/WorkIterator.cpp
+    member3_routing/Iterator.cpp
     member3_routing/DepthFirstIterator.cpp
 
     # --- Member 4: commands, events, history ---
