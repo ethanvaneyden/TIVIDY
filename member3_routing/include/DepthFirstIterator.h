@@ -1,10 +1,10 @@
 #ifndef DEPTHFIRSTITERATOR_H
 #define DEPTHFIRSTITERATOR_H
 
-#include "WorkIterator.h"
+#include "Iterator.h"
 #include "Component.h"
 
-class DepthFirstIterator : WorkIterator
+class DepthFirstIterator : Iterator
 {
 private:
     Component *root;
