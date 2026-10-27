@@ -16,13 +16,13 @@ demonstrated with two scenarios:
 
 | Member | Folder | Area |
 |---|---|---|
-| _Ethan Van Eyden_ (u25260244) | `member1_core/` | Core workflow model (Composite) |
-| _Jayden Dean_ (u24647897) | `member2_execution/` | Instances & lifecycle (State) |
+| _Ethan Van Eyden_ (u25260244) | `member1_core/` | Core workflow model (Composite, Instances, API) |
+| _Jayden Dean_ (u24647897) | `member2_execution/` | Item and container lifecycle (State) |
 | _Stefan van Staden_ (u25031784) | `member3_routing/` | Assignment & traversal (Strategy, Iterator) |
-| _Christian Nunes_ (u25138309) | `member4_services/` | Commands, events, history (Command, Mediator, Observer, Chain of Responsibility) |
-| _Kyle Pillay_ (u23545756) | `member5_education/` | Education scenario (Builder, Adapter) |
-| _Rochaan_ (uXXXXXXXX) | `member6_hospital/` | Hospital scenario (Builder, Adapter) |
-| _Lesego Tebeile_ (u25143230) | `member7_integration/` | Integration, factories, decorators, CLI (Facade, Decorator, Abstract Factory) |
+| _Christian Nunes_ (u25138309) | `member4_services/` | Commands, events, history (Command, Abstract Mediator, Observer, Chain of Responsibility) |
+| _Kyle Pillay_ (u23545756) | `member5_education/` | Education scenario (Concrete Mediator, Concrete Leaf/Composite, Concrete Chain) |
+| _Rochaan_ (uXXXXXXXX) | `member6_hospital/` | Hospital scenario (Concrete Mediator, Concrete Leaf/Composite, Concrete Chain) |
+| _Lesego Tebeile_ (u25143230) | `member7_integration/` | CI/CD, Scenario Setup factory, Builder, Facade
 
 ---
 
