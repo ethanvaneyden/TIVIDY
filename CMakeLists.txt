@@ -17,17 +17,27 @@ FetchContent_MakeAvailable(googletest)
 # All production code except app/main.cpp.
 add_library(tividy_core
     # --- Member 1: core model ---
-    # member1_core/Colleague.cpp # # uncomment this line & more
+    member1_core/Colleague.cpp # # uncomment this line & more
     member1_core/Component.cpp
-     member1_core/Container.cpp
+    member1_core/Container.cpp
     member1_core/Item.cpp
     member1_core/Participant.cpp
     member1_core/ParticipantRegistry.cpp
-    # member1_core/Root.cpp
-    # member1_core/WorkRegistry.cpp
+    member1_core/Root.cpp
+    member1_core/WorkRegistry.cpp
 
     # --- Member 2: execution & lifecycle ---
-    # member2_execution/WorkflowInstance.cpp # # uncomment this line & more
+    member2_execution/WorkflowInstance.cpp # # uncomment this line & more
+    member2_execution/ItemState.cpp
+    member2_execution/CreatedState.cpp
+    member2_execution/AssignedState.cpp
+    member2_execution/InProgressState.cpp
+    member2_execution/CompletedState.cpp
+    member2_execution/RejectedState.cpp
+    member2_execution/IntakePhase.cpp
+    member2_execution/ActivePhase.cpp
+    member2_execution/ReviewPhase.cpp
+    member2_execution/PublishPhase.cpp
 
     # --- Member 3: assignment & traversal ---
     # member3_routing/AssignmentEngine.cpp # # uncomment this line & more
@@ -36,6 +46,7 @@ add_library(tividy_core
 
     # --- Member 4: commands, events, history ---
     # member4_services/WorkCommand.cpp # # uncomment this line & more
+    member4_services/WorkflowMediator.cpp
 
     # --- Member 5: education scenario ---
     # member5_education/AssignmentMarkingBuilder.cpp # # uncomment this line & more
@@ -43,8 +54,13 @@ add_library(tividy_core
     # --- Member 6: hospital scenario ---
     # member6_hospital/HospitalAdmissionBuilder.cpp # # uncomment this line & more
 
-    # --- Member 7: integration, factories, decorators ---
-    # member7_integration/WorkflowDirector.cpp # # uncomment this line & more
+    # --- Member 7: integration, factories ---
+    member7_integration/WorkflowDirector.cpp # # uncomment this line & more
+    member7_integration/EducationWorkflowFactory.cpp
+    member7_integration/HospitalWorkflowFactory.cpp
+    member7_integration/TividyWorkflow.cpp
+    member7_integration/JsonSerializer.cpp
+    member7_integration/RestServer.cpp
 )
 
 # Every member folder is on the include path, so `#include "Header.h"`
@@ -53,12 +69,16 @@ target_include_directories(tividy_core PUBLIC
     member1_core
     member1_core/include
     member2_execution
+    member2_execution/include
     member3_routing
     member3_routing/include
     member4_services
+    member4_services/include
     member5_education
+    member5_education/include
     member6_hospital
     member7_integration
+    member7_integration/include
 )
 
 # ----------------- Application -----------------
@@ -95,12 +115,16 @@ target_include_directories(tividy_tests PRIVATE
     member1_core
     member1_core/include
     member2_execution
+    member2_execution/include
     member3_routing
     member3_routing/include
     member4_services
+    member4_services/include
     member5_education
+    member5_education/include
     member6_hospital
     member7_integration
+    member7_integration/include
 )
 
 include(GoogleTest)
