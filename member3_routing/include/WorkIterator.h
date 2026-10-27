@@ -5,7 +5,7 @@ class Component;
 class WorkIterator
 {
 public:
-    virtual ~WorkIterator();
+    virtual ~WorkIterator() = default;
 
     virtual Component *first() = 0;
     virtual Component *next() = 0;

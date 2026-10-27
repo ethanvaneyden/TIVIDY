@@ -18,9 +18,9 @@ FetchContent_MakeAvailable(googletest)
 add_library(tividy_core
     # --- Member 1: core model ---
     # member1_core/Colleague.cpp # # uncomment this line & more
-    # member1_core/Component.cpp
-    # member1_core/Container.cpp
-    # member1_core/Item.cpp
+    member1_core/Component.cpp
+     member1_core/Container.cpp
+    member1_core/Item.cpp
     member1_core/Participant.cpp
     member1_core/ParticipantRegistry.cpp
     # member1_core/Root.cpp
