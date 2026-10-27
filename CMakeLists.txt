@@ -31,6 +31,8 @@ add_library(tividy_core
 
     # --- Member 3: assignment & traversal ---
     # member3_routing/AssignmentEngine.cpp # # uncomment this line & more
+    member3_routing/WorkIterator.cpp
+    member3_routing/DepthFirstIterator.cpp
 
     # --- Member 4: commands, events, history ---
     # member4_services/WorkCommand.cpp # # uncomment this line & more
@@ -52,6 +54,7 @@ target_include_directories(tividy_core PUBLIC
     member1_core/include
     member2_execution
     member3_routing
+    member3_routing/include
     member4_services
     member5_education
     member6_hospital
@@ -93,6 +96,7 @@ target_include_directories(tividy_tests PRIVATE
     member1_core/include
     member2_execution
     member3_routing
+    member3_routing/include
     member4_services
     member5_education
     member6_hospital
