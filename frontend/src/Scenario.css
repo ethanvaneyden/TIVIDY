@@ -29,6 +29,11 @@
     text-transform: uppercase;
 }
 
+.scenario-workflow-back {
+    display: flex;
+    width: fit-content;
+}
+
 .scenario-page .landing-header {
     font-size: clamp(2.2rem, 5vw, 3.4rem);
 }
@@ -59,11 +64,8 @@
     filter: brightness(0.94);
 }
 
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        scroll-behavior: auto !important;
-        transition-duration: 0.01ms !important;
-    }
+.instance-text {
+    color: var(--scenario-accent);
+    font-weight: bold;
+    font-size: large;
 }

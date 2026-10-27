@@ -147,3 +147,7 @@ body {
 .cta-button.danger:hover {
     background-color: var(--color-danger-hover);
 }
+
+.cta-button.success { background-color: #198754; }
+.cta-button.warning { background-color: #ffc107; color: black; }
+.cta-button.outline { background-color: transparent; border: 1px solid #ccc; color: #333; }
