@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router';
 
 import Landing from './Landing';
 import EducationInstanceSelect from './EducationInstanceSelect';
+import EducationWorkflow from './EducationWorkflow';
 
 function App() {
     return (
@@ -13,7 +14,11 @@ function App() {
 
             <Route
                 path="/education/instances"
-                element={<EducationInstanceSelect ids={["INS001", "INS002"]} />}
+                element={<EducationInstanceSelect/>}
+            />
+            <Route
+                path="education/:instanceid"
+                element={<EducationWorkflow />}
             />
         </Routes>
     );

@@ -1,12 +1,12 @@
 
 import { Container, Row, Col } from "react-bootstrap";
+import { useNavigate } from "react-router";
 import "./EducationInstanceSelect.css";
 
-interface EducationInstanceSelectProps {
-    ids: string[];
-}
+const ids : string[] = ["INS001", "INS002"]
 
-function EducationInstanceSelect({ ids }: EducationInstanceSelectProps) {
+function EducationInstanceSelect() {
+    const navigate = useNavigate()
     return (
         <Container className="py-5">
             <div className="mb-5">
@@ -29,7 +29,8 @@ function EducationInstanceSelect({ ids }: EducationInstanceSelectProps) {
                         <div className="instance-wrapper">
                             <button
                                 type="button"
-                                className="instance-card w-100 d-flex align-items-center gap-3 p-4 text-start">
+                                className="instance-card w-100 d-flex align-items-center gap-3 p-4 text-start"
+                                onClick={() => navigate(`/education/${id}`)} >
                                 <h2 className="h5 mb-1">{id}</h2>
                             </button>
 
