@@ -11,6 +11,12 @@ private:
     std::vector<Component*> children;
     std::unique_ptr<WorkflowPhase> phase;
 
+    void setPhase(std::unique_ptr<WorkflowPhase> next);
+    friend class IntakePhase;
+    friend class ActivePhase;
+    friend class ReviewPhase;
+    friend class PublishPhase;
+
 public:
     Container(std::string id, std::string type, std::string name, Component* parent = nullptr);
     virtual ~Container() override;
@@ -23,6 +29,10 @@ public:
 
     void advancePhase();
     std::string getPhaseName() const;
+    bool isReadyToPublish() const;
+    // Called by the mediator after batch approval or personal review.
+    // Returns false without changing anything while review is incomplete.
+    bool tryPublish();
 };
 
 #endif

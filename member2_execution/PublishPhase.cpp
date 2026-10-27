@@ -1,13 +1,11 @@
 #include "PublishPhase.h"
 #include "Container.h"
-
-/* STUB — real transitions belong to Member 2. */
+#include "InvalidTransition.h"
 #include <memory>
 
-void PublishPhase::advance(Container& container)
-{}
-
-std::string PublishPhase::name() const
+void PublishPhase::advance(Container& )
 {
-    return "";
+    throw InvalidTransition("Publish is the final phase");
 }
+
+std::string PublishPhase::name() const { return "Publish"; }
