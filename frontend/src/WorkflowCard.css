@@ -1,27 +1,77 @@
 
 .WorkflowCard {
     width: 100%;
-    max-width: 500px;
-    min-height: 450px;
-
+    min-height: 460px;
     background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
-
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 22px;
+    box-shadow: 0 10px 35px rgba(26, 38, 67, 0.055);
     overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.WorkflowCard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 22px 48px rgba(26, 38, 67, 0.12);
+}
+
+.accent-blue {
+    --card-accent: #2878df;
+    --card-accent-soft: #eaf3ff;
+    --card-accent-glow: rgba(31, 111, 218, 0.34);
+}
+
+.accent-purple {
+    --card-accent: #7654d6;
+    --card-accent-soft: #f1edff;
+    --card-accent-glow: rgba(112, 78, 208, 0.34);
 }
 
 .CardImage img {
     display: block;
     width: 100%;
-    height: 200px;
+    height: 218px;
     object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.WorkflowCard:hover .CardImage img {
+    transform: scale(1.035);
+}
+
+.CardImage {
+    position: relative;
+    overflow: hidden;
+}
+
+.CardImage::after {
+    position: absolute;
+    inset: 45% 0 0;
+    background: linear-gradient(transparent, rgba(20, 27, 44, 0.32));
+    content: "";
+    pointer-events: none;
+}
+
+.CardTag {
+    position: absolute;
+    z-index: 1;
+    left: 1.35rem;
+    bottom: 1.1rem;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--card-accent);
+    font-size: 0.62rem;
+    font-weight: 750;
+    letter-spacing: 0.12em;
+    backdrop-filter: blur(8px);
 }
 
 .CardHeader {
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.04em;
     line-height: 1.3;
     color: var(--color-text);
 }
@@ -29,7 +79,7 @@
 .CardDescription {
     font-size: 0.95rem;
     line-height: 1.6;
-    color: var(--color-text-muted);
+    color: #69758b;
 }
 
 .CardFeature {
@@ -37,7 +87,7 @@
     padding-left: 1.5rem;
     font-size: 0.9rem;
     line-height: 1.5;
-    color: var(--color-text-secondary);
+    color: #556177;
 }
 
 .CardFeature::before {
@@ -47,35 +97,30 @@
     font-weight: 600;
 }
 
-.accent-blue .CardFeature::before {
-    color: var(--color-accent-blue);
-}
-
-.accent-violet .CardFeature::before {
-    color: var(--color-accent-violet);
+.CardFeature::before {
+    color: var(--card-accent);
 }
 
 .CardButton {
     width: 100%;
     padding: 0.75rem 1rem;
-    border: none;
-    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid transparent;
+    border-radius: 12px;
     color: var(--color-text-inverse);
     font-weight: 600;
     cursor: pointer;
-    transition: filter 0.2s ease;
-}
-
-.accent-blue .CardButton {
-    background-color: var(--color-accent-blue);
-}
-
-.accent-violet .CardButton {
-    background-color: var(--color-accent-violet);
+    background-color: var(--card-accent);
+    box-shadow: 0 7px 16px var(--card-accent-glow);
+    transition: filter 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .CardButton:hover {
     filter: brightness(0.9);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px var(--card-accent-glow);
 }
 
 .CardButton:focus-visible {

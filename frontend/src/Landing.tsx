@@ -4,18 +4,31 @@ import WorkflowCard from "./WorkflowCard";
 
 function Landing() {
     return (
-        <Container className="py-5">
-            <div className="d-flex flex-column align-items-center gap-3">
-                <h2 className="text-center landing-subtitle">
-                    Workflow Management
-                </h2>
-                <h1 className="text-center landing-header mb-5">
-                    Welcome to TIVIDY
+        <Container className="landing-page py-5">
+            <header className="landing-intro">
+                <span className="landing-eyebrow">
+                    <span className="landing-eyebrow-dot" />
+                    TIVIDY WORKSPACE
+                </span>
+                <h1 className="landing-header">
+                    Your workflows,<br />
+                    <span>moving forward.</span>
                 </h1>
+                <p className="landing-lede">
+                    A clearer way to coordinate the work that matters.
+                    Choose a workspace and start a workflow.
+                </p>
+            </header>
+
+            <div className="workflow-section-heading">
+                <div>
+                    <p className="workflow-section-kicker">YOUR WORKSPACES</p>
+                    <h2>Choose a workflow</h2>
+                </div>
+                <span className="workflow-count">02 WORKSPACES</span>
             </div>
 
-
-            <Row className="g-4 ">
+            <Row className="g-4 workflow-grid">
                 <Col md={6}>
                     <WorkflowCard title="Patient Admissions"
                         description="Manage patient admissions efficiently."
@@ -26,15 +39,15 @@ function Landing() {
                             'Track admission status',
                             'Organise patient workflows',
                         ]}
-                        link="healthcare/instances"
-                    ></WorkflowCard>
+                        link="/healthcare/instances"
+                    />
                 </Col>
                 <Col md={6}>
                     <WorkflowCard
                         title="Assignment Marking"
                         description="Streamline assignment assessment, coordinate marking, and deliver consistent feedback to students."
                         image="marking.jpg"
-                        accent="violet"
+                        accent="purple"
                         features={[
                             'Organise assignment submissions',
                             'Coordinate marking and assessment',

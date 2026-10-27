@@ -1,5 +1,6 @@
 import { Container } from 'react-bootstrap';
 import { useParams } from 'react-router';
+import './Scenario.css';
 
 function ScenarioWorkflow() {
     const { scenario: scenarioId, instanceId } = useParams();
@@ -13,12 +14,11 @@ function ScenarioWorkflow() {
     }
 
     return (
-        <Container className="py-5">
-            <p className="text-primary fw-semibold text-uppercase small mb-2">
-                {scenarioId}
-            </p>
+        <Container className="scenario-page py-5" data-scenario={scenarioId.toLowerCase()}>
+            <span className="scenario-eyebrow">{scenarioId}</span>
             <h1 className="landing-header">Welcome to the workflow</h1>
-            <h2 className="h4">{instanceId}</h2>
+            <p className="scenario-description">You are working in instance</p>
+            <div className="scenario-instance-id">{instanceId}</div>
         </Container>
     );
 }

@@ -5,7 +5,7 @@ interface WorkflowCardProps {
     title: string;
     description: string;
     image: string;
-    accent: 'blue' | 'violet';
+    accent: 'blue' | 'purple';
     features: string[];
     link: string;
 }
@@ -20,13 +20,14 @@ function WorkflowCard({
 }: WorkflowCardProps) {
     const navigate = useNavigate();
     return (
-        <div className={`WorkflowCard accent-${accent} d-flex flex-column h-100`}>
+        <article className={`WorkflowCard accent-${accent} d-flex flex-column h-100`}>
             <div className="CardImage">
                 <img
                     src={image}
                     alt={title}
                     className="w-100"
                 />
+                <span className="CardTag">{accent === 'blue' ? 'HEALTHCARE' : 'EDUCATION'}</span>
             </div>
 
             <div className="CardBody d-flex flex-column flex-grow-1 gap-3 p-4">
@@ -47,13 +48,13 @@ function WorkflowCard({
                 </ul>
             </div>
 
-            <div className="CardFooter p-4 pt-0 mt-auto"
-            onClick={() => navigate(link)}>
-                <button className="CardButton w-100">
-                    Start workflow
+            <div className="CardFooter p-4 pt-0 mt-auto">
+                <button type="button" className="CardButton w-100" onClick={() => navigate(link)}>
+                    <span>Open workspace</span>
+                    <span aria-hidden="true">↗</span>
                 </button>
             </div>
-        </div>
+        </article>
     );
 }
 
