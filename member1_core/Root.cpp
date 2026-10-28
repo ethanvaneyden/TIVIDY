@@ -21,6 +21,7 @@ void Root::add(Component *c)
             throw std::invalid_argument("Duplicate container in root");
     children.push_back(c);
     c->setParent(this);
+    c->setMediator(getMediator());
 }
 
 void Root::remove(const std::string &id)

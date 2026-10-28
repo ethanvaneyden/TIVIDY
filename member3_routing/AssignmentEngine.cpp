@@ -1,5 +1,7 @@
 #include "AssignmentEngine.h"
 #include "Participant.h"
+#include "Item.h"
+#include "WorkflowMediator.h"
 #include <utility>
 
 AssignmentEngine::AssignmentEngine(std::unique_ptr<AssignmentStrategy> s) : strategy(std::move(s))
@@ -20,9 +22,6 @@ std::string AssignmentEngine::strategyName() const
 
 Participant *AssignmentEngine::assign(Item &item, const std::vector<Participant *> &pool)
 {
-    if (!strategy)
-        return nullptr;
-
     std::vector<Participant *> clean;
     for (Participant *p : pool)
     {
@@ -30,5 +29,12 @@ Participant *AssignmentEngine::assign(Item &item, const std::vector<Participant 
             clean.push_back(p);
     }
 
-    return strategy->assign(clean);
+    Participant *assignee = strategy ? strategy->assign(clean) : nullptr;
+    if (assignee == nullptr)
+    {
+        WorkflowMediator *workflowMediator = item.getMediator();
+        if (workflowMediator != nullptr)
+            workflowMediator->onAssignmentFailed(&item, "No worker is available");
+    }
+    return assignee;
 }

@@ -3,12 +3,14 @@
 #include <string>
 #include <vector>
 
-class Container;
+class Root;
 class WorkflowMediator;
 class AssignmentStrategy;
 class ParticipantRegistry;
+class Participant;
 class WorkflowBuilder;
 class WorkRegistry;
+class Item;
 
 /**
  * @brief Represents one configured workflow instance.
@@ -24,11 +26,13 @@ private:
     std::string definitionType;
 
     std::unique_ptr<WorkRegistry> workRegistry;
-    std::unique_ptr<WorkflowMediator> coordinator;
+    std::shared_ptr<WorkflowMediator> coordinator;
     std::unique_ptr<AssignmentStrategy> strategy;
     std::unique_ptr<WorkflowBuilder> builder;
     ParticipantRegistry *participants;
-    Container *root;
+    Root *root;
+
+    WorkflowMediator* getCoordinator() const;
 
 public:
     /**
@@ -36,7 +40,7 @@ public:
      * @param instanceId Unique identifier for this workflow instance.
      * @param definitionType Type of workflow definition being run.
      * @param workRegistry Registry for workflow components.
-     * @param root Root container for the workflow tree.
+     * @param root Root component for the workflow tree.
      * @param coordinator Mediator coordinating workflow actions.
      * @param strategy Assignment strategy.
      * @param builder Builder associated with the workflow definition.
@@ -46,14 +50,14 @@ public:
         std::string instanceId,
         std::string definitionType,
         std::unique_ptr<WorkRegistry> workRegistry,
-        Container *root,
-        std::unique_ptr<WorkflowMediator> coordinator,
+        Root *root,
+        std::shared_ptr<WorkflowMediator> coordinator,
         std::unique_ptr<AssignmentStrategy> strategy,
         std::unique_ptr<WorkflowBuilder> builder,
         ParticipantRegistry *participants);
 
     /// @brief Destroys the workflow instance and its owned collaborators.
-    ~WorkflowInstance();
+    virtual ~WorkflowInstance();
 
     /// @brief Copying workflow instances is disabled.
     WorkflowInstance(const WorkflowInstance &) = delete;
@@ -65,10 +69,10 @@ public:
     const std::string &getInstanceId() const;
 
     /// @brief Returns the workflow definition type.
-    const std::string &getDefinitionType() const;
+    virtual const std::string &getDefinitionType() const;
 
-    /// @brief Returns the root container of the workflow.
-    Container *getRoot() const;
+    /// @brief Returns the root component of the workflow tree.
+    Root *getRoot() const;
 
     /// @brief Returns the workflow's recorded history entries.
     std::vector<std::string> getHistory() const;
@@ -101,7 +105,18 @@ public:
      * @brief Approves a container's completed work.
      * @param containerId Identifier of the container to approve.
      */
-    void approveContainer(const std::string &containerId);
+    virtual void approveContainer(const std::string &containerId);
+
+    /**
+     * @brief Resolves a rejected item using the scenario's review policy.
+     * @param item Item awaiting personal review.
+     * @param accept Whether to retain its existing value.
+     * @param newValue Replacement value when the existing value is not accepted.
+     * @param reviewer Participant performing the review.
+     * @throws std::logic_error if this workflow does not support this action.
+     */
+    virtual bool resolveRejected(Item &item, bool accept, int newValue,
+                                 Participant *reviewer);
 
     /**
      * @brief Rejects a container's completed work.

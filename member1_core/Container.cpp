@@ -3,7 +3,6 @@
 #include "DepthFirstIterator.h"
 #include "IntakePhase.h"
 #include "InvalidTransition.h"
-#include "LifecycleEvents.h"
 #include "WorkflowMediator.h"
 #include "DepthFirstIterator.h"
 
@@ -32,6 +31,7 @@ void Container::add(Component *c)
             throw std::invalid_argument("Duplicate item in container");
     children.push_back(c);
     c->setParent(this);
+    c->setMediator(getMediator());
 }
 
 void Container::remove(const std::string &id)
@@ -93,7 +93,7 @@ void Container::advancePhase()
     if (!target && parent)
         target = parent->getMediator();
     if (target)
-        target->notify(this, LifecycleEvents::PhaseChanged);
+        target->onPhaseAdvanced(this);
 }
 
 std::string Container::getPhaseName() const { return phase->name(); }

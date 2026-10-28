@@ -84,11 +84,29 @@ void Item::requirePhase(const std::string &expected) const
 
 void Item::notifyChange(const std::string &event)
 {
-    WorkflowMediator *target = getMediator();
-    if (!target && parent)
-        target = parent->getMediator();
-    if (target)
-        target->notify(this, event);
+    WorkflowMediator *target = findMediator();
+    if (target == nullptr)
+        return;
+
+    if (event == LifecycleEvents::ItemCompleted)
+        target->onItemCompleted(this, result);
+    else if (event == LifecycleEvents::ItemRejected)
+        target->onItemRejected(this, rejectionReason);
+    else if (event == LifecycleEvents::ItemReviewResolved)
+        target->onItemOverridden(this, "Resolved rejected result: " + rejectionReason);
+}
+
+WorkflowMediator* Item::findMediator() const
+{
+    const Component* current = this;
+    while (current != nullptr)
+    {
+        WorkflowMediator* target = current->getMediator();
+        if (target != nullptr)
+            return target;
+        current = current->getParent();
+    }
+    return nullptr;
 }
 
 void Item::assign(Participant *p)

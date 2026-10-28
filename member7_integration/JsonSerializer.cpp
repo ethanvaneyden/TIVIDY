@@ -97,7 +97,7 @@ void JsonSerializer::serializeComponent(const Component* c, std::string& out)
     out += "]}";
 }
 
-std::string JsonSerializer::serializeTree(const Container* root)
+std::string JsonSerializer::serializeTree(const Component* root)
 {
     if(root == nullptr)
     {

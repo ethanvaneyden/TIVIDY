@@ -1,6 +1,6 @@
 /**
  * @file WorkflowInstance.cpp
- * @brief STUB — replaced by Member 2's full implementation.
+ * @brief Shared workflow instance implementation.
 */
 
 #include "WorkflowInstance.h"
@@ -10,14 +10,16 @@
 #include "WorkflowBuilder.h"   
 #include "Container.h"
 #include "ParticipantRegistry.h"
+#include "Root.h"
 #include <utility>
+#include <stdexcept>
 
 WorkflowInstance::WorkflowInstance(
         std::string instanceId,
         std::string definitionType,
         std::unique_ptr<WorkRegistry> workRegistry,
-        Container *root,
-        std::unique_ptr<WorkflowMediator> coordinator,
+        Root *root,
+        std::shared_ptr<WorkflowMediator> coordinator,
         std::unique_ptr<AssignmentStrategy> strategy,
         std::unique_ptr<WorkflowBuilder> builder,
         ParticipantRegistry *participants)
@@ -30,6 +32,8 @@ WorkflowInstance::WorkflowInstance(
       participants(participants),
       root(root)
 {
+    if (this->root != nullptr && this->coordinator)
+        this->root->setMediator(this->coordinator.get());
 }
 
 WorkflowInstance::~WorkflowInstance() = default;
@@ -44,7 +48,12 @@ const std::string &WorkflowInstance::getDefinitionType() const
     return definitionType;
 }
 
-Container *WorkflowInstance::getRoot() const
+WorkflowMediator* WorkflowInstance::getCoordinator() const
+{
+    return coordinator.get();
+}
+
+Root *WorkflowInstance::getRoot() const
 {
     return root;
 }
@@ -79,6 +88,11 @@ void WorkflowInstance::completeItem(const std::string &itemId, int value)
 void WorkflowInstance::approveContainer(const std::string &containerId)
 {
     (void)containerId;
+}
+
+bool WorkflowInstance::resolveRejected(Item &, bool, int, Participant *)
+{
+    throw std::logic_error("This workflow does not support rejected item resolution");
 }
 
 void WorkflowInstance::rejectContainer(const std::string &containerId,

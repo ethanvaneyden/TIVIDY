@@ -13,6 +13,7 @@
 #include "WorkflowBuilder.h"
 #include "Container.h"
 #include "ParticipantRegistry.h"
+#include "EducationWorkflowFactory.h"
 
 #include <stdexcept>
 
@@ -69,11 +70,8 @@ std::string TividyWorkflow::startEducation(const std::string& name)
 {
     static int counter = 0;
     std::string id = "edu_" + std::to_string(counter++) + "_" + name;
-    auto inst = std::unique_ptr<WorkflowInstance>(
-        new WorkflowInstance(
-            id, "education",
-            nullptr, nullptr, nullptr, nullptr, nullptr,
-            participants.get()));
+    EducationWorkflowFactory factory;
+    auto inst = factory.createInstance(id, nullptr, participants.get());
     educationInstances.push_back(std::move(inst));
     return id;
 }
@@ -111,16 +109,14 @@ std::vector<std::string> TividyWorkflow::listHealthcareInstances() const
     return ids;
 }
 
-Container* TividyWorkflow::getTree(const std::string& instanceId) const
+Root* TividyWorkflow::getTree(const std::string& instanceId) const
 {
     const auto* inst = findInstance(instanceId);
     if(inst == nullptr)
     {
         return nullptr;
     }
-    /* [TBD — Member 2] WorkflowInstance::getRoot() returns Container* in the
-     * current header. Once Container inherits Container, this cast can be simplified.*/
-    return dynamic_cast<Container*>(inst->getRoot());
+    return inst->getRoot();
 }
 
 std::vector<std::string> TividyWorkflow::getHistory(const std::string& instanceId) const

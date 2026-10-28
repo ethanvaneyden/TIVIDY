@@ -25,9 +25,10 @@ add_library(tividy_core
     member1_core/ParticipantRegistry.cpp
     member1_core/Root.cpp
     member1_core/WorkRegistry.cpp
+    member1_core/WorkflowInstance.cpp
+    member1_core/EducationInstance.cpp
 
     # --- Member 2: execution & lifecycle ---
-    member2_execution/WorkflowInstance.cpp # # uncomment this line & more
     member2_execution/ItemState.cpp
     member2_execution/CreatedState.cpp
     member2_execution/AssignedState.cpp
@@ -54,6 +55,9 @@ add_library(tividy_core
 
     # --- Member 5: education scenario ---
     # member5_education/AssignmentMarkingBuilder.cpp # # uncomment this line & more
+    member5_education/EducationApprovalChain.cpp
+    member5_education/EducationMediator.cpp
+    member5_education/EducationPolicies.cpp
 
     # --- Member 6: hospital scenario ---
     # member6_hospital/HospitalAdmissionBuilder.cpp # # uncomment this line & more
