@@ -105,7 +105,7 @@ TEST_F(StrategyTest, EngineSetStrategySwapsBehaviour)
 {
     AssignmentEngine engine(std::make_unique<RoundRobinStrategy>());
     Item item("I1", "Submission", "Test item");
-    EXPECT_EQ(engine.strategyName(), "Round Robin");
+    EXPECT_EQ(engine.strategyName(), "RoundRobin");
 
     a.incrementPendingTasks(); // a is now busy
     engine.setStrategy(std::make_unique<WorkloadStrategy>());
