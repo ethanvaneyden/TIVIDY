@@ -7,6 +7,7 @@
 #include "Container.h"
 #include "Item.h"
 #include "Participant.h"
+#include "Submission.h"
 
 #include <sstream>
 
@@ -38,7 +39,7 @@ std::string JsonSerializer::serializeItem(const Item* item)
     std::ostringstream os;
     os << "{";
     os << "\"id\":\"" << escape(item->getId()) << "\",";
-    os << "\"type\":\"Item\",";
+    os << "\"type\":\"" << escape(item->getType()) << "\",";
     os << "\"name\":\"" << escape(item->getName()) << "\",";
     os << "\"state\":\"" << escape(item->getStateName()) << "\",";
     os << "\"assignee\":";
@@ -62,6 +63,15 @@ std::string JsonSerializer::serializeItem(const Item* item)
         os << "null";
     }
     os << ",\"reviewMethod\":\"" << escape(item->getReviewMethod()) << "\"";
+    if (const education::Submission* submission =
+            dynamic_cast<const education::Submission*>(item))
+    {
+        os << ",\"mark\":";
+        if (submission->hasMark())
+            os << submission->getMark();
+        else
+            os << "null";
+    }
     os << "}";
     return os.str();
 }

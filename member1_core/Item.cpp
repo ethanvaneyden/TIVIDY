@@ -40,6 +40,12 @@ void Item::setState(std::unique_ptr<ItemState> next)
     state = std::move(next);
 }
 
+void Item::storeResult(int value)
+{
+    result = value;
+    resultRecorded = true;
+}
+
 void Item::transition(Action action, int value, const std::string &reason)
 {
     // Keep the executing state alive until its method returns, even if that
@@ -116,8 +122,7 @@ void Item::complete(int value)
     if (state->isRejected())
         throw InvalidTransition("Rejected results require personal review");
     transition(Action::Complete, value);
-    result = value;
-    resultRecorded = true;
+    storeResult(value);
     notifyChange(LifecycleEvents::ItemCompleted);
 }
 
@@ -172,7 +177,7 @@ void Item::recordReview(Participant *p, const std::string &method)
     if (method != "Batch" && method != "Personal")
         throw std::invalid_argument("Review method must be Batch or Personal");
     requirePhase("Review");
-    if (!isCompleted() || !resultRecorded)
+    if (!isCompleted() || !hasResult())
         throw InvalidTransition("Only completed results can be approved; use resolveReview for rejected results");
     setReviewer(p);
     reviewMethod = method;
@@ -184,10 +189,10 @@ void Item::resolveReview(Participant *p, int value)
     if (!p)
         throw std::invalid_argument("A reviewer is required");
     requirePhase("Review");
-    if (!state->isRejected() || !resultRecorded)
+    if (!state->isRejected() || !hasResult())
         throw InvalidTransition("Personal resolution requires a rejected result");
     transition(Action::Complete, value);
-    result = value;
+    storeResult(value);
     setReviewer(p);
     reviewMethod = "Personal";
     // Keep rejectionReason for the audit/history collaborator.

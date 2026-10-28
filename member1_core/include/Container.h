@@ -8,14 +8,15 @@
 /**
  * @brief A workflow component that groups and manages work items.
  *
- * A container holds non-owning references to its child components and tracks
- * the workflow phase shared by those children. Items may be added or removed
- * only during the Intake phase. The phase sequence is Intake, Active, Review,
- * and Publish.
+ * A container tracks its child components and workflow phase. Raw-pointer
+ * children are non-owning; children added with unique_ptr are owned by the
+ * container. Items may be added or removed only during Intake. The phase
+ * sequence is Intake, Active, Review, and Publish.
  */
 class Container : public Component {
 private:
     std::vector<Component*> children;
+    std::vector<std::unique_ptr<Component>> ownedChildren;
     std::unique_ptr<WorkflowPhase> phase;
 
     /// @brief Replaces the current phase.
@@ -36,7 +37,7 @@ public:
      */
     Container(std::string id, std::string type, std::string name, Component* parent = nullptr);
 
-    /// @brief Destroys the container without destroying its child components.
+    /// @brief Destroys the container and any children it owns.
     virtual ~Container() override;
 
     /**
@@ -47,6 +48,12 @@ public:
      * @throws InvalidTransition If the container is not in the Intake phase.
      */
     void add(Component* c) override;
+
+    /**
+     * @brief Adds and takes ownership of an item.
+     * @param c Owned child item.
+     */
+    void add(std::unique_ptr<Component> c);
 
     /**
      * @brief Removes a child item by identifier.

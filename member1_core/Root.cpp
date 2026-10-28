@@ -23,14 +23,42 @@ void Root::add(Component *c)
     c->setParent(this);
 }
 
+void Root::add(std::unique_ptr<Component> c)
+{
+    if (!c)
+        throw std::invalid_argument("A child container is required");
+
+    Component* raw = c.get();
+    ownedChildren.push_back(std::move(c));
+    try
+    {
+        add(raw);
+    }
+    catch (...)
+    {
+        ownedChildren.pop_back();
+        throw;
+    }
+}
+
 void Root::remove(const std::string &id)
 {
     for (auto it = children.begin(); it != children.end(); it++)
     {
         if ((*it)->getId() == id)
         {
+            Component* removed = *it;
             (*it)->setParent(nullptr);
             children.erase(it);
+            for (std::vector<std::unique_ptr<Component>>::iterator owned = ownedChildren.begin();
+                 owned != ownedChildren.end(); ++owned)
+            {
+                if (owned->get() == removed)
+                {
+                    ownedChildren.erase(owned);
+                    break;
+                }
+            }
             return;
         }
     }

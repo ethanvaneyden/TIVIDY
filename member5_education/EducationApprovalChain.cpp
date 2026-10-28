@@ -4,6 +4,7 @@
 #include "Item.h"
 #include "Participant.h"
 #include "ParticipantRegistry.h"
+#include "Submission.h"
 
 namespace education
 {
@@ -18,15 +19,17 @@ EducationBandHandler::~EducationBandHandler() {}
 
 bool EducationBandHandler::handle(Item& item, int value)
 {
-    // TODO(Member 4): adapt this signature if the real ApprovalHandler takes
-    // an ApprovalRequest instead of (Item&, int).
+    Submission* submission = dynamic_cast<Submission*>(&item);
+    if (submission == nullptr)
+        return ApprovalHandler::handle(item, value);
+
     if (EducationPolicies::approverRoleFor(value) == role)
     {
         Participant* approver =
-            EducationPolicies::selectApprover(value, item.getAssignee(), registry);
+            EducationPolicies::selectApprover(value, submission->getAssignee(), registry);
         if (approver != nullptr)
         {
-            item.recordReview(approver, "Batch");
+            submission->recordReview(approver, "Batch");
             return true;
         }
     }

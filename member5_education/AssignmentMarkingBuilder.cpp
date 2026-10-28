@@ -3,6 +3,7 @@
 #include "Container.h"
 #include "Item.h"
 #include "Root.h"
+#include "Submission.h"
 
 #include <stdexcept>
 #include <utility>
@@ -14,7 +15,6 @@ namespace
 {
     const char* const MODULE_TYPE = "module";
     const char* const ASSIGNMENT_TYPE = "assignment";
-    const char* const SUBMISSION_TYPE = "submission";
 }
 
 AssignmentMarkingBuilder::AssignmentMarkingBuilder() : currentContainer(nullptr) {}
@@ -34,10 +34,9 @@ void AssignmentMarkingBuilder::buildContainer(const std::string& containerId,
     {
         throw std::logic_error("buildContainer called before buildRoot");
     }
-    // TODO(Member 1): ownership of the new node is not defined yet.
-    Container* container = new Container(containerId, ASSIGNMENT_TYPE, name);
-    root->add(container);
-    currentContainer = container;
+    std::unique_ptr<Container> container(new Container(containerId, ASSIGNMENT_TYPE, name));
+    currentContainer = container.get();
+    root->add(std::unique_ptr<Component>(container.release()));
 }
 
 void AssignmentMarkingBuilder::buildItem(const std::string& itemId,
@@ -47,8 +46,7 @@ void AssignmentMarkingBuilder::buildItem(const std::string& itemId,
     {
         throw std::logic_error("buildItem called before buildContainer");
     }
-    // TODO(Member 1): ownership of the new node is not defined yet.
-    currentContainer->add(new Item(itemId, SUBMISSION_TYPE, name));
+    currentContainer->add(std::unique_ptr<Component>(new Submission(itemId, name)));
 }
 
 std::unique_ptr<Root> AssignmentMarkingBuilder::getResult()

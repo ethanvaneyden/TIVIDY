@@ -63,6 +63,7 @@ private:
      * @param s Non-null replacement state.
      */
     void setState(std::unique_ptr<ItemState> s);
+    virtual void storeResult(int value);
 
     /// @brief Sets the assignee and updates the participant's item references.
     void setAssignee(Participant* p);
@@ -124,7 +125,7 @@ public:
      * @throws InvalidTransition If the attached item's container is not Active,
      *         the result was rejected, or the current state disallows completion.
      */
-    void complete(int value);
+    virtual void complete(int value);
 
     /**
      * @brief Rejects a result during the Review phase.
@@ -158,14 +159,14 @@ public:
     void recordReview(Participant* p, const std::string& method);
 
     /// @brief Checks whether a result value has been recorded.
-    bool hasResult() const;
+    virtual bool hasResult() const;
 
     /**
      * @brief Returns the recorded result.
      * @return The result value.
      * @throws InvalidTransition If no result has been recorded.
      */
-    int getResult() const;
+    virtual int getResult() const;
 
     /// @brief Checks whether the item is completed and has a recorded review.
     bool isReviewed() const;
@@ -183,6 +184,6 @@ public:
      *
      * The original assignee and rejection reason are retained.
      */
-    void resolveReview(Participant* reviewer, int value);
+    virtual void resolveReview(Participant* reviewer, int value);
 
 };

@@ -6,12 +6,14 @@
 /**
  * @brief Top-level component for a workflow component tree.
  *
- * The root stores non-owning references to Container children. Adding a child
- * sets its parent to this root; removing a child detaches it.
+ * The root tracks Container children. Raw-pointer children are non-owning;
+ * children added with unique_ptr are owned by the root. Adding a child sets
+ * its parent to this root; removing a child detaches it.
  */
 class Root : public Component {
 private:
     std::vector<Component*> children;
+    std::vector<std::unique_ptr<Component>> ownedChildren;
 
 public:
     /**
@@ -23,7 +25,7 @@ public:
      */
     Root(std::string id, std::string type, std::string name, Component* parent = nullptr);
 
-    /// @brief Destroys the root without destroying its children.
+    /// @brief Destroys the root and any children it owns.
     virtual ~Root() = default;
 
     /**
@@ -33,6 +35,12 @@ public:
      *         belongs to another parent, or duplicates an existing child.
      */
     void add(Component* c) override;
+
+    /**
+     * @brief Adds and takes ownership of a child container.
+     * @param c Owned child container.
+     */
+    void add(std::unique_ptr<Component> c);
 
     /**
      * @brief Removes and detaches the child with the given identifier.

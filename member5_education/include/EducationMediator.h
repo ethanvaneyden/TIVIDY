@@ -8,7 +8,6 @@
 #include "WorkflowMediator.h"
 #include "EducationApprovalChain.h"
 
-#include <map>
 #include <string>
 #include <vector>
 
@@ -36,17 +35,7 @@ class EducationMediator : public WorkflowMediator
         };
 
     private:
-        struct Record
-        {
-            Item* item;
-            int mark;
-            bool rejected;
-            bool reviewed;
-            Record() : item(nullptr), mark(0), rejected(false), reviewed(false) {}
-        };
-
         EducationApprovalChain chain;
-        std::map<std::string, Record> records;
 
     public:
         explicit EducationMediator(ParticipantRegistry& participants);
@@ -56,27 +45,11 @@ class EducationMediator : public WorkflowMediator
         virtual void notify(Colleague* sender, const std::string& event);
 
         /**
-         * @brief Remember the mark entered for an item.
-         *
-         * Call this before Item::complete(). Marks outside 0-100 are
-         * refused, and so is a new mark for an item that was already reviewed.
-         *
-         * @return true if the mark was recorded.
-         */
-        bool recordMark(Item& item, int mark);
-
-        /** @return true if a mark has been recorded for this item id. */
-        bool hasMark(const std::string& itemId) const;
-
-        /** @return the recorded mark, or -1 if none. */
-        int getMark(const std::string& itemId) const;
-
-        /**
          * @brief Run the chain over every child of the container.
          *
          * Items the chain approves get their reviewer recorded ("Batch").
-         * Items it cannot approve are sent to Item::reject() and remembered
-         * as rejected until the lecturer resolves them.
+         * Items it cannot approve are sent to Item::reject(); their state
+         * remains on the submission until a lecturer resolves it.
          */
         BatchResult approveBatch(const Container& container);
 
@@ -90,8 +63,6 @@ class EducationMediator : public WorkflowMediator
          * @return false if the item is not rejected, the participant is not a
          *         lecturer, or the final mark is outside 0-100.
          *
-         * TODO(Member 2): the item state machine must allow Rejected to
-         * Completed for this call to succeed on real items.
          */
         bool resolveRejected(Item& item, bool accept, int newMark, Participant* lecturer);
 

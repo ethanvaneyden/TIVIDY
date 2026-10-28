@@ -53,7 +53,11 @@ add_library(tividy_core
     member4_services/WorkflowMediator.cpp
 
     # --- Member 5: education scenario ---
-    # member5_education/AssignmentMarkingBuilder.cpp # # uncomment this line & more
+    member5_education/AssignmentMarkingBuilder.cpp
+    member5_education/EducationApprovalChain.cpp
+    member5_education/EducationMediator.cpp
+    member5_education/EducationPolicies.cpp
+    member5_education/Submission.cpp
 
     # --- Member 6: hospital scenario ---
     # member6_hospital/HospitalAdmissionBuilder.cpp # # uncomment this line & more
