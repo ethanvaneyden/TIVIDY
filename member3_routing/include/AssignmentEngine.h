@@ -1,0 +1,25 @@
+#pragma once
+
+#include <memory>
+#include <string>
+#include <vector>
+#include "AssignmentStrategy.h"
+
+class Item;
+
+class Participant;
+
+class AssignmentEngine
+{
+private:
+    std::unique_ptr<AssignmentStrategy> strategy;
+
+public:
+    explicit AssignmentEngine(std::unique_ptr<AssignmentStrategy> strategy);
+
+    void setStrategy(std::unique_ptr<AssignmentStrategy> s);
+    std::string strategyName() const;
+
+    Participant *assign(Item &item, const std::vector<Participant *> &pool);
+};
+

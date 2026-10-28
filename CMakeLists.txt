@@ -40,7 +40,10 @@ add_library(tividy_core
     member2_execution/PublishPhase.cpp
 
     # --- Member 3: assignment & traversal ---
-    # member3_routing/AssignmentEngine.cpp # # uncomment this line & more
+    member3_routing/AssignmentEngine.cpp # # uncomment this line & more
+    member3_routing/RandomStrategy.cpp 
+    member3_routing/RoundRobinStrategy.cpp 
+    member3_routing/WorkloadStrategy.cpp 
     member3_routing/Iterator.cpp
     member3_routing/DepthFirstIterator.cpp
      member3_routing/StateFilterIterator.cpp
