@@ -3,8 +3,7 @@
  * @brief Abstract Factory for scenario-specific workflow components.
 */
 
-#ifndef WORKFLOWCOMPONENTFACTORY_H
-#define WORKFLOWCOMPONENTFACTORY_H
+#pragma once
 
 #include <memory>
 #include <string>
@@ -49,5 +48,3 @@ class WorkflowComponentFactory
         */
         virtual std::string scenarioName() const = 0;
 };
-
-#endif /*WORKFLOWCOMPONENTFACTORY_H*/

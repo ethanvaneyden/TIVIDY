@@ -1,5 +1,11 @@
 #include "WorkRegistry.h"
+#include "Container.h"
+#include "InvalidTransition.h"
+
 #include <stdexcept>
+
+WorkRegistry::WorkRegistry() = default;
+WorkRegistry::~WorkRegistry() = default;
 
 Component *WorkRegistry::add(std::unique_ptr<Component> item)
 {
@@ -35,15 +41,20 @@ void WorkRegistry::remove(const std::string &id)
 
     Component *component = pair->second.get();
 
+    Component *parent = component->getParent();
+    Container *parentContainer = dynamic_cast<Container*>(parent);
+    if (parentContainer && parentContainer->getPhaseName() != "Intake")
+        throw InvalidTransition("Components can only be removed during Intake");
+
     auto children = component->getChildren();
     for (auto *child : children)
     {
         remove(child->getId());
     }
 
-    if (component->getParent())
+    if (parent)
     {
-        component->getParent()->remove(id);
+        parent->remove(id);
     }
 
     components.erase(id);

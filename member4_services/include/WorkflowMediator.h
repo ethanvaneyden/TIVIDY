@@ -1,5 +1,4 @@
-#ifndef WORKFLOWMEDIATOR_H
-#define WORKFLOWMEDIATOR_H
+#pragma once
 
 /**
  * @file WorkflowMediator.h
@@ -20,5 +19,3 @@ class WorkflowMediator
         // virtual void notify(Colleague* sender, const std::string& event) = 0;
         virtual void notify(Colleague* sender, const std::string& event);
 };
-
-#endif

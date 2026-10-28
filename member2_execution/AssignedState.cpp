@@ -1,18 +1,11 @@
 #include "AssignedState.h"
+#include "InProgressState.h"
 #include "Item.h"
+#include <memory>
 
-/* STUB — real transitions belong to Member 2. */
-
-void AssignedState::assign(Item& item)
+void AssignedState::start(Item& item)
 {
-    
+    item.setState(std::unique_ptr<ItemState>(new InProgressState()));
 }
 
-void AssignedState::start(Item& item) { /* [TBD] */ }
-void AssignedState::complete(Item& item, int value) { /* [TBD] */ }
-void AssignedState::reject(Item& item, const std::string& reason) { /* [TBD] */ }
-
-std::string AssignedState::name() const
-{
-    return "";
-}
+std::string AssignedState::name() const { return "Assigned"; }

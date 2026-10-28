@@ -3,8 +3,7 @@
  * @brief STUB — replaced by Member 2's full implementation.
 */
 
-#ifndef WORKFLOWENGINE_H
-#define WORKFLOWENGINE_H
+#pragma once
 
 #include <memory>
 #include <string>
@@ -23,5 +22,3 @@ class WorkflowEngine
             const std::string& name,
             std::unique_ptr<WorkflowBuilder> builder) = 0;
 };
-
-#endif
