@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 #include "Component.h"
@@ -24,7 +25,10 @@ public:
     }
     std::vector<Component *> getChildren() const override { return kids; }
     std::string getStateName() const override { return stateName; }
-    Iterator *createIterator() override { return nullptr; }
+    Iterator *createIterator() override { return new DepthFirstIterator(this); }
+    Iterator *createIterator(const std::string& state) override {
+        return new StateFilterIterator(this, state);
+    }
     bool isCompleted() const override { return false; }
 };
 
@@ -54,10 +58,10 @@ TEST(IteratorTest, StateFilterFindsOnlyMatches)
     c1.add(&b);
     c1.add(&c);
 
-    StateFilterIterator it(&root, "Rejected");
+    std::unique_ptr<Iterator> it(root.createIterator("Rejected"));
     std::vector<std::string> found;
-    for (it.first(); !it.isDone(); it.next())
-        found.push_back(it.current()->getName());
+    for (it->first(); !it->isDone(); it->next())
+        found.push_back(it->current()->getName());
 
     EXPECT_EQ(found, (std::vector<std::string>{"B", "C"}));
 }
@@ -67,8 +71,8 @@ TEST(IteratorTest, StateFilterNoMatchEndsCleanly)
     TestNode root("Root"), a("A", "Available");
     root.add(&a);
 
-    StateFilterIterator it(&root, "Completed");
-    it.first();
-    EXPECT_TRUE(it.isDone());
-    EXPECT_EQ(it.current(), nullptr);
+    std::unique_ptr<Iterator> it(root.createIterator("Completed"));
+    it->first();
+    EXPECT_TRUE(it->isDone());
+    EXPECT_EQ(it->current(), nullptr);
 }

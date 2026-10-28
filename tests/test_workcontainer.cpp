@@ -47,6 +47,22 @@ TEST(RootTest, CreatesDepthFirstIteratorForWorkflowTree)
     EXPECT_EQ(names, (std::vector<std::string>{"Workflow", "Container", "Item"}));
 }
 
+TEST(ContainerTest, CreatesDepthFirstIteratorFromContainer)
+{
+    Container container("container", "group", "Container");
+    Item first("first", "work", "First");
+    Item second("second", "work", "Second");
+    container.add(&first);
+    container.add(&second);
+
+    std::unique_ptr<Iterator> iterator(container.createIterator());
+    std::vector<std::string> names;
+    for (iterator->first(); !iterator->isDone(); iterator->next())
+        names.push_back(iterator->current()->getName());
+
+    EXPECT_EQ(names, (std::vector<std::string>{"Container", "First", "Second"}));
+}
+
 TEST(WorkRegistryTest, RemovesRegisteredTreeAndDetachesDescendants)
 {
     WorkRegistry registry;

@@ -1,11 +1,8 @@
 #include "PublishPhase.h"
-#include "Container.h"
-#include "InvalidTransition.h"
-#include <memory>
 
-void PublishPhase::advance(Container& )
+std::unique_ptr<WorkflowPhase> PublishPhase::advance(Container&)
 {
-    throw InvalidTransition("Publish is the final phase");
+    return nullptr;
 }
 
 std::string PublishPhase::name() const { return "Publish"; }

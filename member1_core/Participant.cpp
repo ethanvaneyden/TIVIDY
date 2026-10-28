@@ -1,70 +1,44 @@
+/**
+ * @file Participant.cpp
+ * @brief Implementation of the Participant class.
+ * @author Member 1
+ */
+
 #include "Participant.h"
-#include "Item.h"
+#include <utility>
 
 Participant::Participant(std::string id, std::string name, std::string role)
-    : id(id), name(name), role(role), pendingTasks(0)
-{
+    : id(std::move(id)), 
+      name(std::move(name)), 
+      role(std::move(role)), 
+      pendingTasks(0) {}
+
+const std::string& Participant::getId() const { 
+    return id; 
 }
 
-Participant::~Participant()
-{
-    for (const auto& reference : itemReferences)
-        reference.first->participantDestroyed(this);
+const std::string& Participant::getName() const { 
+    return name; 
 }
 
-const std::string &Participant::getId() const
-{
-    return id;
+const std::string& Participant::getRole() const { 
+    return role; 
 }
 
-const std::string &Participant::getName() const
-{
-    return name;
+void Participant::setName(const std::string& newName) {
+    name = newName;
 }
 
-const std::string &Participant::getRole() const
-{
-    return role;
+int Participant::getPendingTasks() const { 
+    return pendingTasks; 
 }
 
-void Participant::setName(const std::string &name)
-{
-    this->name = name;
+void Participant::incrementPendingTasks() { 
+    ++pendingTasks; 
 }
 
-int Participant::getPendingTasks()
-{
-    return pendingTasks;
-}
-
-void Participant::incrementPendingTasks()
-{
-    pendingTasks++;
-}
-
-void Participant::decrementPendingTasks()
-{
-    if(pendingTasks < 1) {
-        return;
+void Participant::decrementPendingTasks() { 
+    if (pendingTasks > 0) {
+        --pendingTasks; 
     }
-    pendingTasks--;
-}
-
-void Participant::addItemReference(Item* item)
-{
-    ++itemReferences[item];
-}
-
-void Participant::removeItemReference(Item* item)
-{
-    auto reference = itemReferences.find(item);
-    if (reference == itemReferences.end())
-        return;
-    if (--reference->second == 0)
-        itemReferences.erase(reference);
-}
-
-bool Participant::hasItemReferences() const
-{
-    return !itemReferences.empty();
 }

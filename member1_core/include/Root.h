@@ -1,59 +1,71 @@
+// Root.h
 #pragma once
+
+
 #include "Component.h"
 #include <vector>
-#include <memory>
 
 /**
- * @brief Top-level component for a workflow component tree.
- *
- * The root stores non-owning references to Container children. Adding a child
- * sets its parent to this root; removing a child detaches it.
+ * @brief The Root container (e.g., Module or Hospital).
+ * 
+ * Acts as the structural entry point. Has NO phase, only holds Containers.
  */
 class Root : public Component {
 private:
-    std::vector<Component*> children;
+    std::vector<Component*> children; ///< Non-owning references.
 
 public:
     /**
-     * @brief Constructs a root component.
-     * @param id Component identifier.
-     * @param type Component type.
+     * @brief Creates a root component.
+     * @param id Unique component ID.
+     * @param type Scenario-specific type.
      * @param name Display name.
-     * @param parent Optional non-owning parent component.
+     * @param parent Optional parent pointer; normally null.
+     * @throws std::invalid_argument If ID or type is empty.
      */
     Root(std::string id, std::string type, std::string name, Component* parent = nullptr);
 
-    /// @brief Destroys the root without destroying its children.
-    virtual ~Root() = default;
+    /**
+     * @brief Destroys the root without deleting registry-owned descendants.
+     */
+    ~Root() override = default;
 
     /**
-     * @brief Adds a container as a child and assigns its parent to this root.
-     * @param c Container to add.
-     * @throws std::invalid_argument If c is null, is not a Container, already
-     *         belongs to another parent, or duplicates an existing child.
+     * @brief Adds a container to the root.
+     * @param c Non-owning pointer to the child.
+     * @throws std::invalid_argument If child is not a Container.
+     * @throws std::invalid_argument If null, already parented, or duplicate ID.
      */
     void add(Component* c) override;
-
+    
     /**
-     * @brief Removes and detaches the child with the given identifier.
-     * @param id Identifier of the child to remove.
-     *
-     * Has no effect if no child has the identifier.
+     * @brief Detaches a direct child by ID.
+     * @param id Child ID.
      */
     void remove(const std::string& id) override;
 
-    /// @brief Returns a copy of the root's non-owning child references.
+    /**
+     * @brief Returns direct non-owning child pointers.
+     * @return Child components.
+     */
     std::vector<Component*> getChildren() const override;
 
     /**
-     * @brief Checks whether the root has children and all are completed.
-     * @return true if at least one child exists and every child is completed.
+     * @brief Checks whether every child container is complete.
+     * @return True when the non-empty root's containers are complete.
      */
     bool isCompleted() const override;
 
     /**
-     * @brief Creates a depth-first iterator for the root and its descendants.
-     * @return Owning pointer to the iterator; the caller must delete it.
+     * @brief Creates a depth-first iterator rooted at this component.
+     * @return Caller-owned iterator.
      */
     Iterator* createIterator() override;
+
+    /**
+     * @brief Creates a state-filtered iterator.
+     * @param state State name to match.
+     * @return Caller-owned iterator.
+     */
+    Iterator* createIterator(const std::string& state) override;
 };

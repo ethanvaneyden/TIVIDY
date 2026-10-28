@@ -1,69 +1,34 @@
+// Participant.h
 #pragma once
-#include <cstddef>
-#include <map>
+
 #include <string>
 
-class Item;
-class ParticipantRegistry;
-
 /**
- * @brief Represents a person who participates in workflow tasks.
- *
- * A participant has an identifier, name, role, and pending-task count.
+ * @brief Passive data object representing a workflow participant.
  */
-class Participant
-{
+class Participant {
 private:
     std::string id;
     std::string name;
     std::string role;
-    int pendingTasks;
-    std::map<Item*, std::size_t> itemReferences;
-
-    void addItemReference(Item* item);
-    void removeItemReference(Item* item);
-    bool hasItemReferences() const;
-
-    friend class Item;
-    friend class ParticipantRegistry;
+    int pendingTasks; ///< Used by LoadBalancedStrategy.
 
 public:
-    /**
-     * @brief Constructs a participant with no pending tasks.
-     * @param id Participant identifier.
-     * @param name Participant's display name.
-     * @param role Participant's workflow role.
-     */
+    /** @brief Creates a participant with its registry-assigned identity. */
     Participant(std::string id, std::string name, std::string role);
 
-    /**
-     * @brief Detaches any items that still refer to this participant.
-     */
-    ~Participant();
-
-    /// @brief Returns the participant identifier.
-    const std::string &getId() const;
-
-    /// @brief Returns the participant's display name.
-    const std::string &getName() const;
-
-    /// @brief Returns the participant's workflow role.
-    const std::string &getRole() const;
-
-    /// @brief Updates the participant's display name.
-    /// @param name New display name.
-    void setName(const std::string &name);
-
-    /// @brief Returns the number of tasks currently pending for this participant.
-    int getPendingTasks();
-
-    /// @brief Increments the pending-task count.
+    /** @brief Returns this participant's unique ID. */
+    const std::string& getId() const;
+    /** @brief Returns this participant's display name. */
+    const std::string& getName() const;
+    /** @brief Returns this participant's role. */
+    const std::string& getRole() const;
+    /** @brief Returns the count of work items currently assigned. */
+    int getPendingTasks() const;
+    /** @brief Updates the participant's display name. */
+    void setName(const std::string& newName);
+    /** @brief Increments the assigned-work count. */
     void incrementPendingTasks();
-
-    /**
-     * @brief Decrements the pending-task count when it is positive.
-     *
-     * The count remains unchanged when it is already zero.
-     */
+    /** @brief Decrements the assigned-work count, bounded at zero. */
     void decrementPendingTasks();
 };
