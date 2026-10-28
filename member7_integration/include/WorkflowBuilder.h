@@ -3,8 +3,7 @@
  * @brief Abstract Builder for constructing the workflow tree.
 */
 
-#ifndef WORKFLOWBUILDER_H
-#define WORKFLOWBUILDER_H
+#pragma once
 
 #include <memory>
 #include <string>
@@ -55,5 +54,3 @@ class WorkflowBuilder
         */
         virtual std::unique_ptr<Root> getResult() = 0;
 };
-
-#endif /*WORKFLOWBUILDER_H*/

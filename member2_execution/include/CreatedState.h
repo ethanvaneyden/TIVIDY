@@ -1,5 +1,4 @@
-#ifndef CREATEDSTATE_H
-#define CREATEDSTATE_H
+#pragma once
 
 #include "ItemState.h"
 
@@ -10,5 +9,3 @@ public:
     void assign(Item& item) override;
     std::string name() const override;
 };
-
-#endif

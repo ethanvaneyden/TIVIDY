@@ -4,44 +4,49 @@
 */
 
 #include "WorkflowInstance.h"
-#include "Registry.h"          
+#include "WorkRegistry.h"
 #include "WorkflowMediator.h"  
 #include "AssignmentStrategy.h"
 #include "WorkflowBuilder.h"   
 #include "Container.h"
 #include "ParticipantRegistry.h"
+#include <utility>
 
 WorkflowInstance::WorkflowInstance(
         std::string instanceId,
         std::string definitionType,
-        std::unique_ptr<Registry> registry,
+        std::unique_ptr<WorkRegistry> workRegistry,
         Container *root,
         std::unique_ptr<WorkflowMediator> coordinator,
         std::unique_ptr<AssignmentStrategy> strategy,
         std::unique_ptr<WorkflowBuilder> builder,
         ParticipantRegistry *participants)
+    : instanceId(std::move(instanceId)),
+      definitionType(std::move(definitionType)),
+      workRegistry(std::move(workRegistry)),
+      coordinator(std::move(coordinator)),
+      strategy(std::move(strategy)),
+      builder(std::move(builder)),
+      participants(participants),
+      root(root)
 {
-    /* STUB — real implementation assigns these to members and stores the id,
-     * definitionType, root, and participants.*/
 }
 
 WorkflowInstance::~WorkflowInstance() = default;
 
 const std::string &WorkflowInstance::getInstanceId() const
 {
-    static const std::string stub = "";
-    return stub;
+    return instanceId;
 }
 
 const std::string &WorkflowInstance::getDefinitionType() const
 {
-    static const std::string stub = "";
-    return stub;
+    return definitionType;
 }
 
 Container *WorkflowInstance::getRoot() const
 {
-    return nullptr;
+    return root;
 }
 
 std::vector<std::string> WorkflowInstance::getHistory() const

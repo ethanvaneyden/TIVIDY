@@ -1,5 +1,6 @@
 #include "Container.h"
 #include "Item.h"
+#include "DepthFirstIterator.h"
 #include "IntakePhase.h"
 #include "InvalidTransition.h"
 #include "LifecycleEvents.h"

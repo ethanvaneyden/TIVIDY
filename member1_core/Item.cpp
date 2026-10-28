@@ -1,5 +1,7 @@
 #include "Item.h"
 #include "ItemState.h"
+#include "Participant.h"
+#include "DepthFirstIterator.h"
 #include "CreatedState.h"
 #include "Container.h"
 #include "InvalidTransition.h"
@@ -17,7 +19,11 @@ Item::Item(std::string id, std::string type, std::string name, Component *parent
 }
 
 // ItemState is complete here, so callers can safely destroy Item from its header.
-Item::~Item() = default;
+Item::~Item()
+{
+    setAssignee(nullptr);
+    setReviewer(nullptr);
+}
 
 Iterator *Item::createIterator()
 {
@@ -91,7 +97,7 @@ void Item::assign(Participant *p)
         throw std::invalid_argument("An assignee is required");
     requirePhase("Active");
     transition(Action::Assign);
-    assignee = p;
+    setAssignee(p);
     notifyChange(LifecycleEvents::ItemAssigned);
 }
 
@@ -122,18 +128,42 @@ void Item::reject(const std::string &reason)
     requirePhase("Review");
     transition(Action::Reject, 0, reason);
     rejectionReason = reason;
-    reviewer = nullptr;
+    setReviewer(nullptr);
     reviewMethod.clear();
     notifyChange(LifecycleEvents::ItemRejected);
 }
 
 Participant *Item::getAssignee() const { return assignee; }
 
-// Low-level hooks retained for the assignment strategy and state collaborators.
-// User actions should go through assign/start/complete/reject.
-void Item::setAssignee(Participant *p) { assignee = p; }
-Participant *Item::getReviewer() const { return reviewer; }
-const std::string &Item::getReviewMethod() const { return reviewMethod; }
+void Item::setAssignee(Participant* p)
+{
+    if (assignee == p) return;
+    if (p) p->addItemReference(this);
+    if (assignee) assignee->removeItemReference(this);
+    assignee = p;
+}
+
+void Item::setReviewer(Participant* p)
+{
+    if (reviewer == p) return;
+    if (p) p->addItemReference(this);
+    if (reviewer) reviewer->removeItemReference(this);
+    reviewer = p;
+}
+
+void Item::participantDestroyed(Participant* p)
+{
+    if (assignee == p)
+        assignee = nullptr;
+    if (reviewer == p)
+    {
+        reviewer = nullptr;
+        reviewMethod.clear();
+    }
+}
+
+Participant* Item::getReviewer() const { return reviewer; }
+const std::string& Item::getReviewMethod() const { return reviewMethod; }
 
 void Item::recordReview(Participant *p, const std::string &method)
 {
@@ -144,7 +174,7 @@ void Item::recordReview(Participant *p, const std::string &method)
     requirePhase("Review");
     if (!isCompleted() || !resultRecorded)
         throw InvalidTransition("Only completed results can be approved; use resolveReview for rejected results");
-    reviewer = p;
+    setReviewer(p);
     reviewMethod = method;
     notifyChange(LifecycleEvents::ItemReviewed);
 }
@@ -158,7 +188,7 @@ void Item::resolveReview(Participant *p, int value)
         throw InvalidTransition("Personal resolution requires a rejected result");
     transition(Action::Complete, value);
     result = value;
-    reviewer = p;
+    setReviewer(p);
     reviewMethod = "Personal";
     // Keep rejectionReason for the audit/history collaborator.
     notifyChange(LifecycleEvents::ItemReviewResolved);

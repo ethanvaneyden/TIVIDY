@@ -1,5 +1,4 @@
-#ifndef COMPLETEDSTATE_H
-#define COMPLETEDSTATE_H
+#pragma once
 
 #include "ItemState.h"
 
@@ -10,5 +9,3 @@ public:
     std::string name() const override;
     bool isCompleted() const override { return true; }
 };
-
-#endif

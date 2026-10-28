@@ -3,8 +3,7 @@
  * @brief Director that orchestrates a WorkflowBuilder.
 */
 
-#ifndef WORKFLOWDIRECTOR_H
-#define WORKFLOWDIRECTOR_H
+#pragma once
 
 #include <memory>
 #include <string>
@@ -50,5 +49,3 @@ class WorkflowDirector
             const std::vector<std::pair<std::string, std::string>>& containers,
             const std::vector<std::tuple<std::string, std::string, std::string>>& items);
 };
-
-#endif /*WORKFLOWDIRECTOR_*/

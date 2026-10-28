@@ -3,8 +3,7 @@
  * @brief STUB — replaced by Member 3's real implementation.
  */
 
-#ifndef ASSIGNMENTSTRATEGY_H
-#define ASSIGNMENTSTRATEGY_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -18,5 +17,3 @@ public:
     virtual Participant *assign(const std::vector<Participant *> &pool) = 0;
     virtual std::string name() const = 0;
 };
-
-#endif

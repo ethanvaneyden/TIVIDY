@@ -1,5 +1,4 @@
-#ifndef WORKFLOWPHASE_H
-#define WORKFLOWPHASE_H
+#pragma once
 
 #include <string>
 class Container;
@@ -13,5 +12,3 @@ public:
     virtual void advance(Container& container) = 0;
     virtual std::string name() const = 0;
 };
-
-#endif
