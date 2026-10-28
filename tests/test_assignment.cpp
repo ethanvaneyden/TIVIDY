@@ -84,7 +84,7 @@ TEST_F(StrategyTest, RandomEmptyPoolReturnsNull)
     EXPECT_EQ(r.assign({}), nullptr);
 }
 
-// ---------- Engine ----------
+
 TEST_F(StrategyTest, EngineStripsNullsFromPool)
 {
     AssignmentEngine engine(std::make_unique<WorkloadStrategy>());
@@ -107,10 +107,10 @@ TEST_F(StrategyTest, EngineSetStrategySwapsBehaviour)
     Item item("I1", "Submission", "Test item");
     EXPECT_EQ(engine.strategyName(), "RoundRobin");
 
-    a.incrementPendingTasks(); // a is now busy
+    a.incrementPendingTasks(); 
     engine.setStrategy(std::make_unique<WorkloadStrategy>());
     EXPECT_EQ(engine.strategyName(), "Workload");
-    EXPECT_EQ(engine.assign(item, pool), &b); // fewest pending, first on tie
+    EXPECT_EQ(engine.assign(item, pool), &b); 
 }
 
 TEST_F(StrategyTest, EngineDoesNotChangeTheItem)
@@ -118,5 +118,5 @@ TEST_F(StrategyTest, EngineDoesNotChangeTheItem)
     AssignmentEngine engine(std::make_unique<RoundRobinStrategy>());
     Item item("I1", "Submission", "Test item");
     engine.assign(item, pool);
-    EXPECT_EQ(item.getAssignee(), nullptr); // the command does item.assign()
+    EXPECT_EQ(item.getAssignee(), nullptr); 
 }
