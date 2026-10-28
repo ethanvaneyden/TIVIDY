@@ -11,7 +11,7 @@ protected:
     std::unique_ptr<ItemState> state;
     Participant* assignee;
     Participant* reviewer;
-    std::string reviewMethod; // Batch / Personal
+    std::string reviewMethod; // Batch / Personal / null
 
 private:
     int result;
