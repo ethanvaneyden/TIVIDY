@@ -30,7 +30,7 @@ void Root::remove(const std::string &id)
 
 std::vector<Component *> Root::getChildren() const
 {
-    return std::vector<Component *>();
+    return children;
 }
 
 Iterator *Root::createIterator()
