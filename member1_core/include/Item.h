@@ -5,6 +5,11 @@
 
 class ItemState;
 class Participant;
+class CreatedState;
+class AssignedState;
+class InProgressState;
+class CompletedState;
+class RejectedState;
 
 class Item : public Component {
 protected:
@@ -22,6 +27,17 @@ private:
     void transition(Action action, int value = 0, const std::string& reason = "");
     void requirePhase(const std::string& expected) const;
     void notifyChange(const std::string& event);
+    void setState(std::unique_ptr<ItemState> s);
+    void setAssignee(Participant* p);
+    void setReviewer(Participant* p);
+    void participantDestroyed(Participant* p);
+
+    friend class CreatedState;
+    friend class AssignedState;
+    friend class InProgressState;
+    friend class CompletedState;
+    friend class RejectedState;
+    friend class Participant;
 
 public:
     Item(std::string id, std::string type, std::string name, Component* parent = nullptr);
@@ -36,10 +52,8 @@ public:
     void reject(const std::string& reason);
 
     std::string getStateName() const;
-    void setState(std::unique_ptr<ItemState> s);
 
     Participant* getAssignee() const;
-    void setAssignee(Participant* p);
 
     Participant* getReviewer() const;
     const std::string& getReviewMethod() const;

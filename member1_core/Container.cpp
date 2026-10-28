@@ -1,5 +1,6 @@
 #include "Container.h"
 #include "Item.h"
+#include "DepthFirstIterator.h"
 #include "IntakePhase.h"
 #include "InvalidTransition.h"
 #include "LifecycleEvents.h"
@@ -50,8 +51,7 @@ std::vector<Component*> Container::getChildren() const { return children; }
 
 Iterator* Container::createIterator()
 {
-    // Traversal is provided by Member 3.
-    return nullptr;
+    return new DepthFirstIterator(this);
 }
 
 bool Container::isCompleted() const

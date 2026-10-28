@@ -20,6 +20,14 @@ public:
 
     Participant *add(std::string name, std::string role);
     Participant *get(const std::string &id) const;
+
+    /**
+     * @brief Removes an unreferenced participant by identifier.
+     * @param id Participant identifier.
+     * @throws std::logic_error If workflow items still refer to the participant.
+     *
+     * Has no effect if the identifier is not registered.
+     */
     void remove(const std::string &id);
     bool contains(const std::string &id) const;
     std::vector<Participant *> getByRole(const std::string role) const;

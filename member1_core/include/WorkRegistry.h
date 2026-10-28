@@ -15,6 +15,13 @@ public:
 
     Component *add(std::unique_ptr<Component> item);
     Component *get(const std::string &id) const;
+
+    /**
+     * @brief Removes a component and its registered descendants.
+     * @param id Component identifier.
+     * @throws InvalidTransition If removing a descendant would violate its
+     *         container's phase restrictions.
+     */
     void remove(const std::string &id);
     bool contains(const std::string &id) const;
     size_t size() const;

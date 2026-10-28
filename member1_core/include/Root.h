@@ -16,6 +16,7 @@ public:
     void add(Component* c) override;
     void remove(const std::string& id) override;
     std::vector<Component*> getChildren() const override;
+    bool isCompleted() const override;
     Iterator* createIterator() override;
 };
 

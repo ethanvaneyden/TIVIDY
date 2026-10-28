@@ -4,7 +4,7 @@
 #include "Iterator.h"
 #include "Component.h"
 
-class DepthFirstIterator : Iterator
+class DepthFirstIterator : public Iterator
 {
 private:
     Component *root;
