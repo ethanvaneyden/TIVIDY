@@ -2,22 +2,30 @@
 #define COLLEAGUE_H
 class WorkflowMediator;
 
-/// @brief This class represents any part of the program that needs to be mediated
+/**
+ * @brief Base class for objects that communicate through a workflow mediator.
+ *
+ * The mediator pointer is non-owning; its lifetime is managed elsewhere.
+ */
 class Colleague
 {
 protected:
     WorkflowMediator *mediator = nullptr;
 
 public:
+    /// @brief Constructs a colleague with no mediator.
     Colleague() = default;
+
+    /// @brief Destroys the colleague.
     virtual ~Colleague() = default;
 
-    /// @brief Sets the items mediator
-    /// @param m 
+    /**
+     * @brief Sets the mediator used for workflow coordination.
+     * @param m Non-owning mediator pointer, or nullptr to clear it.
+     */
     void setMediator(WorkflowMediator *m);
 
-    /// @brief Returns the items current mediator
-    /// @return WorkflowMediator*
+    /// @brief Returns the current non-owning mediator, or nullptr if unset.
     WorkflowMediator *getMediator() const;
 };
 
