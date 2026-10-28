@@ -20,14 +20,14 @@ protected:
     std::vector<Participant *> pool{&a, &b, &c};
 };
 
-// ---------- RoundRobin ----------
+
 TEST_F(StrategyTest, RoundRobinCyclesThroughPool)
 {
     RoundRobinStrategy rr;
     EXPECT_EQ(rr.assign(pool), &a);
     EXPECT_EQ(rr.assign(pool), &b);
     EXPECT_EQ(rr.assign(pool), &c);
-    EXPECT_EQ(rr.assign(pool), &a); // wraps around
+    EXPECT_EQ(rr.assign(pool), &a); 
 }
 
 TEST_F(StrategyTest, RoundRobinEmptyPoolReturnsNull)
@@ -39,10 +39,10 @@ TEST_F(StrategyTest, RoundRobinEmptyPoolReturnsNull)
 TEST_F(StrategyTest, RoundRobinSurvivesPoolChange)
 {
     RoundRobinStrategy rr;
-    rr.assign(pool); // a
-    rr.assign(pool); // b
+    rr.assign(pool); 
+    rr.assign(pool); 
     std::vector<Participant *> smaller{&a, &b};
-    EXPECT_EQ(rr.assign(smaller), &a); // after b, wraps to a
+    EXPECT_EQ(rr.assign(smaller), &a); 
 }
 
 // ---------- Workload ----------
