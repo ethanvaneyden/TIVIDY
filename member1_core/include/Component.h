@@ -13,6 +13,8 @@ protected:
     std::string id;
     std::string type;
     std::string name;
+
+    /// @brief Non owning reference
     Component *parent;
 
 public:
