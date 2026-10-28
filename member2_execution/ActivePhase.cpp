@@ -1,13 +1,13 @@
 #include "ActivePhase.h"
+#include "ReviewPhase.h"
 #include "Container.h"
+#include "InvalidTransition.h"
 
-/* STUB — real transitions belong to Member 2. */
-#include <memory>
-
-void ActivePhase::advance(Container& container)
-{}
-
-std::string ActivePhase::name() const
+std::unique_ptr<WorkflowPhase> ActivePhase::advance(Container& container)
 {
-    return "";
+    if (!container.isCompleted())
+        throw InvalidTransition("All items must have completed work before review");
+    return std::unique_ptr<WorkflowPhase>(new ReviewPhase());
 }
+
+std::string ActivePhase::name() const { return "Active"; }

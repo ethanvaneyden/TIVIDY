@@ -1,18 +1,10 @@
 #include "CreatedState.h"
-#include "Item.h"
+#include "AssignedState.h"
+#include <memory>
 
-/* STUB — real transitions belong to Member 2. */
-
-void CreatedState::assign(Item& item)
+std::unique_ptr<ItemState> CreatedState::assign(Item&, Participant*)
 {
-    /* [TBD — Member 2] item.setState(std::unique_ptr<ItemState>(new AssignedState())); */
+    return std::unique_ptr<ItemState>(new AssignedState());
 }
 
-void CreatedState::start(Item& item) { /* [TBD] */ }
-void CreatedState::complete(Item& item, int value) { /* [TBD] */ }
-void CreatedState::reject(Item& item, const std::string& reason) { /* [TBD] */ }
-
-std::string CreatedState::name() const
-{
-    return "Created";
-}
+std::string CreatedState::name() const { return "Available"; }

@@ -1,14 +1,13 @@
 #include "IntakePhase.h"
-#include "Container.h"
 #include "ActivePhase.h"
+#include "Container.h"
+#include "InvalidTransition.h"
 
-/* STUB — real transitions belong to Member 2. */
-#include <memory>
-
-void IntakePhase::advance(Container& container)
-{}
-
-std::string IntakePhase::name() const
+std::unique_ptr<WorkflowPhase> IntakePhase::advance(Container& container)
 {
-    return "";
+    if (container.getChildren().empty())
+        throw InvalidTransition("Cannot activate an empty container");
+    return std::unique_ptr<WorkflowPhase>(new ActivePhase());
 }
+
+std::string IntakePhase::name() const { return "Intake"; }

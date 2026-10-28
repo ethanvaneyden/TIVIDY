@@ -1,13 +1,13 @@
 #include "ReviewPhase.h"
+#include "PublishPhase.h"
 #include "Container.h"
+#include "InvalidTransition.h"
 
-/* STUB — real transitions belong to Member 2. */
-#include <memory>
-
-void ReviewPhase::advance(Container& container)
-{}
-
-std::string ReviewPhase::name() const
+std::unique_ptr<WorkflowPhase> ReviewPhase::advance(Container& container)
 {
-    return "";
+    if (!container.isReadyToPublish())
+        throw InvalidTransition("All items must be completed and reviewed before publishing");
+    return std::unique_ptr<WorkflowPhase>(new PublishPhase());
 }
+
+std::string ReviewPhase::name() const { return "Review"; }

@@ -8,6 +8,8 @@
 
 #include "Participant.h"
 #include "ParticipantRegistry.h"
+#include "Container.h"
+#include "Item.h"
 
 TEST(ParticipantTest, StoresIdentityAndAllowsNameUpdates)
 {
@@ -114,4 +116,71 @@ TEST(ParticipantRegistryTest, RejectsEmptyNameOrRole)
     Participant *participant = registry.add("Alex", "Marker");
     ASSERT_NE(participant, nullptr);
     EXPECT_EQ(participant->getId(), "Marker1");
+}
+
+TEST(ParticipantRegistryTest, AvoidsCollisionsBetweenRoleGeneratedIds)
+{
+    ParticipantRegistry registry;
+    for (int i = 0; i < 11; ++i)
+        registry.add("Person", "A");
+
+    Participant *participant = registry.add("Other", "A1");
+
+    ASSERT_NE(participant, nullptr);
+    EXPECT_EQ(participant->getId(), "A12");
+    EXPECT_EQ(registry.get("A11")->getRole(), "A");
+    EXPECT_EQ(registry.get("A12"), participant);
+}
+
+TEST(ParticipantRegistryTest, PreventsRemovalWhileItemReferencesParticipant)
+{
+    ParticipantRegistry registry;
+    Participant *participant = registry.add("Alex", "Marker");
+
+    {
+        Container container("container", "group", "Container");
+        Item item("item", "work", "Item");
+        container.add(&item);
+        container.advancePhase();
+        item.assign(participant);
+        item.start();
+        item.complete(10);
+        container.advancePhase();
+        item.recordReview(participant, "Personal");
+
+        EXPECT_THROW(registry.remove(participant->getId()), std::logic_error);
+        EXPECT_TRUE(registry.contains(participant->getId()));
+        EXPECT_EQ(item.getAssignee(), participant);
+        EXPECT_EQ(item.getReviewer(), participant);
+    }
+
+    registry.remove("Marker1");
+    EXPECT_FALSE(registry.contains("Marker1"));
+}
+
+TEST(ParticipantRegistryTest, ClearsItemReferencesWhenRegistryIsDestroyed)
+{
+    Container container("container", "group", "Container");
+    Item item("item", "work", "Item");
+
+    container.add(&item);
+    container.advancePhase();
+
+    {
+        ParticipantRegistry registry;
+        Participant *participant = registry.add("Alex", "Marker");
+        item.assign(participant);
+        item.start();
+        item.complete(10);
+        container.advancePhase();
+        item.recordReview(participant, "Personal");
+
+        ASSERT_EQ(item.getAssignee(), participant);
+        ASSERT_EQ(item.getReviewer(), participant);
+    }
+
+    EXPECT_EQ(item.getAssignee(), nullptr);
+    EXPECT_EQ(item.getReviewer(), nullptr);
+    EXPECT_TRUE(item.getReviewMethod().empty());
+    EXPECT_FALSE(item.isReviewed());
 }

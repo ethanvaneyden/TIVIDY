@@ -1,24 +1,10 @@
-/**
- * @file AssignedState.h
- * @brief STUB concrete state — replaced by Member 2's full implementation.
-*/
-
-#ifndef ASSIGNEDSTATE_H
-#define ASSIGNEDSTATE_H
+#pragma once
 
 #include "ItemState.h"
 
-class AssignedState : public ItemState
+class AssignedState : public InvalidTransitionState
 {
-    public:
-        AssignedState() = default;
-        ~AssignedState() override = default;
-
-        void assign(Item& item) override;
-        void start(Item& item) override;
-        void complete(Item& item, int value) override;
-        void reject(Item& item, const std::string& reason) override;
-        std::string name() const override;
+public:
+    std::unique_ptr<ItemState> start(Item& item) override;
+    std::string name() const override;
 };
-
-#endif

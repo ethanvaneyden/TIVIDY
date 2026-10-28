@@ -1,56 +1,166 @@
-#include "Item.h"
-#include "ItemState.h"
 
-Item::Item(std::string id, std::string type, std::string name, Component *parent) : Component(id, type, name, parent)
+#include "Item.h"
+#include "CreatedState.h"
+#include "ItemState.h"
+#include "InvalidTransition.h"
+#include "Participant.h"
+#include "WorkflowMediator.h"
+#include "Container.h"
+#include <stdexcept>
+#include <utility>
+
+Item::Item(std::string id, std::string type, std::string name, Component* parent)
+    : Component(std::move(id), std::move(type), std::move(name), parent),
+      assignee(nullptr),
+      reviewer(nullptr),
+      reviewMethod(""),
+      result(0),
+      resultRecorded(false),
+      rejectionReason("")
 {
-    // TODO set state to available when interface defined
-    assignee = nullptr;
-    reviewer = nullptr;
+    state.reset(new CreatedState());
 }
 
-Iterator *Item::createIterator()
-{
-    // TODO Implement once iterator interface is defined
+Item::~Item() = default;
+
+Iterator* Item::createIterator() {
     return nullptr;
 }
 
-bool Item::isCompleted() const
-{
-    // TODO Implement once state interface is defined
-    return false;
+Iterator* Item::createIterator(const std::string& state) {
+    return nullptr;
 }
 
-// TODO Implement state delegation methods
-
-Participant *Item::getAssignee() const
-{
-    return assignee;
+bool Item::isCompleted() const {
+    return state ? state->isCompleted() : false;
 }
 
-void Item::setAssignee(Participant *p)
-{
-    assignee = p;
+// ==========================================
+// STATE TRANSITIONS
+// ==========================================
+
+void Item::assign(Participant* p) {
+    if (!p) throw std::invalid_argument("Cannot assign a null participant");
+    requirePhase("Active");
+    if (!state) throw std::logic_error("Item has no lifecycle state");
+
+    auto next = state->assign(*this, p);
+    if (!next) throw std::logic_error("Item state returned no next state");
+    setAssignee(p);
+    setState(std::move(next));
+    if (mediator) mediator->onItemAssigned(this, p);
 }
 
-Participant *Item::getReviewer() const
-{
-    return reviewer;
+void Item::start() {
+    requirePhase("Active");
+    if (!assignee) throw std::logic_error("Cannot start an item without an assignee");
+    if (!state) throw std::logic_error("Item has no lifecycle state");
+
+    auto next = state->start(*this);
+    if (!next) throw std::logic_error("Item state returned no next state");
+    setState(std::move(next));
+    if (mediator) mediator->onItemStarted(this);
 }
 
-const std::string &Item::getReviewMethod() const
-{
-    return reviewMethod;
+void Item::complete(int value) {
+    requirePhase("Active");
+    if (!state) throw std::logic_error("Item has no lifecycle state");
+
+    auto next = state->complete(*this, value);
+    if (!next) throw std::logic_error("Item state returned no next state");
+    setState(std::move(next));
+    setResult(value);
+    if (mediator) mediator->onItemCompleted(this, value);
 }
 
-void Item::recordReview(Participant *p, const std::string &method)
-{
-    reviewer = p;
+void Item::reject(const std::string& reason) {
+    if (reason.empty()) throw std::invalid_argument("Rejection reason cannot be empty");
+    if (!state) throw std::logic_error("Item has no lifecycle state");
+
+    auto next = state->reject(*this, reason);
+    if (!next) throw std::logic_error("Item state returned no next state");
+    setState(std::move(next));
+    setRejectionReason(reason);
+    if (mediator) mediator->onItemRejected(this, reason);
+}
+
+void Item::resolveReview(Participant* reviewer, int value, const std::string& reason) {
+    if (!reviewer) throw std::invalid_argument("Reviewer cannot be null");
+    requirePhase("Review");
+    if (!state) throw std::logic_error("Item has no lifecycle state");
+
+    auto next = state->resolveReview(*this, reviewer, value);
+    if (!next) throw std::logic_error("Item state returned no next state");
+    setState(std::move(next));
+    setResult(value);
+    setReviewer(reviewer, "Personal"); 
+    if (mediator) mediator->onItemOverridden(this, reviewer, value, reason);
+}
+
+// ==========================================
+// STATE MANAGEMENT
+// ==========================================
+
+void Item::setState(std::unique_ptr<ItemState> s) {
+    if (!s) throw std::invalid_argument("Cannot set a null state");
+    state = std::move(s);
+}
+
+std::string Item::getStateName() const {
+    return state ? state->name() : "Unknown";
+}
+
+// ==========================================
+// DATA ACCESSORS
+// ==========================================
+
+Participant* Item::getAssignee() const { return assignee; }
+Participant* Item::getReviewer() const { return reviewer; }
+const std::string& Item::getReviewMethod() const { return reviewMethod; }
+bool Item::hasResult() const { return resultRecorded; }
+const std::string& Item::getRejectionReason() const { return rejectionReason; }
+bool Item::isReviewed() const { return isCompleted() && reviewer != nullptr; }
+
+int Item::getResult() const {
+    if (!resultRecorded) throw std::logic_error("No result recorded");
+    return result;
+}
+
+// ==========================================
+// SETTERS
+// ==========================================
+
+void Item::setAssignee(Participant* p) { assignee = p; }
+void Item::setReviewer(Participant* p, const std::string& method) { 
+    reviewer = p; 
     reviewMethod = method;
 }
+void Item::recordReview(Participant* p, const std::string& method) {
+    if (!p) throw std::invalid_argument("Reviewer cannot be null");
+    if (method.empty()) throw std::invalid_argument("Review method cannot be empty");
+    if (!isCompleted()) throw InvalidTransition("Only completed items can be reviewed");
+    setReviewer(p, method);
+}
+void Item::setResult(int value) { 
+    result = value; 
+    resultRecorded = true; 
+}
+void Item::setRejectionReason(const std::string& reason) { 
+    rejectionReason = reason; 
+}
 
-void  Item::assign(Participant* p){/*STUB*/}
-void  Item::start(){/*STUB*/}
-void  Item::complete(int value){/*STUB*/}
-void  Item::reject(const std::string& reason){/*STUB*/}
-std::string  Item::getStateName() const{/*STUB*/ return "";}
-void  Item::setState(std::unique_ptr<ItemState> s){/*STUB*/}
+// ==========================================
+// PHASE ENFORCEMENT
+// ==========================================
+
+void Item::requirePhase(const std::string& expected) const {
+    if (!parent) return; 
+    auto* container = dynamic_cast<const Container*>(parent);
+    if (container) {
+        std::string currentPhase = container->getPhaseName();
+        if (currentPhase != expected) {
+            throw std::logic_error("Invalid workflow phase: expected '" + 
+                expected + "' but was '" + currentPhase + "'");
+        }
+    }
+}

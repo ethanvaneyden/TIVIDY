@@ -25,9 +25,11 @@ add_library(tividy_core
     member1_core/ParticipantRegistry.cpp
     member1_core/Root.cpp
     member1_core/WorkRegistry.cpp
+    member1_core/WorkflowInstance.cpp
+    member1_core/EducationInstance.cpp
 
     # --- Member 2: execution & lifecycle ---
-    member2_execution/WorkflowInstance.cpp # # uncomment this line & more
+    member2_execution/ItemState.cpp
     member2_execution/CreatedState.cpp
     member2_execution/AssignedState.cpp
     member2_execution/InProgressState.cpp
@@ -39,7 +41,13 @@ add_library(tividy_core
     member2_execution/PublishPhase.cpp
 
     # --- Member 3: assignment & traversal ---
-    # member3_routing/AssignmentEngine.cpp # # uncomment this line & more
+    member3_routing/AssignmentEngine.cpp # # uncomment this line & more
+    member3_routing/RandomStrategy.cpp 
+    member3_routing/RoundRobinStrategy.cpp 
+    member3_routing/WorkloadStrategy.cpp 
+    member3_routing/Iterator.cpp
+    member3_routing/DepthFirstIterator.cpp
+     member3_routing/StateFilterIterator.cpp
 
     # --- Member 4: commands, events, history ---
     # member4_services/WorkCommand.cpp # # uncomment this line & more
@@ -47,6 +55,9 @@ add_library(tividy_core
 
     # --- Member 5: education scenario ---
     # member5_education/AssignmentMarkingBuilder.cpp # # uncomment this line & more
+    member5_education/EducationApprovalChain.cpp
+    member5_education/EducationMediator.cpp
+    member5_education/EducationPolicies.cpp
 
     # --- Member 6: hospital scenario ---
     # member6_hospital/HospitalAdmissionBuilder.cpp # # uncomment this line & more

@@ -1,13 +1,8 @@
 #include "PublishPhase.h"
-#include "Container.h"
 
-/* STUB — real transitions belong to Member 2. */
-#include <memory>
-
-void PublishPhase::advance(Container& container)
-{}
-
-std::string PublishPhase::name() const
+std::unique_ptr<WorkflowPhase> PublishPhase::advance(Container&)
 {
-    return "";
+    return nullptr;
 }
+
+std::string PublishPhase::name() const { return "Publish"; }
