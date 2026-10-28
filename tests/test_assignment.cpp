@@ -67,7 +67,7 @@ TEST_F(StrategyTest, WorkloadEmptyPoolReturnsNull)
     EXPECT_EQ(w.assign({}), nullptr);
 }
 
-// ---------- Random ----------
+
 TEST_F(StrategyTest, RandomAlwaysReturnsPoolMember)
 {
     RandomStrategy r;
