@@ -21,8 +21,17 @@ public:
     Component(std::string id, std::string type, std::string name, Component *parent = nullptr);
     virtual ~Component() = default;
 
+    
+    /// @brief Default no op add
+    /// @param c 
     virtual void add(Component *c);
+
+    /// @brief Default no op remove
+    /// @param id 
     virtual void remove(const std::string &id);
+
+    /// @brief Default no op get children
+    /// @return vector of components
     virtual std::vector<Component *> getChildren() const;
 
     virtual Iterator *createIterator() = 0;
