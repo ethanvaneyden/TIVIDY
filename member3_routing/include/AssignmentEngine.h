@@ -1,5 +1,4 @@
-#ifndef ASSIGNMENTENGINE_H
-#define ASSIGNMENTENGINE_H
+#pragma once
 
 #include <memory>
 #include <string>
@@ -24,4 +23,3 @@ public:
     Participant *assign(Item &item, const std::vector<Participant *> &pool);
 };
 
-#endif

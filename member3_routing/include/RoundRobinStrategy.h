@@ -3,8 +3,7 @@
  * @brief STUB — replaced by Member 3's real implementation.
  */
 
-#ifndef ROUNDROBINSTRATEGY_H
-#define ROUNDROBINSTRATEGY_H
+#pragma once
 
 #include "AssignmentStrategy.h"
 
@@ -19,4 +18,3 @@ public:
     std::string name() const override;
 };
 
-#endif

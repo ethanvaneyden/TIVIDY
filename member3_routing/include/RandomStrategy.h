@@ -1,5 +1,4 @@
-#ifndef RANDOMSTRATEGY_H
-#define RANDOMSTRATEGY_H
+#pragma once
 
 #include <random>
 #include "AssignmentStrategy.h"
@@ -15,4 +14,3 @@ public:
     std::string name() const override;
 };
 
-#endif
