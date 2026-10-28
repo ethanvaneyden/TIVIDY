@@ -7,8 +7,8 @@
 /**
  * @brief Top-level component for a workflow component tree.
  *
- * The root stores non-owning references to its children. Adding a child sets
- * its parent to this root; removing a child detaches it.
+ * The root stores non-owning references to Container children. Adding a child
+ * sets its parent to this root; removing a child detaches it.
  */
 class Root : public Component {
 private:
@@ -28,8 +28,10 @@ public:
     virtual ~Root() = default;
 
     /**
-     * @brief Adds a child component and assigns its parent to this root.
-     * @param c Child to add; null pointers are ignored.
+     * @brief Adds a container as a child and assigns its parent to this root.
+     * @param c Container to add.
+     * @throws std::invalid_argument If c is null, is not a Container, already
+     *         belongs to another parent, or duplicates an existing child.
      */
     void add(Component* c) override;
 
@@ -41,15 +43,18 @@ public:
      */
     void remove(const std::string& id) override;
 
-    /**
-     * @brief Returns the root's children.
-     * @return An empty vector in the current implementation.
-     */
+    /// @brief Returns a copy of the root's non-owning child references.
     std::vector<Component*> getChildren() const override;
 
     /**
-     * @brief Creates an iterator for traversing the root.
-     * @return nullptr in the current implementation.
+     * @brief Checks whether the root has children and all are completed.
+     * @return true if at least one child exists and every child is completed.
+     */
+    bool isCompleted() const override;
+
+    /**
+     * @brief Creates a depth-first iterator for the root and its descendants.
+     * @return Owning pointer to the iterator; the caller must delete it.
      */
     Iterator* createIterator() override;
 };

@@ -43,9 +43,11 @@ public:
     /**
      * @brief Removes a component and any registered descendants.
      * @param id Identifier of the component to remove.
+     * @throws InvalidTransition If a child cannot be removed in its current
+     *         container phase.
      *
-     * Has no effect if the identifier is not registered. The component is
-     * detached from its parent before it is destroyed.
+     * Has no effect if the identifier is not registered. Components are
+     * detached from their parents before destruction.
      */
     void remove(const std::string &id);
 

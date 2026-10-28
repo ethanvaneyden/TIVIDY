@@ -5,6 +5,11 @@
 
 class ItemState;
 class Participant;
+class CreatedState;
+class AssignedState;
+class InProgressState;
+class CompletedState;
+class RejectedState;
 
 /**
  * @brief A leaf workflow component with an execution and review lifecycle.
@@ -53,6 +58,28 @@ private:
 
     /// @brief Notifies the associated mediator that this item changed.
     void notifyChange(const std::string& event);
+
+    /**
+     * @brief Replaces the owned lifecycle state.
+     * @param s Non-null replacement state.
+     */
+    void setState(std::unique_ptr<ItemState> s);
+
+    /// @brief Sets the assignee and updates the participant's item references.
+    void setAssignee(Participant* p);
+
+    /// @brief Sets the reviewer and updates the participant's item references.
+    void setReviewer(Participant* p);
+
+    /// @brief Clears references to a participant that is being destroyed.
+    void participantDestroyed(Participant* p);
+
+    friend class CreatedState;
+    friend class AssignedState;
+    friend class InProgressState;
+    friend class CompletedState;
+    friend class RejectedState;
+    friend class Participant;
 
 public:
     /**
@@ -112,23 +139,8 @@ public:
     /// @brief Returns the name of the current lifecycle state.
     std::string getStateName() const;
 
-    /**
-     * @brief Replaces the item's lifecycle state.
-     * @param s New non-null state to own.
-     * @throws std::invalid_argument If s is null.
-     */
-    void setState(std::unique_ptr<ItemState> s);
-
     /// @brief Returns the non-owning assignee, or nullptr if none is set.
     Participant* getAssignee() const;
-
-    /**
-     * @brief Sets the assignee directly for internal collaborators.
-     * @param p Non-owning assignee pointer; may be nullptr.
-     *
-     * User-facing assignment should use assign().
-     */
-    void setAssignee(Participant* p);
 
     /// @brief Returns the non-owning reviewer, or nullptr if not reviewed.
     Participant* getReviewer() const;

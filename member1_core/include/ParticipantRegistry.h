@@ -12,8 +12,9 @@
  * @brief Owns and provides lookup for registered workflow participants.
  *
  * Participant identifiers are generated from each role and a role-specific
- * increasing counter. Pointers returned by this registry are non-owning and
- * remain valid until that participant is removed or the registry is destroyed.
+ * increasing counter. Pointers returned by this registry are non-owning.
+ * Participants referenced by items cannot be removed; destroying the registry
+ * detaches its participants from any items that still refer to them.
  */
 class ParticipantRegistry
 {
@@ -45,11 +46,11 @@ public:
     Participant *get(const std::string &id) const;
 
     /**
-     * @brief Removes a participant by identifier.
-     * @param id Identifier of the participant to remove.
+     * @brief Removes an unreferenced participant by identifier.
+     * @param id Participant identifier.
+     * @throws std::logic_error If workflow items still refer to the participant.
      *
-     * Has no effect if the identifier is not registered. Any pointer
-     * previously returned for the removed participant becomes invalid.
+     * Has no effect if the identifier is not registered.
      */
     void remove(const std::string &id);
 

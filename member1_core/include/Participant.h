@@ -1,6 +1,11 @@
 #ifndef PARTICIPANT_H
 #define PARTICIPANT_H
+#include <cstddef>
+#include <map>
 #include <string>
+
+class Item;
+class ParticipantRegistry;
 
 /**
  * @brief Represents a person who participates in workflow tasks.
@@ -14,6 +19,14 @@ private:
     std::string name;
     std::string role;
     int pendingTasks;
+    std::map<Item*, std::size_t> itemReferences;
+
+    void addItemReference(Item* item);
+    void removeItemReference(Item* item);
+    bool hasItemReferences() const;
+
+    friend class Item;
+    friend class ParticipantRegistry;
 
 public:
     /**
@@ -23,6 +36,11 @@ public:
      * @param role Participant's workflow role.
      */
     Participant(std::string id, std::string name, std::string role);
+
+    /**
+     * @brief Detaches any items that still refer to this participant.
+     */
+    ~Participant();
 
     /// @brief Returns the participant identifier.
     const std::string &getId() const;
