@@ -10,7 +10,7 @@ Participant *RoundRobinStrategy::assign(const std::vector<Participant *> &pool)
     if (pool.empty())
         return nullptr;
 
-    size_t next = 0;   
+    size_t next = 0;
     for (size_t i = 0; i < pool.size(); ++i)
     {
         if (pool[i] == lastPicked)
