@@ -91,4 +91,5 @@ class EducationApprovalChain
         bool approve(Item& item, int value);
 };
 
-} // namespace education
+}
+

@@ -88,4 +88,4 @@ Participant* EducationPolicies::selectApprover(int mark,
     return best;
 }
 
-} // namespace education
+}
