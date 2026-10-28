@@ -7,7 +7,7 @@
 #include "AssignmentStrategy.h"
 
 class Item;
-class Iterator;
+
 class Participant;
 
 class AssignmentEngine
@@ -22,8 +22,6 @@ public:
     std::string strategyName() const;
 
     Participant *assign(Item &item, const std::vector<Participant *> &pool);
-
-    int assignAvailable(Iterator &it, const std::vector<Participant *> &pool);
 };
 
 #endif
