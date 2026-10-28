@@ -10,7 +10,7 @@ private:
     std::mt19937 rng;
 
 public:
-    explicit RandomStrategy(unsigned seed = std::random_device{}());
+    RandomStrategy();
     Participant *assign(const std::vector<Participant *> &pool) override;
     std::string name() const override;
 };
