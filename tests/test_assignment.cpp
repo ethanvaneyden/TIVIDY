@@ -45,20 +45,20 @@ TEST_F(StrategyTest, RoundRobinSurvivesPoolChange)
     EXPECT_EQ(rr.assign(smaller), &a); 
 }
 
-// ---------- Workload ----------
+
 TEST_F(StrategyTest, WorkloadPicksFewestPending)
 {
     a.incrementPendingTasks();
     a.incrementPendingTasks();
     b.incrementPendingTasks();
     WorkloadStrategy w;
-    EXPECT_EQ(w.assign(pool), &c); // c has 0
+    EXPECT_EQ(w.assign(pool), &c); 
 }
 
 TEST_F(StrategyTest, WorkloadTieGoesToFirst)
 {
     WorkloadStrategy w;
-    EXPECT_EQ(w.assign(pool), &a); // all at 0
+    EXPECT_EQ(w.assign(pool), &a); 
 }
 
 TEST_F(StrategyTest, WorkloadEmptyPoolReturnsNull)
