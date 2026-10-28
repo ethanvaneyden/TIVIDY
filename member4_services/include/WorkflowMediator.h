@@ -1,43 +1,50 @@
 #pragma once
 #include <string>
+#include <vector>
 
-// Forward declarations to avoid circular dependencies
 class Item;
 class Container;
 class Participant;
 
 /**
  * @brief The Mediator interface.
- *
+ * 
  * Colleagues (Items, Containers, AssignmentEngine, etc.) call these methods
- * to notify the Coordinator of events. The Coordinator then decides
- * what to do next (e.g., record history, trigger the chain, advance phases).
+ * to notify the Coordinator of events. 
  */
 class WorkflowMediator {
 public:
     virtual ~WorkflowMediator() = default;
 
-    // --- Tree Events ---
-
-    /** @brief Called by an Item when it transitions to Completed. */
+    // ==========================================
+    // TREE EVENTS (Called by Items)
+    // ==========================================
+    virtual void onItemAssigned(Item* item, Participant* assignee) = 0;
+    virtual void onItemStarted(Item* item) = 0;
     virtual void onItemCompleted(Item* item, int value) = 0;
-
-    /** @brief Called by an Item when a worker rejects it. */
     virtual void onItemRejected(Item* item, const std::string& reason) = 0;
-
-    /** @brief Called by an Item when an Operator overrides a rejected state. */
-    virtual void onItemOverridden(Item* item, const std::string& reason) = 0;
-
-    /** @brief Called by a Container when its phase changes (e.g., Active -> Review). */
+    
+    // Operator override
+    virtual void onItemOverridden(Item* item, Participant* reviewer, int newValue, const std::string& reason) = 0;
+    
+    // Phase changes
     virtual void onPhaseAdvanced(Container* container) = 0;
 
-    // --- Chain of Responsibility Events ---
-
-    /** @brief Called by an ApprovalHandler when a batch approval is resolved. */
+    // ==========================================
+    // ASSIGNMENT & BATCH EVENTS
+    // ==========================================
+    virtual void onItemAdded(Item* item) = 0;
+    virtual void onAssignmentFailed(Item* item, const std::string& reason) = 0;
+    
+    // Batch approvals
+    virtual void onContainerApprovalRequested(Container* container, Participant* operatorParticipant) = 0;
+    virtual void onContainerRejected(Container* container, const std::string& reason) = 0;
+    
+    // Called by the Chain of Responsibility
     virtual void onApprovalResolved(Item* item, bool approved) = 0;
 
-    // --- Assignment Events (Optional) ---
-
-    /** @brief Called by the AssignmentEngine if no worker is available. */
-    virtual void onAssignmentFailed(Item* item, const std::string& reason) = 0;
+    // ==========================================
+    // UTILITY
+    // ==========================================
+    virtual std::vector<std::string> getHistoryAsStrings() const = 0;
 };

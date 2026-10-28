@@ -1,60 +1,32 @@
+// Component.cpp
 #include "Component.h"
-#include "WorkflowMediator.h"
 #include <stdexcept>
+#include <utility>
 
-Component::Component(std::string id, std::string type, std::string name, Component *parent) : id(id), type(type), name(name), parent(parent)
-{
+Component::Component(std::string id, std::string type, std::string name, Component* parent)
+    : id(std::move(id)), type(std::move(type)), name(std::move(name)), parent(parent) {}
 
+void Component::add(Component*) {
+    throw std::logic_error("Cannot add children to a leaf component.");
 }
 
-void Component::add(Component *c)
-{
-    throw std::logic_error{"Unable to add a component to a leaf"};
+void Component::remove(const std::string&) {
+    throw std::logic_error("Cannot remove children from a leaf component.");
 }
 
-void Component::remove(const std::string &id)
-{
-    throw std::logic_error{"Unable to remove a component from leaf"};
-}
-
-std::vector<Component *> Component::getChildren() const
-{
+std::vector<Component*> Component::getChildren() const {
     return {};
 }
 
-const std::string &Component::getId() const
-{
-    return id;
-}
+const std::string& Component::getId() const { return id; }
+const std::string& Component::getType() const { return type; }
+const std::string& Component::getName() const { return name; }
+Component* Component::getParent() const { return parent; }
+void Component::setParent(Component* p) { parent = p; }
 
-const std::string &Component::getType() const
-{
-    return type;
-}
-
-const std::string &Component::getName() const
-{
-    return name;
-}
-
-Component *Component::getParent() const
-{
-    return parent;
-}
-
-void Component::setParent(Component *p)
-{
-    parent = p;
-}
-
-void Component::setMediator(WorkflowMediator *workflowMediator)
-{
-    Colleague::setMediator(workflowMediator);
-    const std::vector<Component*> children = getChildren();
-    for (std::vector<Component*>::const_iterator child = children.begin();
-         child != children.end(); ++child)
-    {
-        if (*child != nullptr)
-            (*child)->setMediator(workflowMediator);
+void Component::setMediator(WorkflowMediator* m) {
+    Colleague::setMediator(m);
+    for (auto* child : getChildren()) {
+        if (child) child->setMediator(m);
     }
 }

@@ -2,9 +2,9 @@
 
 #include "ItemState.h"
 
-class AssignedState : public ItemState
+class AssignedState : public InvalidTransitionState
 {
 public:
-    void start(Item& item) override;
+    std::unique_ptr<ItemState> start(Item& item) override;
     std::string name() const override;
 };

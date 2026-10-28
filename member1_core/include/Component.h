@@ -1,3 +1,4 @@
+// Component.h
 #pragma once
 
 #include <string>
@@ -7,77 +8,61 @@
 class Iterator;
 
 /**
- * @brief Abstract base for components in the workflow tree.
- *
- * A component has an identifier, type, name, optional non-owning parent, and
- * optional workflow mediator inherited from Colleague. Leaf implementations
- * provide their own iterator and completion behavior.
+ * @brief Abstract base for all nodes in the workflow tree.
+ * 
+ * Component role in the Composite pattern. Inherits from Colleague 
+ * to receive Mediator events.
  */
-class Component : public Colleague
-{
+class Component : public Colleague {
 protected:
-    std::string id;
-    std::string type;
-    std::string name;
-
-    /// @brief Non owning reference
-    Component *parent;
+    std::string id;             ///< Unique identifier.
+    std::string type;           ///< Type (e.g., "Submission", "Assignment").
+    std::string name;           ///< Display name.
+    Component* parent;          ///< Non-owning parent reference.
 
 public:
     /**
      * @brief Constructs a component.
-     * @param id Component identifier.
-     * @param type Component type.
-     * @param name Display name.
-     * @param parent Optional non-owning parent component.
      */
-    Component(std::string id, std::string type, std::string name, Component *parent = nullptr);
-
-    /// @brief Destroys the component.
+    Component(std::string id, std::string type, std::string name, Component* parent = nullptr);
+    
+    /// @brief Virtual destructor.
     virtual ~Component() = default;
 
     /**
      * @brief Adds a child component.
-     * @param c Child to add.
-     * @throws std::logic_error The base implementation rejects adding children
-     *         to a leaf component.
+     * @throws std::logic_error Leaves cannot have children.
      */
-    virtual void add(Component *c);
+    virtual void add(Component* c);
 
     /**
-     * @brief Removes a child component by identifier.
-     * @param id Identifier of the child to remove.
-     * @throws std::logic_error The base implementation rejects removing
-     *         children from a leaf component.
+     * @brief Removes a child component.
+     * @throws std::logic_error Leaves cannot have children.
      */
-    virtual void remove(const std::string &id);
+    virtual void remove(const std::string& id);
 
-    /// @brief Returns the component's children.
-    /// @return An empty vector in the base implementation.
-    virtual std::vector<Component *> getChildren() const;
+    /// @brief Returns child components (empty for leaves).
+    virtual std::vector<Component*> getChildren() const;
 
-    /// @brief Creates an iterator for traversing this component.
-    virtual Iterator *createIterator() = 0;
+    /// @brief Creates an iterator for this component.
+    virtual Iterator* createIterator() = 0;
 
-    /// @brief Checks whether the component's work is complete.
+    /// @brief Checks if the component's work is done.
     virtual bool isCompleted() const = 0;
 
-    /// @brief Returns the component identifier.
-    const std::string &getId() const;
-
-    /// @brief Returns the component type.
-    const std::string &getType() const;
-
-    /// @brief Returns the component display name.
-    const std::string &getName() const;
-
-    /// @brief Returns the component state name, if the component has a state.
+    const std::string& getId() const;   ///< @return Component ID.
+    const std::string& getType() const; ///< @return Component type.
+    const std::string& getName() const; ///< @return Component display name.
+    
+    /// @brief Returns the state name (empty for non-items).
     virtual std::string getStateName() const { return ""; }
+    
+    Component* getParent() const;       ///< @return Non-owning parent.
+    void setParent(Component* p);       ///< @param p New parent.
 
-    /// @brief Returns the non-owning parent component, or nullptr if detached.
-    Component *getParent() const;
-
-    /// @brief Sets the non-owning parent component.
-    /// @param p Parent component, or nullptr to detach.
-    void setParent(Component *p);
+    /**
+     * @brief Sets the mediator for this component and all its children.
+     * @param mediator Non-owning pointer to the mediator.
+     */
+    void setMediator(WorkflowMediator* mediator);
 };

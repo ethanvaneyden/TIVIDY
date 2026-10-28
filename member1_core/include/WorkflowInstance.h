@@ -1,127 +1,80 @@
 #pragma once
+
 #include <memory>
 #include <string>
 #include <vector>
 
+// Forward declarations
+class WorkRegistry;
 class Root;
+class Container;
+class Item;
 class WorkflowMediator;
 class AssignmentStrategy;
+class WorkflowBuilder;
 class ParticipantRegistry;
 class Participant;
-class WorkflowBuilder;
-class WorkRegistry;
-class Item;
 
 /**
- * @brief Represents one configured workflow instance.
+ * @brief Represents a single, independent running workflow instance.
  *
- * The interface groups workflow identity, component tree access, history, and
- * operations for adding work and handling item/container outcomes. Its current
- * implementation is a stub; these operations are not yet implemented.
+ * Owns the WorkRegistry (the tree), the Coordinator (Mediator),
+ * the Strategy, and the Builder. Guarantees instance isolation.
  */
-class WorkflowInstance
-{
+class WorkflowInstance {
 private:
     std::string instanceId;
     std::string definitionType;
+    std::vector<std::string> history;
 
-    std::unique_ptr<WorkRegistry> workRegistry;
-    std::shared_ptr<WorkflowMediator> coordinator;
+    // --- Owned Components ---
+    std::unique_ptr<WorkRegistry> registry;
+    std::unique_ptr<WorkflowMediator> coordinator;
     std::unique_ptr<AssignmentStrategy> strategy;
     std::unique_ptr<WorkflowBuilder> builder;
-    ParticipantRegistry *participants;
-    Root *root;
 
-    WorkflowMediator* getCoordinator() const;
+    // --- Non-Owning References ---
+    ParticipantRegistry* participants; // Owned by the Facade
+    Root* root;                         // Owned by the WorkRegistry
 
 public:
-    /**
-     * @brief Constructs a workflow instance from its collaborating services.
-     * @param instanceId Unique identifier for this workflow instance.
-     * @param definitionType Type of workflow definition being run.
-     * @param workRegistry Registry for workflow components.
-     * @param root Root component for the workflow tree.
-     * @param coordinator Mediator coordinating workflow actions.
-     * @param strategy Assignment strategy.
-     * @param builder Builder associated with the workflow definition.
-     * @param participants Registry of workflow participants.
-     */
     WorkflowInstance(
         std::string instanceId,
         std::string definitionType,
-        std::unique_ptr<WorkRegistry> workRegistry,
-        Root *root,
-        std::shared_ptr<WorkflowMediator> coordinator,
+        std::unique_ptr<WorkRegistry> registry, // <--- Updated
+        Root* root,
+        std::unique_ptr<WorkflowMediator> coordinator,
         std::unique_ptr<AssignmentStrategy> strategy,
         std::unique_ptr<WorkflowBuilder> builder,
-        ParticipantRegistry *participants);
+        ParticipantRegistry* participants
+    );
 
-    /// @brief Destroys the workflow instance and its owned collaborators.
-    virtual ~WorkflowInstance();
+    ~WorkflowInstance();
 
-    /// @brief Copying workflow instances is disabled.
-    WorkflowInstance(const WorkflowInstance &) = delete;
+    WorkflowInstance(const WorkflowInstance&) = delete;
+    WorkflowInstance& operator=(const WorkflowInstance&) = delete;
 
-    /// @brief Copy assignment is disabled.
-    WorkflowInstance &operator=(const WorkflowInstance &) = delete;
-
-    /// @brief Returns this workflow instance's identifier.
-    const std::string &getInstanceId() const;
-
-    /// @brief Returns the workflow definition type.
-    virtual const std::string &getDefinitionType() const;
-
-    /// @brief Returns the root component of the workflow tree.
-    Root *getRoot() const;
-
-    /// @brief Returns the workflow's recorded history entries.
+    // --- Metadata Accessors ---
+    const std::string& getInstanceId() const;
+    const std::string& getDefinitionType() const;
+    Root* getRoot() const;
     std::vector<std::string> getHistory() const;
 
-    /**
-     * @brief Adds an item to a workflow container.
-     * @param itemId Identifier for the new item.
-     * @param name Display name for the item.
-     * @param subjectId Identifier of the related subject.
-     */
-    void addItem(const std::string &itemId, const std::string &name, const std::string &subjectId);
+    // --- Runtime Mutations ---
+    void addItem(const std::string& parentContainerId,
+                 const std::string& itemId,
+                 const std::string& name,
+                 const std::string& subjectId);
 
-    /**
-     * @brief Adds a container to the workflow.
-     * @param containerId Identifier for the new container.
-     * @param name Display name for the container.
-     */
-    void addContainer(
-        const std::string &containerId,
-        const std::string &name);
+    void startItem(const std::string& itemId);
+    void completeItem(const std::string& itemId, int value);
+    void rejectItem(const std::string& itemId, const std::string& reason);
+    void overrideItem(const std::string& itemId,
+                      Participant* operatorParticipant,
+                      int newValue,
+                      const std::string& reason);
 
-    /**
-     * @brief Records completion of an item with its result.
-     * @param itemId Identifier of the item to complete.
-     * @param value Result value.
-     */
-    void completeItem(const std::string &itemId, int value);
-
-    /**
-     * @brief Approves a container's completed work.
-     * @param containerId Identifier of the container to approve.
-     */
-    virtual void approveContainer(const std::string &containerId);
-
-    /**
-     * @brief Resolves a rejected item using the scenario's review policy.
-     * @param item Item awaiting personal review.
-     * @param accept Whether to retain its existing value.
-     * @param newValue Replacement value when the existing value is not accepted.
-     * @param reviewer Participant performing the review.
-     * @throws std::logic_error if this workflow does not support this action.
-     */
-    virtual bool resolveRejected(Item &item, bool accept, int newValue,
-                                 Participant *reviewer);
-
-    /**
-     * @brief Rejects a container's completed work.
-     * @param containerId Identifier of the container to reject.
-     * @param reason Explanation for the rejection.
-     */
-    void rejectContainer(const std::string &containerId, const std::string &reason);
+    // --- Batch Operations ---
+    void approveContainer(const std::string& containerId, Participant* operatorParticipant);
+    void rejectContainer(const std::string& containerId, const std::string& reason);
 };
