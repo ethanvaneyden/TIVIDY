@@ -1,7 +1,9 @@
 // Container.cpp
 #include "Container.h"
+#include "DepthFirstIterator.h"
 #include "IntakePhase.h"
 #include "Item.h"
+#include "StateFilterIterator.h"
 #include "WorkflowPhase.h" // Member 2
 #include <algorithm>
 #include <stdexcept>
@@ -10,11 +12,19 @@ Container::Container(std::string id, std::string type, std::string name, Compone
     : Component(std::move(id), std::move(type), std::move(name), parent),
       phase(std::unique_ptr<WorkflowPhase>(new IntakePhase())) {}
 
+Container::~Container() = default;
+
 void Container::add(Component* c) {
-    if (!c) return;
+    if (!c) throw std::invalid_argument("Cannot add a null component");
     if (dynamic_cast<Container*>(c)) throw std::invalid_argument("Cannot nest containers");
-    c->setParent(this);
+    if (c == this || c->getParent() != nullptr)
+        throw std::invalid_argument("Component already belongs to a parent");
+    for (Component* child : children) {
+        if (child->getId() == c->getId())
+            throw std::invalid_argument("Duplicate child ID: " + c->getId());
+    }
     children.push_back(c);
+    c->setParent(this);
 }
 
 void Container::remove(const std::string& id) {
@@ -51,4 +61,8 @@ void Container::advancePhase() {
     if (next)
         phase = std::move(next);
 }
-Iterator* Container::createIterator() { return nullptr; } // Member 3
+Iterator* Container::createIterator() { return new DepthFirstIterator(this); }
+
+Iterator* Container::createIterator(const std::string& state) {
+    return new StateFilterIterator(this, state);
+}

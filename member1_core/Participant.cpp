@@ -25,6 +25,10 @@ const std::string& Participant::getRole() const {
     return role; 
 }
 
+void Participant::setName(const std::string& newName) {
+    name = newName;
+}
+
 int Participant::getPendingTasks() const { 
     return pendingTasks; 
 }

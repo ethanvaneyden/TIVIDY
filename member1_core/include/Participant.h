@@ -1,7 +1,6 @@
 // Participant.h
 #pragma once
 
-
 #include <string>
 
 /**
@@ -15,13 +14,21 @@ private:
     int pendingTasks; ///< Used by LoadBalancedStrategy.
 
 public:
-    Participant(std::string id, std::string name, std::string role)
-        : id(std::move(id)), name(std::move(name)), role(std::move(role)), pendingTasks(0) {}
+    /** @brief Creates a participant with its registry-assigned identity. */
+    Participant(std::string id, std::string name, std::string role);
 
-    const std::string& getId() const { return id; }
-    const std::string& getName() const { return name; }
-    const std::string& getRole() const { return role; }
-    int getPendingTasks() const { return pendingTasks; }
-    void incrementPendingTasks() { ++pendingTasks; }
-    void decrementPendingTasks() { if (pendingTasks > 0) --pendingTasks; }
+    /** @brief Returns this participant's unique ID. */
+    const std::string& getId() const;
+    /** @brief Returns this participant's display name. */
+    const std::string& getName() const;
+    /** @brief Returns this participant's role. */
+    const std::string& getRole() const;
+    /** @brief Returns the count of work items currently assigned. */
+    int getPendingTasks() const;
+    /** @brief Updates the participant's display name. */
+    void setName(const std::string& newName);
+    /** @brief Increments the assigned-work count. */
+    void incrementPendingTasks();
+    /** @brief Decrements the assigned-work count, bounded at zero. */
+    void decrementPendingTasks();
 };

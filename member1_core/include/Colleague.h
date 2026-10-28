@@ -19,10 +19,10 @@ public:
      * @brief Injects the Mediator into this colleague.
      * @param m Non-owning pointer to the Mediator.
      */
-    void setMediator(WorkflowMediator* m) { mediator = m; }
+    void setMediator(WorkflowMediator* m);
 
     /**
      * @brief Returns the current Mediator (or nullptr).
      */
-    WorkflowMediator* getMediator() const { return mediator; }
+    WorkflowMediator* getMediator() const;
 };

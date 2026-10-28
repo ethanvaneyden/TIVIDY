@@ -1,7 +1,9 @@
 // Root.cpp
 #include "Root.h"
 #include "Container.h"
+#include "DepthFirstIterator.h"
 #include "Iterator.h"
+#include "StateFilterIterator.h"
 #include <stdexcept>
 #include <algorithm>
 
@@ -9,10 +11,16 @@ Root::Root(std::string id, std::string type, std::string name, Component* parent
     : Component(std::move(id), std::move(type), std::move(name), parent) {}
 
 void Root::add(Component* c) {
-    if (!c) return;
+    if (!c) throw std::invalid_argument("Cannot add a null component");
     if (!dynamic_cast<Container*>(c)) throw std::invalid_argument("Root can only hold Containers");
-    c->setParent(this);
+    if (c == this || c->getParent() != nullptr)
+        throw std::invalid_argument("Component already belongs to a parent");
+    for (Component* child : children) {
+        if (child->getId() == c->getId())
+            throw std::invalid_argument("Duplicate child ID: " + c->getId());
+    }
     children.push_back(c);
+    c->setParent(this);
 }
 
 void Root::remove(const std::string& id) {
@@ -32,5 +40,9 @@ bool Root::isCompleted() const {
 }
 
 Iterator* Root::createIterator() {
-    return nullptr; // Member 3 will implement this
+    return new DepthFirstIterator(this);
+}
+
+Iterator* Root::createIterator(const std::string& state) {
+    return new StateFilterIterator(this, state);
 }

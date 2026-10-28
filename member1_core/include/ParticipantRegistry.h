@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <map>
 
 /**
  * @brief Owns the shared staff pool.
@@ -17,6 +18,8 @@ class ParticipantRegistry {
 private:
     /// @brief The actual storage mapping ID to owned Participant.
     std::unordered_map<std::string, std::unique_ptr<Participant>> participants;
+    /// @brief Next role-specific ordinal used to generate participant IDs.
+    std::map<std::string, unsigned> nextIds;
 
 public:
     /// @brief Constructs an empty registry.
@@ -36,6 +39,15 @@ public:
      * @throws std::invalid_argument If p is null or a duplicate ID exists.
      */
     Participant* add(std::unique_ptr<Participant> p);
+
+    /**
+     * @brief Creates and registers a participant with a role-based ID.
+     * @param name Participant display name.
+     * @param role Participant role.
+     * @return Non-owning pointer to the registered participant.
+     * @throws std::invalid_argument If the name or role is empty.
+     */
+    Participant* add(const std::string& name, const std::string& role);
 
     /**
      * @brief Looks up a participant by ID.
@@ -65,4 +77,10 @@ public:
 
     /// @brief Returns the total number of registered participants.
     size_t size() const;
+
+    /**
+     * @brief Returns IDs for all registered participants.
+     * @return The IDs in unspecified order.
+     */
+    std::vector<std::string> getAllIds() const;
 };

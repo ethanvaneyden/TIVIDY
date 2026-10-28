@@ -23,42 +23,93 @@ protected:
 public:
     /**
      * @brief Constructs a component.
+     * @param id Unique component ID.
+     * @param type Scenario-specific component type.
+     * @param name Display name.
+     * @param parent Optional non-owning parent pointer.
+     * @throws std::invalid_argument If the ID or type is empty.
      */
     Component(std::string id, std::string type, std::string name, Component* parent = nullptr);
     
-    /// @brief Virtual destructor.
+    /**
+     * @brief Destroys the component without deleting its parent or children.
+     */
     virtual ~Component() = default;
 
     /**
      * @brief Adds a child component.
+     * @param c Child pointer.
      * @throws std::logic_error Leaves cannot have children.
      */
     virtual void add(Component* c);
 
     /**
      * @brief Removes a child component.
+     * @param id ID of the child to remove.
      * @throws std::logic_error Leaves cannot have children.
      */
     virtual void remove(const std::string& id);
 
-    /// @brief Returns child components (empty for leaves).
+    /**
+     * @brief Returns non-owning child pointers.
+     * @return Child components, or an empty vector for a leaf.
+     */
     virtual std::vector<Component*> getChildren() const;
 
-    /// @brief Creates an iterator for this component.
+    /**
+     * @brief Creates an iterator for this component.
+     * @return Caller-owned iterator pointer.
+     */
     virtual Iterator* createIterator() = 0;
 
-    /// @brief Checks if the component's work is done.
+    /**
+     * @brief Creates an iterator filtered by item state.
+     * @param state State name to match.
+     * @return Caller-owned iterator pointer.
+     */
+    virtual Iterator* createIterator(const std::string& state) = 0;
+
+    /**
+     * @brief Checks whether this component is complete.
+     * @return True when complete.
+     */
     virtual bool isCompleted() const = 0;
 
-    const std::string& getId() const;   ///< @return Component ID.
-    const std::string& getType() const; ///< @return Component type.
-    const std::string& getName() const; ///< @return Component display name.
+    /**
+     * @brief Returns the component ID.
+     * @return ID reference.
+     */
+    const std::string& getId() const;
+
+    /**
+     * @brief Returns the scenario-specific type.
+     * @return Type reference.
+     */
+    const std::string& getType() const;
+
+    /**
+     * @brief Returns the display name.
+     * @return Name reference.
+     */
+    const std::string& getName() const;
     
-    /// @brief Returns the state name (empty for non-items).
+    /**
+     * @brief Returns the lifecycle state name.
+     * @return State name, or an empty string for non-items.
+     */
     virtual std::string getStateName() const { return ""; }
     
-    Component* getParent() const;       ///< @return Non-owning parent.
-    void setParent(Component* p);       ///< @param p New parent.
+    /**
+     * @brief Returns the non-owning parent pointer.
+     * @return Parent, or nullptr for a root component.
+     */
+    Component* getParent() const;
+
+    /**
+     * @brief Sets the non-owning parent pointer.
+     * @param p New parent, or nullptr to detach.
+     */
+    void setParent(Component* p);
 
     /**
      * @brief Sets the mediator for this component and all its children.

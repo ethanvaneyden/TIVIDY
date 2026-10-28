@@ -1,56 +1,22 @@
+/**
+ * @file WorkflowInstance.cpp
+ * @brief Implementation of the WorkflowInstance class.
+ * @author Member 1 (Core Infrastructure)
+ * @date October 2026
+ */
+
 #include "WorkflowInstance.h"
-
-#include "AssignmentStrategy.h"
-#include "Component.h"
-#include "Container.h"
-#include "InvalidTransition.h"
-#include "Item.h"
-#include "Participant.h"
-#include "ParticipantRegistry.h"
-#include "Root.h"
-#include "WorkflowBuilder.h"
-#include "WorkflowMediator.h"
 #include "WorkRegistry.h"
-
+#include "Root.h"
+#include "Container.h"
+#include "Item.h"
+#include "Component.h"
+#include "WorkflowMediator.h"
+#include "WorkflowBuilder.h"
+#include "AssignmentStrategy.h"
+#include "ParticipantRegistry.h"
 #include <stdexcept>
 #include <utility>
-
-namespace
-{
-
-Component* findInTree(Component* node, const std::string& id)
-{
-    if (node == nullptr)
-        return nullptr;
-    if (node->getId() == id)
-        return node;
-
-    const std::vector<Component*> children = node->getChildren();
-    for (std::vector<Component*>::const_iterator child = children.begin();
-         child != children.end(); ++child)
-    {
-        Component* found = findInTree(*child, id);
-        if (found != nullptr)
-            return found;
-    }
-    return nullptr;
-}
-
-void validateRegisteredTree(const Component* node, const WorkRegistry& registry)
-{
-    if (node == nullptr || registry.get(node->getId()) != node)
-        throw std::invalid_argument(
-            "The work registry must own every node in the workflow tree");
-
-    const std::vector<Component*> children = node->getChildren();
-    for (std::vector<Component*>::const_iterator child = children.begin();
-         child != children.end(); ++child)
-    {
-        validateRegisteredTree(*child, registry);
-    }
-}
-
-}
 
 WorkflowInstance::WorkflowInstance(
     std::string instanceId,
@@ -70,41 +36,61 @@ WorkflowInstance::WorkflowInstance(
       participants(participants),
       root(root)
 {
-    if (this->instanceId.empty())
-        throw std::invalid_argument("Workflow instance id cannot be empty");
-    if (this->definitionType.empty())
-        throw std::invalid_argument("Workflow definition type cannot be empty");
-    if (!this->registry)
-        throw std::invalid_argument("Workflow instance requires a work registry");
-    if (this->root == nullptr)
-        throw std::invalid_argument("Workflow instance requires a root");
-    validateRegisteredTree(this->root, *this->registry);
-    if (!this->coordinator)
-        throw std::invalid_argument("Workflow instance requires a mediator");
+    if (!this->root) throw std::invalid_argument("Root component cannot be null");
+    if (!this->registry) throw std::invalid_argument("Registry cannot be null");
+    if (!this->coordinator) throw std::invalid_argument("Coordinator cannot be null");
+    if (!this->strategy) throw std::invalid_argument("Assignment strategy cannot be null");
+    if (!this->builder) throw std::invalid_argument("Workflow builder cannot be null");
+    if (!this->participants) throw std::invalid_argument("Participant registry cannot be null");
+    if (this->registry->get(this->root->getId()) != this->root)
+        throw std::invalid_argument("Root must be owned by the WorkRegistry");
 
     this->root->setMediator(this->coordinator.get());
 }
 
 WorkflowInstance::~WorkflowInstance() = default;
 
-const std::string& WorkflowInstance::getInstanceId() const
-{
-    return instanceId;
+const std::string& WorkflowInstance::getInstanceId() const { 
+    return instanceId; 
 }
 
-const std::string& WorkflowInstance::getDefinitionType() const
-{
-    return definitionType;
+const std::string& WorkflowInstance::getDefinitionType() const { 
+    return definitionType; 
 }
 
-Root* WorkflowInstance::getRoot() const
-{
-    return root;
+Root* WorkflowInstance::getRoot() const { 
+    return root; 
 }
 
-std::vector<std::string> WorkflowInstance::getHistory() const
+std::vector<std::string> WorkflowInstance::getHistory() const {
+    return coordinator->getHistoryAsStrings();
+}
+
+Container* WorkflowInstance::addContainer(
+    const std::string& containerId,
+    const std::string& name)
 {
-    return history;
+    if (!builder) throw std::runtime_error("No builder configured");
+    builder->buildContainer(containerId, name);
+    Container* container = getContainer(containerId);
+    if (!container)
+        throw std::logic_error("WorkflowBuilder did not register the created container");
+    container->setMediator(coordinator.get());
+    try {
+        root->add(container);
+    } catch (...) {
+        registry->remove(containerId);
+        throw;
+    }
+    return container;
+}
+
+Item* WorkflowInstance::getItem(const std::string& itemId) const {
+    return dynamic_cast<Item*>(registry->get(itemId));
+}
+
+Container* WorkflowInstance::getContainer(const std::string& containerId) const {
+    return dynamic_cast<Container*>(registry->get(containerId));
 }
 
 void WorkflowInstance::addItem(
@@ -113,103 +99,47 @@ void WorkflowInstance::addItem(
     const std::string& name,
     const std::string& subjectId)
 {
-    if (parentContainerId.empty() || itemId.empty() || name.empty())
-        throw std::invalid_argument("Parent id, item id, and item name are required");
-    if (findInTree(root, itemId) != nullptr || registry->get(itemId) != nullptr)
-        throw std::invalid_argument("Duplicate workflow component id: " + itemId);
+    if (!builder) throw std::runtime_error("No builder configured for dynamic items");
 
-    Component* parentComponent = findInTree(root, parentContainerId);
-    Container* parent = dynamic_cast<Container*>(parentComponent);
-    if (parent == nullptr)
-        throw std::out_of_range("Parent container not found: " + parentContainerId);
+    Component* c = registry->get(parentContainerId);
+    Container* parent = dynamic_cast<Container*>(c);
+    if (!parent) throw std::runtime_error("Parent container not found: " + parentContainerId);
 
-    std::unique_ptr<Item> ownedItem(
-        new Item(itemId, "item", name, nullptr, subjectId));
-    Item* item = ownedItem.get();
-    registry->add(std::unique_ptr<Component>(ownedItem.release()));
-
-    try
-    {
+    builder->buildItem(itemId, name);
+    Item* item = getItem(itemId);
+    if (!item)
+        throw std::logic_error("WorkflowBuilder did not register the created item");
+    item->setMediator(coordinator.get());
+    if (item->getParent() != parent) {
         parent->add(item);
     }
-    catch (...)
-    {
-        registry->remove(itemId);
-        throw;
-    }
-
-    item->setMediator(coordinator.get());
-    history.push_back("Added item " + itemId + " to container " + parentContainerId);
+    coordinator->onItemAdded(item);
 }
 
-void WorkflowInstance::startItem(const std::string& itemId)
-{
-    Component* component = findInTree(root, itemId);
-    Item* item = dynamic_cast<Item*>(component);
-    if (item == nullptr)
-        throw std::out_of_range("Item not found: " + itemId);
+void WorkflowInstance::startItem(const std::string& itemId) {
+    Component* c = registry->get(itemId);
+    Item* item = dynamic_cast<Item*>(c);
+    if (!item) throw std::runtime_error("Item not found: " + itemId);
 
-    Container* parent = dynamic_cast<Container*>(item->getParent());
-    if (parent == nullptr)
-        throw std::logic_error("Item is not attached to a workflow container");
-
-    if (parent->getPhaseName() == "Intake")
-    {
-        parent->advancePhase();
-        history.push_back("Activated container " + parent->getId());
-    }
-
-    if (item->getAssignee() == nullptr)
-    {
-        if (!strategy || participants == nullptr)
-            throw std::logic_error("Item assignment is not configured");
-
-        std::vector<Participant*> pool;
-        const std::vector<std::string> ids = participants->getAllIds();
-        for (std::vector<std::string>::const_iterator id = ids.begin();
-             id != ids.end(); ++id)
-        {
-            Participant* participant = participants->get(*id);
-            if (participant != nullptr)
-                pool.push_back(participant);
-        }
-
-        Participant* assignee = strategy->assign(pool);
-        if (assignee == nullptr)
-        {
-            coordinator->onAssignmentFailed(item, "No worker is available");
-            throw std::logic_error("Assignment strategy found no eligible worker");
-        }
-        item->assign(assignee);
-        history.push_back("Assigned item " + itemId + " to " + assignee->getId());
-    }
-
+    // State machine handles validity (throws if not Assigned) and notifies Mediator
     item->start();
-    history.push_back("Started item " + itemId);
 }
 
-void WorkflowInstance::completeItem(const std::string& itemId, int value)
-{
-    Component* component = findInTree(root, itemId);
-    Item* item = dynamic_cast<Item*>(component);
-    if (item == nullptr)
-        throw std::out_of_range("Item not found: " + itemId);
+void WorkflowInstance::completeItem(const std::string& itemId, int value) {
+    Component* c = registry->get(itemId);
+    Item* item = dynamic_cast<Item*>(c);
+    if (!item) throw std::runtime_error("Item not found: " + itemId);
 
+    // State machine handles validity and notifies Mediator
     item->complete(value);
-    history.push_back("Completed item " + itemId);
 }
 
-void WorkflowInstance::rejectItem(
-    const std::string& itemId,
-    const std::string& reason)
-{
-    Component* component = findInTree(root, itemId);
-    Item* item = dynamic_cast<Item*>(component);
-    if (item == nullptr)
-        throw std::out_of_range("Item not found: " + itemId);
+void WorkflowInstance::rejectItem(const std::string& itemId, const std::string& reason) {
+    Component* c = registry->get(itemId);
+    Item* item = dynamic_cast<Item*>(c);
+    if (!item) throw std::runtime_error("Item not found: " + itemId);
 
     item->reject(reason);
-    history.push_back("Rejected item " + itemId + ": " + reason);
 }
 
 void WorkflowInstance::overrideItem(
@@ -218,63 +148,28 @@ void WorkflowInstance::overrideItem(
     int newValue,
     const std::string& reason)
 {
-    if (reason.empty())
-        throw std::invalid_argument("An override reason is required");
+    Component* c = registry->get(itemId);
+    Item* item = dynamic_cast<Item*>(c);
+    if (!item) throw std::runtime_error("Item not found: " + itemId);
 
-    Component* component = findInTree(root, itemId);
-    Item* item = dynamic_cast<Item*>(component);
-    if (item == nullptr)
-        throw std::out_of_range("Item not found: " + itemId);
-
+    // The Operator (Lecturer/Chief) overrides a Rejected item
     item->resolveReview(operatorParticipant, newValue, reason);
-    history.push_back("Overrode item " + itemId + ": " + reason);
 }
 
-void WorkflowInstance::approveContainer(
-    const std::string& containerId,
-    Participant* operatorParticipant)
-{
-    (void)operatorParticipant;
-    Component* component = findInTree(root, containerId);
-    if (dynamic_cast<Container*>(component) == nullptr)
-        throw std::out_of_range("Container not found: " + containerId);
+void WorkflowInstance::approveContainer(const std::string& containerId, Participant* operatorParticipant) {
+    Component* c = registry->get(containerId);
+    Container* container = dynamic_cast<Container*>(c);
+    if (!container) throw std::runtime_error("Container not found: " + containerId);
 
-    throw std::logic_error(
-        "Batch approval is not available in the WorkflowMediator interface");
+    // Delegate the batch approval to the Mediator (runs the Chain of Responsibility)
+    coordinator->onContainerApprovalRequested(container, operatorParticipant);
 }
 
-void WorkflowInstance::rejectContainer(
-    const std::string& containerId,
-    const std::string& reason)
-{
-    if (reason.empty())
-        throw std::invalid_argument("A rejection reason is required");
+void WorkflowInstance::rejectContainer(const std::string& containerId, const std::string& reason) {
+    Component* c = registry->get(containerId);
+    Container* container = dynamic_cast<Container*>(c);
+    if (!container) throw std::runtime_error("Container not found: " + containerId);
 
-    Component* component = findInTree(root, containerId);
-    Container* container = dynamic_cast<Container*>(component);
-    if (container == nullptr)
-        throw std::out_of_range("Container not found: " + containerId);
-    if (container->getPhaseName() != "Review")
-        throw InvalidTransition("A container can only be rejected during Review");
-
-    const std::vector<Component*> children = container->getChildren();
-    if (children.empty())
-        throw InvalidTransition("An empty container cannot be rejected");
-
-    std::vector<Item*> items;
-    for (std::vector<Component*>::const_iterator child = children.begin();
-         child != children.end(); ++child)
-    {
-        Item* item = dynamic_cast<Item*>(*child);
-        if (item == nullptr || item->getStateName() != "Completed")
-            throw InvalidTransition("Only completed items can be rejected as a batch");
-        items.push_back(item);
-    }
-
-    for (std::vector<Item*>::const_iterator item = items.begin();
-         item != items.end(); ++item)
-    {
-        (*item)->reject(reason);
-    }
-    history.push_back("Rejected container " + containerId + ": " + reason);
+    // Delegate to Mediator to handle the rejection and rework logic
+    coordinator->onContainerRejected(container, reason);
 }

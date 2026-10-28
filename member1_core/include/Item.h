@@ -22,6 +22,14 @@ class Container;
  * a std::logic_error.
  */
 class Item : public Component {
+private:
+    /**
+     * @brief Installs a state returned by the current state transition.
+     * @param next Owning pointer to the next state.
+     * @throws std::invalid_argument If next is null.
+     */
+    void setState(std::unique_ptr<ItemState> next);
+
 protected:
     /// @brief Owned lifecycle state for this item (e.g., Available, Assigned).
     std::unique_ptr<ItemState> state;
@@ -64,6 +72,7 @@ public:
      * @return A SingleItemIterator.
      */
     Iterator* createIterator() override;
+     Iterator* createIterator(const std::string& state) override;
 
     /**
      * @brief Checks whether the current lifecycle state is "Completed".
@@ -119,12 +128,6 @@ public:
     // ==========================================
 
     /**
-     * @brief Replaces the owned lifecycle state.
-     * @param s Non-null replacement state (usually created by the current state).
-     */
-    void setState(std::unique_ptr<ItemState> s);
-
-    /**
      * @brief Returns the name of the current lifecycle state.
      */
     std::string getStateName() const;
@@ -173,6 +176,15 @@ public:
      * @param method "Batch" or "Personal".
      */
     void setReviewer(Participant* p, const std::string& method);
+
+    /**
+     * @brief Records an approved review without changing the item state.
+     * @param p Non-owning reviewer pointer.
+     * @param method Review method, such as "Batch".
+     * @throws std::invalid_argument If p is null or method is empty.
+     * @throws InvalidTransition If this item is not completed.
+     */
+    void recordReview(Participant* p, const std::string& method);
 
     /**
      * @brief Sets the result value and marks it as recorded.

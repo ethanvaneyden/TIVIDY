@@ -6,6 +6,7 @@
 
 #include "ParticipantRegistry.h"
 #include <stdexcept>
+#include <utility>
 
 ParticipantRegistry::ParticipantRegistry() = default;
 ParticipantRegistry::~ParticipantRegistry() = default;
@@ -14,7 +15,6 @@ Participant* ParticipantRegistry::add(std::unique_ptr<Participant> p) {
     if (!p) {
         throw std::invalid_argument("Cannot add null participant to registry");
     }
-    
     std::string id = p->getId();
     if (participants.count(id)) {
         throw std::invalid_argument("Participant with ID " + id + " already exists");
@@ -23,6 +23,20 @@ Participant* ParticipantRegistry::add(std::unique_ptr<Participant> p) {
     Participant* raw = p.get();
     participants.emplace(id, std::move(p));
     return raw;
+}
+
+Participant* ParticipantRegistry::add(const std::string& name, const std::string& role) {
+    if (name.empty() || role.empty())
+        throw std::invalid_argument("Participant name and role must not be empty");
+
+    unsigned& nextId = nextIds[role];
+    if (nextId == 0) nextId = 1;
+    std::string id;
+    do {
+        id = role + std::to_string(nextId++);
+    } while (participants.find(id) != participants.end());
+
+    return add(std::unique_ptr<Participant>(new Participant(id, name, role)));
 }
 
 Participant* ParticipantRegistry::get(const std::string& id) const {
@@ -58,4 +72,12 @@ std::vector<Participant*> ParticipantRegistry::getByRole(const std::string& role
 
 size_t ParticipantRegistry::size() const {
     return participants.size();
+}
+
+std::vector<std::string> ParticipantRegistry::getAllIds() const {
+    std::vector<std::string> ids;
+    ids.reserve(participants.size());
+    for (const auto& entry : participants)
+        ids.push_back(entry.first);
+    return ids;
 }

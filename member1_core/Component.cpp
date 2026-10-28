@@ -4,7 +4,10 @@
 #include <utility>
 
 Component::Component(std::string id, std::string type, std::string name, Component* parent)
-    : id(std::move(id)), type(std::move(type)), name(std::move(name)), parent(parent) {}
+    : id(std::move(id)), type(std::move(type)), name(std::move(name)), parent(parent) {
+    if (this->id.empty() || this->type.empty())
+        throw std::invalid_argument("Component ID and type must not be empty");
+}
 
 void Component::add(Component*) {
     throw std::logic_error("Cannot add children to a leaf component.");
