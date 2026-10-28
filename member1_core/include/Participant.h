@@ -1,5 +1,4 @@
-#ifndef PARTICIPANT_H
-#define PARTICIPANT_H
+#pragma once
 #include <cstddef>
 #include <map>
 #include <string>
@@ -68,5 +67,3 @@ public:
      */
     void decrementPendingTasks();
 };
-
-#endif

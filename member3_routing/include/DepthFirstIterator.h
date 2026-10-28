@@ -1,5 +1,4 @@
-#ifndef DEPTHFIRSTITERATOR_H
-#define DEPTHFIRSTITERATOR_H
+#pragma once
 
 #include "Iterator.h"
 #include "Component.h"
@@ -18,5 +17,3 @@ public:
     virtual bool isDone();
     virtual Component *current();
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef INPROGRESSSTATE_H
-#define INPROGRESSSTATE_H
+#pragma once
 
 #include "ItemState.h"
 
@@ -9,5 +8,3 @@ public:
     void complete(Item& item, int) override;
     std::string name() const override;
 };
-
-#endif

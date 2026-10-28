@@ -7,7 +7,7 @@
 #include "Item.h"
 #include "Participant.h"
 #include "WorkflowInstance.h"
-#include "Registry.h"
+#include "WorkRegistry.h"
 #include "WorkflowMediator.h"
 #include "AssignmentStrategy.h"
 #include "WorkflowBuilder.h"

@@ -1,5 +1,4 @@
-#ifndef PARTICIPANTREGISTRY_H
-#define PARTICIPANTREGISTRY_H
+#pragma once
 
 #include "Participant.h"
 
@@ -70,5 +69,3 @@ public:
     /// @brief Returns all registered identifiers in map order.
     std::vector<std::string> getAllIds() const;
 };
-
-#endif

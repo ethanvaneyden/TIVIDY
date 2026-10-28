@@ -3,8 +3,7 @@
  * @brief Concrete Mediator for the Education scenario.
  */
 
-#ifndef EDUCATIONMEDIATOR_H
-#define EDUCATIONMEDIATOR_H
+#pragma once
 
 #include "WorkflowMediator.h"
 #include "EducationApprovalChain.h"
@@ -106,5 +105,3 @@ class EducationMediator : public WorkflowMediator
 };
 
 } // namespace education
-
-#endif /*EDUCATIONMEDIATOR_H*/

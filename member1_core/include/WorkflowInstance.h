@@ -1,16 +1,13 @@
-#ifndef WORKFLOWINSTANCE_H
-#define WORKFLOWINSTANCE_H
+#pragma once
 #include <memory>
 #include <string>
 #include <vector>
 
-class Registry;
 class Container;
 class WorkflowMediator;
 class AssignmentStrategy;
 class ParticipantRegistry;
 class WorkflowBuilder;
-class Root;
 class WorkRegistry;
 
 /**
@@ -26,19 +23,19 @@ private:
     std::string instanceId;
     std::string definitionType;
 
-    std::unique_ptr<WorkRegistry> registry;
+    std::unique_ptr<WorkRegistry> workRegistry;
     std::unique_ptr<WorkflowMediator> coordinator;
     std::unique_ptr<AssignmentStrategy> strategy;
     std::unique_ptr<WorkflowBuilder> builder;
     ParticipantRegistry *participants;
-    Root *root;
+    Container *root;
 
 public:
     /**
      * @brief Constructs a workflow instance from its collaborating services.
      * @param instanceId Unique identifier for this workflow instance.
      * @param definitionType Type of workflow definition being run.
-     * @param registry Registry for workflow components.
+     * @param workRegistry Registry for workflow components.
      * @param root Root container for the workflow tree.
      * @param coordinator Mediator coordinating workflow actions.
      * @param strategy Assignment strategy.
@@ -48,7 +45,7 @@ public:
     WorkflowInstance(
         std::string instanceId,
         std::string definitionType,
-        std::unique_ptr<Registry> registry,
+        std::unique_ptr<WorkRegistry> workRegistry,
         Container *root,
         std::unique_ptr<WorkflowMediator> coordinator,
         std::unique_ptr<AssignmentStrategy> strategy,
@@ -113,5 +110,3 @@ public:
      */
     void rejectContainer(const std::string &containerId, const std::string &reason);
 };
-
-#endif

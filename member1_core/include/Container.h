@@ -1,5 +1,4 @@
-#ifndef CONTAINER_H
-#define CONTAINER_H
+#pragma once
 #include "Component.h"
 #include <vector>
 #include <memory>
@@ -98,5 +97,3 @@ public:
      */
     bool tryPublish();
 };
-
-#endif

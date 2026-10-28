@@ -8,8 +8,7 @@
  * can be swapped out; only RestServer.cpp includes it.
 */
 
-#ifndef JSONSERIALIZER_H
-#define JSONSERIALIZER_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -85,5 +84,3 @@ class JsonSerializer
         */
         static std::string escape(const std::string& s);
 };
-
-#endif /*JSONSERIALIZER_H*/

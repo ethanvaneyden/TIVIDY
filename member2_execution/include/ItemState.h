@@ -3,8 +3,7 @@
  * @brief Shared, scenario-independent item lifecycle.
 */
 
-#ifndef ITEMSTATE_H
-#define ITEMSTATE_H
+#pragma once
 
 #include <string>
 
@@ -24,5 +23,3 @@ class ItemState
         virtual bool isCompleted() const { return false; }
         virtual bool isRejected() const { return false; }
 };
-
-#endif

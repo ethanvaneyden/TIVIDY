@@ -3,8 +3,7 @@
  * @brief STUB - replaced by Member 4's full implementation.
  */
 
-#ifndef APPROVALHANDLER_H
-#define APPROVALHANDLER_H
+#pragma once
 
 class Item;
 
@@ -35,5 +34,3 @@ class ApprovalHandler
             return next != nullptr ? next->handle(item, value) : false;
         }
 };
-
-#endif /*APPROVALHANDLER_H*/

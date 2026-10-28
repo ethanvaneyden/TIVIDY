@@ -1,5 +1,4 @@
-#ifndef COLLEAGUE_H
-#define COLLEAGUE_H
+#pragma once
 class WorkflowMediator;
 
 /**
@@ -28,5 +27,3 @@ public:
     /// @brief Returns the current non-owning mediator, or nullptr if unset.
     WorkflowMediator *getMediator() const;
 };
-
-#endif
