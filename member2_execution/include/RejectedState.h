@@ -1,5 +1,4 @@
-#ifndef REJECTEDSTATE_H
-#define REJECTEDSTATE_H
+#pragma once
 
 #include "ItemState.h"
 
@@ -10,5 +9,3 @@ public:
     std::string name() const override;
     bool isRejected() const override { return true; }
 };
-
-#endif

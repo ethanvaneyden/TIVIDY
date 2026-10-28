@@ -3,8 +3,7 @@
  * @brief Concrete Chain of Responsibility for marks.
  */
 
-#ifndef EDUCATIONAPPROVALCHAIN_H
-#define EDUCATIONAPPROVALCHAIN_H
+#pragma once
 
 #include "ApprovalHandler.h"
 
@@ -93,5 +92,3 @@ class EducationApprovalChain
 };
 
 } // namespace education
-
-#endif /*EDUCATIONAPPROVALCHAIN_H*/

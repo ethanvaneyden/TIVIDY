@@ -1,5 +1,4 @@
-#ifndef STATEFILTERITERATOR_H
-#define STATEFILTERITERATOR_H
+#pragma once
 
 #include "DepthFirstIterator.h"
 #include "Component.h"
@@ -16,5 +15,3 @@ public:
     virtual Component *first();
     virtual Component *next();
 };
-
-#endif

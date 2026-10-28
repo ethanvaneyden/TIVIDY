@@ -1,5 +1,4 @@
-#ifndef ACTIVEPHASE_H
-#define ACTIVEPHASE_H
+#pragma once
 
 #include "WorkflowPhase.h"
 
@@ -9,5 +8,3 @@ public:
     void advance(Container& container) override;
     std::string name() const override;
 };
-
-#endif

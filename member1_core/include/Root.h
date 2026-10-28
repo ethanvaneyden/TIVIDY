@@ -1,5 +1,4 @@
-#ifndef ROOT_H
-#define ROOT_H
+#pragma once
 #include "Component.h"
 #include <vector>
 #include <memory>
@@ -58,5 +57,3 @@ public:
      */
     Iterator* createIterator() override;
 };
-
-#endif

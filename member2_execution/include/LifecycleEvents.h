@@ -1,5 +1,4 @@
-#ifndef LIFECYCLEEVENTS_H
-#define LIFECYCLEEVENTS_H
+#pragma once
 
 // Passed to WorkflowMediator::notify after the operation has committed.
 namespace LifecycleEvents
@@ -12,5 +11,3 @@ namespace LifecycleEvents
     const char* const ItemReviewResolved = "ItemReviewResolved";
     const char* const PhaseChanged = "PhaseChanged";
 }
-
-#endif

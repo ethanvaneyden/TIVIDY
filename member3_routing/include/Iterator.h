@@ -3,8 +3,7 @@
  * @brief STUB — replaced by Member 3's full implementation.
  */
 
-#ifndef ITERATOR_H
-#define ITERATOR_H
+#pragma once
 
 class Component;
 
@@ -18,5 +17,3 @@ public:
     virtual bool isDone() = 0;
     virtual Component *current() = 0;
 };
-
-#endif

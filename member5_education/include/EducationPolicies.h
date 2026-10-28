@@ -3,8 +3,7 @@
  * @brief Education-specific mark rules: validation, approval bands and
  */
 
-#ifndef EDUCATIONPOLICIES_H
-#define EDUCATIONPOLICIES_H
+#pragma once
 
 #include <string>
 
@@ -86,5 +85,3 @@ class EducationPolicies
 };
 
 } // namespace education
-
-#endif /*EDUCATIONPOLICIES_H*/

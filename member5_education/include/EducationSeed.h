@@ -3,8 +3,7 @@
  * @brief Demo data for the Education scenario: participants and sample
  */
 
-#ifndef EDUCATIONSEED_H
-#define EDUCATIONSEED_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -48,5 +47,3 @@ class EducationSeed
 };
 
 } // namespace education
-
-#endif /*EDUCATIONSEED_H*/

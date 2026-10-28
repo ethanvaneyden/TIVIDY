@@ -1,5 +1,4 @@
-#ifndef ITEM_H
-#define ITEM_H
+#pragma once
 #include "Component.h"
 #include <memory>
 
@@ -187,5 +186,3 @@ public:
     void resolveReview(Participant* reviewer, int value);
 
 };
-
-#endif

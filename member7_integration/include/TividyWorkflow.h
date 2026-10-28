@@ -3,8 +3,7 @@
  * @brief Facade for the TIVIDY workflow engine.
 */
 
-#ifndef TIVIDYWORKFLOW_H
-#define TIVIDYWORKFLOW_H
+#pragma once
 
 #include <memory>
 #include <string>
@@ -113,5 +112,3 @@ class TividyWorkflow
         CommandResult admitPatient(const std::string& instanceId,
                                    const std::string& containerName);
 };
-
-#endif /*TIVIDYWORKFLOW_*/

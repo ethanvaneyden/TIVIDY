@@ -3,8 +3,7 @@
  * @brief Concrete Builder for the Education scenario.
  */
 
-#ifndef ASSIGNMENTMARKINGBUILDER_H
-#define ASSIGNMENTMARKINGBUILDER_H
+#pragma once
 
 #include "WorkflowBuilder.h"
 
@@ -48,5 +47,3 @@ class AssignmentMarkingBuilder : public WorkflowBuilder
 };
 
 } // namespace education
-
-#endif /*ASSIGNMENTMARKINGBUILDER_H*/

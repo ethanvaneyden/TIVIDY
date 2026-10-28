@@ -3,8 +3,7 @@
  * @brief REST bridge between React and the TividyWorkflow facade.
 */
 
-#ifndef RESTSERVER_H
-#define RESTSERVER_H
+#pragma once
 
 #include <memory>
 #include <mutex>
@@ -44,5 +43,3 @@ class RestServer
         */
         bool run(const std::string& host, int port);
 };
-
-#endif /*RESTSERVER_*/

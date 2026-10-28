@@ -1,5 +1,4 @@
-#ifndef COMPONENT_H
-#define COMPONENT_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -82,5 +81,3 @@ public:
     /// @param p Parent component, or nullptr to detach.
     void setParent(Component *p);
 };
-
-#endif
