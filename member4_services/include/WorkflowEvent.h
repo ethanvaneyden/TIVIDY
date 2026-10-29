@@ -5,7 +5,6 @@ using namespace std;
 #include <string>
 
 struct WorkflowEvent {  //doxygen
-private:
     string type;
     string recipientId;
     string payload;

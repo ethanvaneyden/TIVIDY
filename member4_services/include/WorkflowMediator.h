@@ -6,19 +6,20 @@
  * @brief STUB — replaced by Member 4's full implementation.
 */
 
+using namespace std;
 #include <string>
 #include "Colleague.h"
+#include "WorkItem.h"
 
 class WorkflowMediator
 {
     public:
         WorkflowMediator();
         virtual ~WorkflowMediator();
-
-        //this function should be pure virtual i assume
-        //stub for now
-        // virtual void notify(Colleague* sender, const std::string& event) = 0;
-        virtual void notify(Colleague* sender, const std::string& event);
+        virtual void notify(Colleague* sender, string event);
+        virtual void onSubmissionReceived(WorkItem* item);
+        virtual void onMarkingCompleted(WorkItem* item);
+        virtual void onModerationCompleted(WorkItem* item);
 };
 
 #endif

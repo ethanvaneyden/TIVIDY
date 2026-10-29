@@ -5,7 +5,8 @@
 
 class Observer {
 public:
-    void update(WorkflowEvent& event);
+    virtual void update(const WorkflowEvent& event) = 0;
+    virtual ~Observer() = default;
 };
 
 

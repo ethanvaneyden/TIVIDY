@@ -8,11 +8,11 @@ using namespace std;
 
 class EventBus {
 private:
-    vector<unique_ptr<Observer>> subscribers;
+    vector<Observer*> subscribers;
 public:
-    void subscribe(unique_ptr<Observer> observer);
-    void publish(WorkflowEvent event);
-    size_t observerCount();
+    void subscribe(Observer* observer);
+    void publish(const WorkflowEvent& event);
+    size_t observerCount() const;
 };
 
 

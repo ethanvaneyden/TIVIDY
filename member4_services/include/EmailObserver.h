@@ -5,7 +5,7 @@
 
 class EmailObserver : public Observer {
     public:
-    void update(WorkflowEvent& event);
+    void update(WorkflowEvent& event) override;
 };
 
 

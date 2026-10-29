@@ -45,6 +45,14 @@ add_library(tividy_core
     # --- Member 4: commands, events, history ---
     # member4_services/WorkCommand.cpp # # uncomment this line & more
     member4_services/WorkflowMediator.cpp
+    member4_services/Colleague.cpp
+    #Observer Pattern
+    member4_services/EventBus.cpp
+    member4_services/EmailObserver.cpp
+    member4_services/LMSObserver.cpp
+    #Command Pattern
+    member4_services/WorkCommand.cpp
+    member4_services/ActionHistory.cpp
 
     # --- Member 5: education scenario ---
     # member5_education/AssignmentMarkingBuilder.cpp # # uncomment this line & more
