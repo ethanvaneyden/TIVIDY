@@ -104,6 +104,19 @@ public:
     std::vector<std::string> getHistory() const;
 
     /**
+     * @brief Returns every item in depth-first workflow-tree order.
+     * @return Non-owning item pointers.
+     */
+    std::vector<Item*> getItems() const;
+
+    /**
+     * @brief Returns items matching a lifecycle state in depth-first order.
+     * @param state Exact state name, such as "Available" or "Rejected".
+     * @return Non-owning item pointers matching the state.
+     */
+    std::vector<Item*> getItemsByState(const std::string& state) const;
+
+    /**
      * @brief Builds and attaches a scenario-specific container.
      * @param containerId Unique container ID.
      * @param name Display name.
