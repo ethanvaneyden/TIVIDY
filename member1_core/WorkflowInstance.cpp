@@ -11,10 +11,12 @@
 #include "Container.h"
 #include "Item.h"
 #include "Component.h"
+#include "Iterator.h"
 #include "WorkflowMediator.h"
 #include "WorkflowBuilder.h"
 #include "AssignmentStrategy.h"
 #include "ParticipantRegistry.h"
+#include <memory>
 #include <stdexcept>
 #include <utility>
 
@@ -64,6 +66,32 @@ Root* WorkflowInstance::getRoot() const {
 
 std::vector<std::string> WorkflowInstance::getHistory() const {
     return coordinator->getHistoryAsStrings();
+}
+
+std::vector<Item*> WorkflowInstance::getItems() const
+{
+    std::vector<Item*> items;
+    std::unique_ptr<Iterator> iterator(root->createIterator());
+    for (iterator->first(); !iterator->isDone(); iterator->next())
+    {
+        Item* item = dynamic_cast<Item*>(iterator->current());
+        if (item != nullptr)
+            items.push_back(item);
+    }
+    return items;
+}
+
+std::vector<Item*> WorkflowInstance::getItemsByState(const std::string& state) const
+{
+    std::vector<Item*> items;
+    std::unique_ptr<Iterator> iterator(root->createIterator(state));
+    for (iterator->first(); !iterator->isDone(); iterator->next())
+    {
+        Item* item = dynamic_cast<Item*>(iterator->current());
+        if (item != nullptr)
+            items.push_back(item);
+    }
+    return items;
 }
 
 Container* WorkflowInstance::addContainer(

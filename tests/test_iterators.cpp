@@ -75,3 +75,33 @@ TEST(IteratorTest, StateFilterNoMatchEndsCleanly)
     EXPECT_TRUE(it->isDone());
     EXPECT_EQ(it->current(), nullptr);
 }
+
+TEST(IteratorTest, StateFilterCanMatchAnyComponentState)
+{
+    TestNode root("Root"), container("Container");
+    TestNode item("Item", "");
+    root.add(&container);
+    container.add(&item);
+
+    std::unique_ptr<Iterator> it(root.createIterator(""));
+    std::vector<std::string> found;
+    for (it->first(); !it->isDone(); it->next())
+        found.push_back(it->current()->getName());
+
+    EXPECT_EQ(found, (std::vector<std::string>{"Root", "Container", "Item"}));
+}
+
+TEST(IteratorTest, ItemCreatesIteratorsForItsOwnSubtree)
+{
+    Item item("item", "work", "Item");
+
+    std::unique_ptr<Iterator> all(item.createIterator());
+    all->first();
+    EXPECT_EQ(all->current(), &item);
+    all->next();
+    EXPECT_TRUE(all->isDone());
+
+    std::unique_ptr<Iterator> filtered(item.createIterator("Available"));
+    filtered->first();
+    EXPECT_EQ(filtered->current(), &item);
+}

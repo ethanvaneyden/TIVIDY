@@ -3,6 +3,8 @@
 #include "CreatedState.h"
 #include "ItemState.h"
 #include "InvalidTransition.h"
+#include "DepthFirstIterator.h"
+#include "StateFilterIterator.h"
 #include "Participant.h"
 #include "WorkflowMediator.h"
 #include "Container.h"
@@ -33,11 +35,11 @@ Item::~Item()
 }
 
 Iterator* Item::createIterator() {
-    return nullptr;
+    return new DepthFirstIterator(this);
 }
 
 Iterator* Item::createIterator(const std::string& state) {
-    return nullptr;
+    return new StateFilterIterator(this, state);
 }
 
 bool Item::isCompleted() const {

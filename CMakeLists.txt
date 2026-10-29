@@ -12,7 +12,6 @@ FetchContent_Declare(
   URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
 )
 FetchContent_MakeAvailable(googletest)
-
 # ----------------- Core library -----------------
 # All production code except the app entry point.
 add_library(tividy_core
@@ -26,6 +25,7 @@ add_library(tividy_core
     member1_core/Root.cpp
     member1_core/WorkRegistry.cpp
     member1_core/WorkflowInstance.cpp
+    member7_integration/JsonSerializer.cpp
 
     # --- Member 2: execution & lifecycle ---
     member2_execution/ItemState.cpp
@@ -87,7 +87,6 @@ target_include_directories(tividy_core PUBLIC
     member7_integration
     member7_integration/include
 )
-
 # ----------------- Application -----------------
 add_executable(tividy app/main_web.cpp)
 target_link_libraries(tividy PRIVATE tividy_core)
@@ -104,6 +103,7 @@ add_executable(tividy_tests
     tests/test_hospital.cpp
     # tests/test_integration.cpp
     tests/test_iterators.cpp
+    tests/test_json_serializer.cpp
     tests/test_participants.cpp
     tests/test_smoke.cpp
     tests/test_states.cpp

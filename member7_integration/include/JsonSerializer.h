@@ -2,10 +2,7 @@
  * @file JsonSerializer.h
  * @brief Minimal JSON serializer for engine objects.
  *
- * [DEFAULT DECISION] Hand-rolled writer (no dependency on nlohmann/json).
- * Rationale: the shapes are simple, the code is small, and there is
- * nothing to fetch in CMake. If the team prefers nlohmann, this file
- * can be swapped out; only RestServer.cpp includes it.
+ * Uses nlohmann/json for JSON generation and parsing.
 */
 
 #pragma once
@@ -13,7 +10,6 @@
 #include <string>
 #include <vector>
 
-class Container;
 class Item;
 class Participant;
 class Component;
@@ -31,7 +27,7 @@ class JsonSerializer
         /**
          * @brief Serialize a component tree.
         */
-        static std::string serializeTree(const Container* root);
+        static std::string serializeTree(const Component* root);
 
         /**
          * @brief Serialize a single item.
@@ -70,17 +66,4 @@ class JsonSerializer
                           const std::string& field,
                           int fallback);
 
-    private:
-        static void serializeComponent(const Component* c, std::string& out);
-
-        /**
-         * @brief Escapes special characters in a string for JSON compatibility.
-         * 
-         * This method iterates through the input string and replaces control characters 
-         * and quotation marks with their corresponding JSON-escaped equivalents.
-         * 
-         * @param s The input string containing text to be escaped.
-         * @return A new `std::string` with all special characters properly escaped.
-        */
-        static std::string escape(const std::string& s);
 };
