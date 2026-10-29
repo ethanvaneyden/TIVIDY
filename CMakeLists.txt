@@ -51,8 +51,8 @@ add_library(tividy_core
     member4_services/EmailObserver.cpp
     member4_services/LMSObserver.cpp
     #Command Pattern
-    member4_services/WorkCommand.cpp
     member4_services/ActionHistory.cpp
+    member4_services/
 
     # --- Member 5: education scenario ---
     # member5_education/AssignmentMarkingBuilder.cpp # # uncomment this line & more

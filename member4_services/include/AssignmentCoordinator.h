@@ -1,8 +1,9 @@
 #ifndef TIVIDY_ASSIGNMENTCOORDINATOR_H
 #define TIVIDY_ASSIGNMENTCOORDINATOR_H
-#include "include/ActionHistory.h"
-#include "include/Colleague.h"
-#include "include/EventBus.h"
+
+#include "ActionHistory.h"
+#include "Colleague.h"
+#include "EventBus.h"
 
 using namespace std;
 #include <memory>

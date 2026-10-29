@@ -1,23 +1,21 @@
 #ifndef TIVIDY_ACTIONHISTORY_H
 #define TIVIDY_ACTIONHISTORY_H
+
 #include <memory>
+#include <string>
 #include <vector>
+#include <utility>
 
 #include "WorkCommand.h"
-
 using namespace std;
-#include <vector>
 
 class ActionHistory {
 private:
     vector<unique_ptr<WorkCommand>> history;
-    vector<unique_ptr<WorkCommand>> undone;
+
 public:
-    void execute(WorkCommand* command);
-    void undoLast();
-    void redoLast();
-    List<WorkCommand*> getHistory();
+    void execute(unique_ptr<WorkCommand> command);
+    vector<string> getHistoryAsStrings() const;
 };
 
-
-#endif //TIVIDY_ACTIONHISTORY_H
+#endif // TIVIDY_ACTIONHISTORY_H
