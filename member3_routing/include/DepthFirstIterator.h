@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Iterator.h"
+#include <vector>
 #include "Component.h"
 /**
  * @file DepthFirstIterator.h
@@ -9,7 +10,7 @@
 
 /**
  * @class DepthFirstIterator
- * @brief Visits a node, then each of its children in order, then moves to the next sibling.
+ * @brief Visits a node and its descendants in depth-first order.
  *
  * For the tree Root -> (C1 -> A, B), (C2 -> C) the visiting order is
  * Root, C1, A, B, C2, C. next() goes down to the first child if there is one,
@@ -17,8 +18,7 @@
  * an ancestor has a next sibling. The climb stops at the starting node, so an
  * iterator started on a Container never leaves that subtree.
  *
- * @note Relies on Container::add() calling setParent() on every child, and on
- *       leaves returning an empty vector from getChildren().
+ * @note Relies on leaves returning an empty vector from getChildren().
  */
 class DepthFirstIterator : public Iterator
 {
@@ -27,6 +27,7 @@ private:
     Component *root;
     /** @brief Node the iterator is currently on, or nullptr when the traversal is done. */
     Component *curr;
+    std::vector<Component*> pending;
 
 public:
     /**

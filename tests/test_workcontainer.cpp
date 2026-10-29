@@ -31,6 +31,20 @@ TEST(RootTest, TracksContainersAndEnforcesSingleParent)
     EXPECT_TRUE(root.getChildren().empty());
 }
 
+TEST(RootTest, RejectsRemovingContainerOutsideIntake)
+{
+    Root root("root", "workflow", "Workflow");
+    Container container("container", "group", "Container");
+    Item item("item", "work", "Item");
+    root.add(&container);
+    container.add(&item);
+    container.advancePhase();
+
+    EXPECT_THROW(root.remove("container"), InvalidTransition);
+    ASSERT_EQ(root.getChildren().size(), 1u);
+    EXPECT_EQ(container.getParent(), &root);
+}
+
 TEST(RootTest, CreatesDepthFirstIteratorForWorkflowTree)
 {
     Root root("root", "workflow", "Workflow");
@@ -98,4 +112,19 @@ TEST(WorkRegistryTest, RejectsRemovalOutsideIntakeWithoutChangingTree)
     ASSERT_EQ(container->getChildren().size(), 1u);
     EXPECT_EQ(container->getChildren().front(), item);
     EXPECT_EQ(item->getParent(), container);
+}
+
+TEST(WorkRegistryTest, RejectsRemovingContainerOutsideIntake)
+{
+    WorkRegistry registry;
+    Container* container = static_cast<Container*>(
+        registry.add(std::unique_ptr<Component>(new Container("container", "group", "Container"))));
+    Item* item = static_cast<Item*>(
+        registry.add(std::unique_ptr<Component>(new Item("item", "work", "Item"))));
+    container->add(item);
+    container->advancePhase();
+
+    EXPECT_THROW(registry.remove("container"), InvalidTransition);
+    EXPECT_TRUE(registry.contains("container"));
+    EXPECT_TRUE(registry.contains("item"));
 }

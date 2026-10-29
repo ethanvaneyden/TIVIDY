@@ -14,7 +14,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 
 # ----------------- Core library -----------------
-# All production code except app/main.cpp.
+# All production code except the app entry point.
 add_library(tividy_core
     # --- Member 1: core model ---
     member1_core/Colleague.cpp # # uncomment this line & more
@@ -26,7 +26,6 @@ add_library(tividy_core
     member1_core/Root.cpp
     member1_core/WorkRegistry.cpp
     member1_core/WorkflowInstance.cpp
-    member1_core/EducationInstance.cpp
 
     # --- Member 2: execution & lifecycle ---
     member2_execution/ItemState.cpp
@@ -50,25 +49,25 @@ add_library(tividy_core
      member3_routing/StateFilterIterator.cpp
 
     # --- Member 4: commands, events, history ---
-    # member4_services/WorkCommand.cpp # # uncomment this line & more
     member4_services/WorkflowMediator.cpp
 
     # --- Member 5: education scenario ---
-    # member5_education/AssignmentMarkingBuilder.cpp # # uncomment this line & more
+    member5_education/AssignmentMarkingBuilder.cpp
+    member5_education/AssignmentMarkingCoordinator.cpp
+    member5_education/AssignmentMarkingDirector.cpp
     member5_education/EducationApprovalChain.cpp
-    member5_education/EducationMediator.cpp
     member5_education/EducationPolicies.cpp
+    member5_education/EducationSeed.cpp
+    member5_education/Submission.cpp
 
     # --- Member 6: hospital scenario ---
-    # member6_hospital/HospitalAdmissionBuilder.cpp # # uncomment this line & more
-
     # --- Member 7: integration, factories ---
-    member7_integration/WorkflowDirector.cpp # # uncomment this line & more
-    member7_integration/EducationWorkflowFactory.cpp
-    member7_integration/HospitalWorkflowFactory.cpp
-    member7_integration/TividyWorkflow.cpp
-    member7_integration/JsonSerializer.cpp
-    member7_integration/RestServer.cpp
+    # member7_integration/WorkflowDirector.cpp
+    # member7_integration/EducationWorkflowFactory.cpp
+    # member7_integration/HospitalWorkflowFactory.cpp
+    # member7_integration/TividyWorkflow.cpp
+    # member7_integration/JsonSerializer.cpp
+    # member7_integration/RestServer.cpp
 )
 
 # Every member folder is on the include path, so `#include "Header.h"`
@@ -97,24 +96,22 @@ target_link_libraries(tividy PRIVATE tividy_core)
 enable_testing()
 
 add_executable(tividy_tests
-    tests/test_workitem.cpp
-    tests/test_workcontainer.cpp
-    tests/test_workflowdefinition.cpp
-    tests/test_workflowinstance.cpp
-    tests/test_states.cpp
-    tests/test_workflowengine.cpp
     tests/test_assignment.cpp
-    tests/test_iterators.cpp
     tests/test_commands.cpp
+    tests/test_education.cpp
     tests/test_events.cpp
     tests/test_history.cpp
-    tests/test_education.cpp
     tests/test_hospital.cpp
-    tests/test_integration.cpp
-
+    # tests/test_integration.cpp
+    tests/test_iterators.cpp
     tests/test_participants.cpp
-
-    tests/test_smoke.cpp        # one trivial test so ctest has something to run
+    tests/test_smoke.cpp
+    tests/test_states.cpp
+    tests/test_workcontainer.cpp
+    tests/test_workflowdefinition.cpp
+    tests/test_workflowengine.cpp
+    tests/test_workflowinstance.cpp
+    tests/test_workitem.cpp
 )
 
 target_link_libraries(tividy_tests PRIVATE tividy_core gtest_main)

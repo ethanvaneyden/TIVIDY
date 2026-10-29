@@ -26,6 +26,7 @@ public:
     ParticipantRegistry();
 
     /// @brief Destroys the registry and all owned participants.
+    /// @note The registry must outlive every workflow item holding its participants.
     ~ParticipantRegistry();
 
     // Prevent copying to avoid accidental double-ownership of unique_ptrs
@@ -60,6 +61,7 @@ public:
      * @brief Removes a participant from the registry.
      * @param id The participant's unique ID.
      * @throws std::logic_error If the participant has pending tasks.
+     * @note Callers must ensure no live workflow item still uses this participant.
      */
     void remove(const std::string& id);
 

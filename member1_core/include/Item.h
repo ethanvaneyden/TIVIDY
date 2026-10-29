@@ -14,8 +14,8 @@ class Container;
  * This class acts as the **Context** in the State pattern and the **Leaf** 
  * in the Composite pattern.
  * 
- * It owns its lifecycle state (via std::unique_ptr) but does NOT own its 
- * assignee or reviewer (those are owned by the ParticipantRegistry).
+ * It owns its lifecycle state (via std::unique_ptr) but does NOT own its
+ * assignee or reviewer. The ParticipantRegistry must outlive this item.
  * 
  * Operations like start() and complete() delegate to the current ItemState. 
  * If an operation is invalid for the current state, the state class will throw 
@@ -29,8 +29,12 @@ private:
      * @throws std::invalid_argument If next is null.
      */
     void setState(std::unique_ptr<ItemState> next);
+    void setAssignee(Participant* p);
+    void setReviewer(Participant* p, const std::string& method);
+    void setResult(int value);
+    void setRejectionReason(const std::string& reason);
+    bool taskPending;
 
-protected:
     /// @brief Owned lifecycle state for this item (e.g., Available, Assigned).
     std::unique_ptr<ItemState> state;
     
@@ -58,9 +62,8 @@ public:
      * @param id Unique identifier for this component.
      * @param type Item type (e.g., "Submission", "Treatment").
      * @param name Display name for the UI.
-     * @param parent Optional non-owning reference to the parent Container.
      */
-    Item(std::string id, std::string type, std::string name, Component* parent = nullptr);
+    Item(std::string id, std::string type, std::string name);
 
     /**
      * @brief Destroys the item and its owned state object.
@@ -165,19 +168,6 @@ public:
     // ==========================================
 
     /**
-     * @brief Sets the assignee and updates the participant's item references.
-     * @param p Non-owning pointer to the assigned participant.
-     */
-    void setAssignee(Participant* p);
-
-    /**
-     * @brief Sets the reviewer and records how they reviewed it.
-     * @param p Non-owning pointer to the reviewer.
-     * @param method "Batch" or "Personal".
-     */
-    void setReviewer(Participant* p, const std::string& method);
-
-    /**
      * @brief Records an approved review without changing the item state.
      * @param p Non-owning reviewer pointer.
      * @param method Review method, such as "Batch".
@@ -185,18 +175,6 @@ public:
      * @throws InvalidTransition If this item is not completed.
      */
     void recordReview(Participant* p, const std::string& method);
-
-    /**
-     * @brief Sets the result value and marks it as recorded.
-     * @param value The mark or severity.
-     */
-    void setResult(int value);
-
-    /**
-     * @brief Stores the reason why the item was rejected.
-     * @param reason The rejection explanation.
-     */
-    void setRejectionReason(const std::string& reason);
 
     // ==========================================
     // PHASE ENFORCEMENT

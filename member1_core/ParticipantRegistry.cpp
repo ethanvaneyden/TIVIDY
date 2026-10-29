@@ -52,7 +52,11 @@ void ParticipantRegistry::remove(const std::string& id) {
     if (it->second->getPendingTasks() > 0) {
         throw std::logic_error("Cannot remove participant " + id + " because they have pending tasks.");
     }
-
+    if (it->second->hasItemUses())
+    {
+        throw std::logic_error("Cannot remove participant " + id +
+                               " while workflow items still use them.");
+    }
     participants.erase(it);
 }
 

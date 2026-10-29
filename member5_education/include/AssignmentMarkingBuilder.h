@@ -1,9 +1,8 @@
 /**
  * @file AssignmentMarkingBuilder.h
  * @brief Concrete Builder for the Education scenario.
- * Notes: WorkflowBuilder::getResult() returns unique_ptr<Root>,
- * but the registry owns the root, so there is nothing to hand over. Until the
- * interface changes, getResult() throws and callers use getRoot().
+ * The registry owns the components built here; accessors return non-owning
+ * pointers into that registry.
  */
 
 #pragma once
@@ -47,7 +46,7 @@ class AssignmentMarkingBuilder : public WorkflowBuilder
          * @brief Start a new module.
          * @throws std::logic_error if no registry has been set.
          */
-        virtual void buildRoot(const std::string& rootName);
+        virtual void buildRoot(const std::string& rootName) override;
 
         /**
          * @brief Add an assignment under the module and make it current.
@@ -55,24 +54,21 @@ class AssignmentMarkingBuilder : public WorkflowBuilder
          * @throws std::invalid_argument if the id is already registered.
          */
         virtual void buildContainer(const std::string& containerId,
-                                    const std::string& name);
+                                    const std::string& name) override;
 
         /**
          * @brief Add a student submission under the current assignment.
          * @throws std::logic_error if there is no current assignment.
          * @throws std::invalid_argument if the id is already registered.
          */
-        virtual void buildItem(const std::string& itemId, const std::string& name);
-
-        /** @brief Not supported yet: see the Notes above. Always throws std::logic_error. */
-        virtual std::unique_ptr<Root> getResult();
+        virtual void buildItem(const std::string& itemId,
+                               const std::string& name) override;
 
         /** @return the root built so far (owned by the registry), or nullptr. */
-        Root* getRoot() const;
+        virtual Root* getRoot() const override;
 
         /** @return the assignment currently being filled, or nullptr. */
         Container* getCurrentContainer() const;
 };
 
 }
-
