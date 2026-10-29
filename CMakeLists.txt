@@ -52,7 +52,10 @@ add_library(tividy_core
     member4_services/LMSObserver.cpp
     #Command Pattern
     member4_services/ActionHistory.cpp
-    member4_services/
+    member4_services/AssignItemCommand.cpp
+    member4_services/RecordResultCommand.cpp
+
+
 
     # --- Member 5: education scenario ---
     # member5_education/AssignmentMarkingBuilder.cpp # # uncomment this line & more
