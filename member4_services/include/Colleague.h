@@ -1,16 +1,17 @@
 #ifndef TIVIDY_COLLEAGUE_H
 #define TIVIDY_COLLEAGUE_H
 
-using namespace std;
 #include <string>
-#include "Mediator.h"
+
+class WorkflowMediator;
 
 class Colleague {
+protected:
+    WorkflowMediator* mediator = nullptr;
 public:
-    virtual void notify(string event);
-    void setMediator(Mediator* mediator);
-    virtual ~Colleague();
+    virtual ~Colleague() = default;
+    void setMediator(WorkflowMediator* mediator);
+    virtual void notify(const std::string& event) = 0;
 };
 
-
-#endif //TIVIDY_COLLEAGUE_H
+#endif

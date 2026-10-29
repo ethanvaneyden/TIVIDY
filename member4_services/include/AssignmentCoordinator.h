@@ -1,29 +1,33 @@
 #ifndef TIVIDY_ASSIGNMENTCOORDINATOR_H
 #define TIVIDY_ASSIGNMENTCOORDINATOR_H
 
+#include <memory>
+#include <string>
+
+#include "WorkflowMediator.h"
 #include "ActionHistory.h"
-#include "Colleague.h"
 #include "EventBus.h"
 
-using namespace std;
-#include <memory>
-#include "WorkFlow"
+#include "../AssignmentEngine.h"
+#include "../ApprovalHandler.h"
+#include "../WorkRegistry.h"
+#include "../AssignmentStrategy.h"
 
-class AssignmentCoordinator : public WorkflowMediator{
+class AssignmentCoordinator : public WorkflowMediator {
 private:
-    unique_ptr<AssignmentEngine> assignmentEngine;
-    unique_ptr<ActionHistory> history;
-    unique_ptr<AprovalHandler> approvalChain;
-    unique_ptr<EventBus> eventBus;
-    WorkRegistry* registry;
-    AssignmentStrategy* assignmentStrategy;
+    std::unique_ptr<AssignmentEngine> assignmentEngine;
+    std::unique_ptr<ActionHistory> history;
+    std::unique_ptr<ApprovalHandler> approvalChain;
+    std::unique_ptr<EventBus> eventBus;
+    WorkRegistry* registry = nullptr;
+    AssignmentStrategy* assignmentStrategy = nullptr;
 public:
-    AssignmentCoordinator();//////////////////////
-    void notify(Colleague* sender, string event) override;
+    AssignmentCoordinator();
+    ~AssignmentCoordinator() override;
+    void notify(Colleague* sender, const std::string& event) override;
     void onSubmissionReceived(WorkItem* item);
     void onMarkingCompleted(WorkItem* item);
     void onModerationCompleted(WorkItem* item);
 };
 
-
-#endif //TIVIDY_ASSIGNMENTCOORDINATOR_H
+#endif // TIVIDY_ASSIGNMENTCOORDINATOR_H
