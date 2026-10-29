@@ -76,11 +76,22 @@ Container* WorkflowInstance::addContainer(
     if (!container)
         throw std::logic_error("WorkflowBuilder did not register the created container");
     container->setMediator(coordinator.get());
-    try {
-        root->add(container);
-    } catch (...) {
+    if (container->getParent() == nullptr)
+    {
+        try
+        {
+            root->add(container);
+        }
+        catch (...)
+        {
+            registry->remove(containerId);
+            throw;
+        }
+    }
+    else if (container->getParent() != root)
+    {
         registry->remove(containerId);
-        throw;
+        throw std::logic_error("WorkflowBuilder attached the container to the wrong root");
     }
     return container;
 }
@@ -110,8 +121,21 @@ void WorkflowInstance::addItem(
     if (!item)
         throw std::logic_error("WorkflowBuilder did not register the created item");
     item->setMediator(coordinator.get());
-    if (item->getParent() != parent) {
-        parent->add(item);
+    if (item->getParent() == nullptr) {
+        try
+        {
+            parent->add(item);
+        }
+        catch (...)
+        {
+            registry->remove(itemId);
+            throw;
+        }
+    }
+    else if (item->getParent() != parent)
+    {
+        registry->remove(itemId);
+        throw std::logic_error("WorkflowBuilder attached the item to the wrong container");
     }
     coordinator->onItemAdded(item);
 }

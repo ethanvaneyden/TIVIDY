@@ -14,6 +14,7 @@ class Container : public Component {
 private:
     std::vector<Component*> children;          ///< Non-owning items.
     std::unique_ptr<WorkflowPhase> phase;      ///< Owned phase state.
+    void setPhase(std::unique_ptr<WorkflowPhase> next);
 
 public:
     /**
@@ -21,10 +22,9 @@ public:
      * @param id Unique component ID.
      * @param type Scenario-specific type.
      * @param name Display name.
-     * @param parent Optional non-owning parent pointer.
      * @throws std::invalid_argument If ID or type is empty.
      */
-    Container(std::string id, std::string type, std::string name, Component* parent = nullptr);
+    Container(std::string id, std::string type, std::string name);
 
     /**
      * @brief Destroys the container and its owned phase object.
@@ -87,10 +87,4 @@ public:
      */
     std::string getPhaseName() const;
 
-    /**
-     * @brief Replaces the owned phase.
-     * @param next Owning pointer to the next phase.
-     * @throws std::invalid_argument If next is null.
-     */
-    void setPhase(std::unique_ptr<WorkflowPhase> next);
 };

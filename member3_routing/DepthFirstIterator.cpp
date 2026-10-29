@@ -8,6 +8,7 @@ DepthFirstIterator::DepthFirstIterator(Component *root)
 
 Component *DepthFirstIterator::first()
 {
+    pending.clear();
     curr = root;
     return curr;
 }
@@ -16,32 +17,19 @@ Component *DepthFirstIterator::next()
     if (!curr)
         return nullptr;
 
-    
-    std::vector<Component *> kids = curr->getChildren();
-    if (!kids.empty())
+    const std::vector<Component*> children = curr->getChildren();
+    for (auto child = children.rbegin(); child != children.rend(); ++child)
+        pending.push_back(*child);
+
+    if (pending.empty())
     {
-        curr = kids.front();
-        return curr;
+        curr = nullptr;
+        return nullptr;
     }
 
-    Component *node = curr;
-    while (node != root && node->getParent())
-    {
-        Component *parent = node->getParent();
-        std::vector<Component *> sibs = parent->getChildren();
-        for (size_t i = 0; i + 1 < sibs.size(); ++i)
-        {
-            if (sibs[i] == node)
-            {
-                curr = sibs[i + 1];
-                return curr;
-            }
-        }
-        node = parent;
-    }
-
-    curr = nullptr;
-    return nullptr;
+    curr = pending.back();
+    pending.pop_back();
+    return curr;
 }
 bool DepthFirstIterator::isDone()
 {

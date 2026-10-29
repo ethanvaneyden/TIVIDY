@@ -6,6 +6,8 @@
 #include "Colleague.h"
 
 class Iterator;
+class Container;
+class Root;
 
 /**
  * @brief Abstract base for all nodes in the workflow tree.
@@ -14,11 +16,15 @@ class Iterator;
  * to receive Mediator events.
  */
 class Component : public Colleague {
-protected:
+private:
     std::string id;             ///< Unique identifier.
     std::string type;           ///< Type (e.g., "Submission", "Assignment").
     std::string name;           ///< Display name.
     Component* parent;          ///< Non-owning parent reference.
+
+    friend class Container;
+    friend class Root;
+    void setParent(Component* p);
 
 public:
     /**
@@ -26,10 +32,9 @@ public:
      * @param id Unique component ID.
      * @param type Scenario-specific component type.
      * @param name Display name.
-     * @param parent Optional non-owning parent pointer.
      * @throws std::invalid_argument If the ID or type is empty.
      */
-    Component(std::string id, std::string type, std::string name, Component* parent = nullptr);
+    Component(std::string id, std::string type, std::string name);
     
     /**
      * @brief Destroys the component without deleting its parent or children.
@@ -104,12 +109,6 @@ public:
      * @return Parent, or nullptr for a root component.
      */
     Component* getParent() const;
-
-    /**
-     * @brief Sets the non-owning parent pointer.
-     * @param p New parent, or nullptr to detach.
-     */
-    void setParent(Component* p);
 
     /**
      * @brief Sets the mediator for this component and all its children.

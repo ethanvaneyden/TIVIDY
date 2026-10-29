@@ -21,7 +21,6 @@ public:
     void add(Component *c) override
     {
         kids.push_back(c);
-        c->setParent(this);
     }
     std::vector<Component *> getChildren() const override { return kids; }
     std::string getStateName() const override { return stateName; }

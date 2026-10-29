@@ -1,6 +1,7 @@
 // Participant.h
 #pragma once
 
+#include <cstddef>
 #include <string>
 
 /**
@@ -12,6 +13,13 @@ private:
     std::string name;
     std::string role;
     int pendingTasks; ///< Used by LoadBalancedStrategy.
+    std::size_t itemUses;
+
+    friend class Item;
+    friend class ParticipantRegistry;
+    void retainItemUse();
+    void releaseItemUse();
+    bool hasItemUses() const;
 
 public:
     /** @brief Creates a participant with its registry-assigned identity. */

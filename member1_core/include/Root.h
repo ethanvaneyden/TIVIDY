@@ -20,15 +20,14 @@ public:
      * @param id Unique component ID.
      * @param type Scenario-specific type.
      * @param name Display name.
-     * @param parent Optional parent pointer; normally null.
      * @throws std::invalid_argument If ID or type is empty.
      */
-    Root(std::string id, std::string type, std::string name, Component* parent = nullptr);
+    Root(std::string id, std::string type, std::string name);
 
     /**
      * @brief Destroys the root without deleting registry-owned descendants.
      */
-    ~Root() override = default;
+    ~Root() override;
 
     /**
      * @brief Adds a container to the root.

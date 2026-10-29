@@ -3,8 +3,8 @@
 #include <stdexcept>
 #include <utility>
 
-Component::Component(std::string id, std::string type, std::string name, Component* parent)
-    : id(std::move(id)), type(std::move(type)), name(std::move(name)), parent(parent) {
+Component::Component(std::string id, std::string type, std::string name)
+    : id(std::move(id)), type(std::move(type)), name(std::move(name)), parent(nullptr) {
     if (this->id.empty() || this->type.empty())
         throw std::invalid_argument("Component ID and type must not be empty");
 }

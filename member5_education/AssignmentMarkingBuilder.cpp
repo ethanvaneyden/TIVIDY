@@ -87,13 +87,6 @@ void AssignmentMarkingBuilder::buildItem(const std::string& itemId, const std::s
     }
 }
 
-std::unique_ptr<Root> AssignmentMarkingBuilder::getResult()
-{
-    // Notes: the registry owns the root, so it cannot be handed out
-    // as a unique_ptr. Maybe change the interface (for example Root* getResult())?.
-    throw std::logic_error("The registry owns the root; use getRoot()");
-}
-
 Root* AssignmentMarkingBuilder::getRoot() const
 {
     return root;

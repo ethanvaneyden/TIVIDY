@@ -1,6 +1,36 @@
 // WorkRegistry.cpp
 #include "WorkRegistry.h"
+#include "Container.h"
+#include "InvalidTransition.h"
 #include <stdexcept>
+
+namespace
+{
+    void validateRemoval(const Component* component)
+    {
+        const Container* removingContainer = dynamic_cast<const Container*>(component);
+        if (removingContainer != nullptr &&
+            removingContainer->getPhaseName() != "Intake")
+        {
+            throw InvalidTransition("Containers can only be removed during the Intake phase");
+        }
+
+        const Component* parent = component->getParent();
+        const Container* parentContainer = dynamic_cast<const Container*>(parent);
+        if (parentContainer != nullptr &&
+            parentContainer->getPhaseName() != "Intake")
+        {
+            throw InvalidTransition("Work can only be removed during the Intake phase");
+        }
+
+        const std::vector<Component*> children = component->getChildren();
+        for (std::vector<Component*>::const_iterator child = children.begin();
+             child != children.end(); ++child)
+        {
+            validateRemoval(*child);
+        }
+    }
+}
 
 WorkRegistry::WorkRegistry() = default;
 WorkRegistry::~WorkRegistry() = default;
@@ -23,6 +53,8 @@ Component* WorkRegistry::get(const std::string& id) const {
 void WorkRegistry::remove(const std::string& id) {
     auto it = components.find(id);
     if (it == components.end()) return;
+
+    validateRemoval(it->second.get());
 
     // Detach from parent
     if (it->second->getParent()) {

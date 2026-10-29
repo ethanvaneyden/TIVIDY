@@ -8,8 +8,6 @@
 #include "TividyWorkflow.h"
 #include "JsonSerializer.h"
 #include "EducationWorkflowFactory.h"
-#include "EducationInstance.h"
-#include "EducationMediator.h"
 #include "ParticipantRegistry.h"
 #include "Container.h"
 #include "Root.h"
