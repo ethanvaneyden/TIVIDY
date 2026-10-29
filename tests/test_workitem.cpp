@@ -3,6 +3,7 @@
 #include <limits>
 
 #include "Container.h"
+#include "InvalidTransition.h"
 #include "Item.h"
 #include "Participant.h"
 
@@ -95,3 +96,46 @@ INSTANTIATE_TEST_SUITE_P(
     ItemResultTest,
     ::testing::Values(std::numeric_limits<int>::min(), -1, 0, 72,
                       std::numeric_limits<int>::max()));
+
+TEST(ItemPhaseValidationTest, WorkCannotBeginDuringIntake)
+{
+    Participant worker("worker-1", "Alex", "Worker");
+    Item item("item-1", "work", "Record a result");
+    Container container("container-1", "batch", "Work batch");
+    container.add(&item);
+
+    EXPECT_THROW(item.assign(&worker), InvalidTransition);
+    EXPECT_THROW(item.start(), InvalidTransition);
+    EXPECT_THROW(item.complete(99), InvalidTransition);
+    EXPECT_EQ(container.getPhaseName(), "Intake");
+    EXPECT_EQ(item.getStateName(), "Available");
+    EXPECT_EQ(item.getParent(), &container);
+    EXPECT_EQ(item.getAssignee(), nullptr);
+    EXPECT_FALSE(item.hasResult());
+    EXPECT_FALSE(item.isCompleted());
+    EXPECT_FALSE(item.isReviewed());
+    EXPECT_EQ(worker.getPendingTasks(), 0);
+}
+
+TEST(ItemPhaseValidationTest, DetachedItemRejectsLifecycleActions)
+{
+    Participant worker("worker-1", "Alex", "Worker");
+    Item item("item-1", "work", "Record a result");
+
+    EXPECT_THROW(item.assign(&worker), InvalidTransition);
+    EXPECT_THROW(item.start(), InvalidTransition);
+    EXPECT_THROW(item.complete(99), InvalidTransition);
+    EXPECT_THROW(item.reject("Personal review required"), InvalidTransition);
+    EXPECT_THROW(item.recordReview(&worker, "Batch"), InvalidTransition);
+    EXPECT_THROW(item.resolveReview(&worker, 99), InvalidTransition);
+    EXPECT_EQ(item.getParent(), nullptr);
+    EXPECT_EQ(item.getStateName(), "Available");
+    EXPECT_EQ(item.getAssignee(), nullptr);
+    EXPECT_EQ(item.getReviewer(), nullptr);
+    EXPECT_FALSE(item.hasResult());
+    EXPECT_FALSE(item.isCompleted());
+    EXPECT_FALSE(item.isReviewed());
+    EXPECT_TRUE(item.getReviewMethod().empty());
+    EXPECT_TRUE(item.getRejectionReason().empty());
+    EXPECT_EQ(worker.getPendingTasks(), 0);
+}
