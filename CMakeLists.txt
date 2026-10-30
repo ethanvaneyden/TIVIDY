@@ -56,7 +56,13 @@ add_library(tividy_core
     # member5_education/AssignmentMarkingBuilder.cpp # # uncomment this line & more
 
     # --- Member 6: hospital scenario ---
-    # member6_hospital/HospitalAdmissionBuilder.cpp # # uncomment this line & more
+    member6_hospital/Treatment.cpp
+    member6_hospital/HospitalPolicies.cpp
+    member6_hospital/HospitalApprovalChain.cpp
+    member6_hospital/HospitalAdmissionBuilder.cpp
+    member6_hospital/HospitalAdmissionDirector.cpp
+    member6_hospital/HospitalAdmissionCoordinator.cpp
+    member6_hospital/HospitalSeed.cpp	
 
     # --- Member 7: integration, factories ---
     member7_integration/WorkflowDirector.cpp # # uncomment this line & more
