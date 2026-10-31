@@ -1,9 +1,14 @@
 import { Button } from 'react-bootstrap';
-import type { Treatment } from '../../types/types';
+import type { Treatment, WorkflowPhase } from '../../types/types';
 
 interface TreatmentRowProps {
     treatment: Treatment;
+    phase: WorkflowPhase;
+    busy: boolean;
     onView: () => void;
+    onStart: () => void;
+    onComplete: () => void;
+    onResolve: () => void;
 }
 
 const stateLabels: Record<Treatment['state'], string> = {
@@ -14,14 +19,18 @@ const stateLabels: Record<Treatment['state'], string> = {
     rejected: 'Rejected',
 };
 
-function TreatmentRow({ treatment, onView }: TreatmentRowProps) {
+function TreatmentRow({ treatment, phase, busy, onView, onStart, onComplete, onResolve }: TreatmentRowProps) {
+    const canStart = phase === 'Active' && treatment.state === 'assigned';
+    const canComplete = phase === 'Active' && treatment.state === 'inprogress';
+    const canResolve = phase === 'Review' && treatment.state === 'rejected';
+
     return (
         <article className={`treatment-row treatment-state-${treatment.state}`}>
             <div className="treatment-patient">
                 <span className="treatment-avatar" aria-hidden="true">{getInitials(treatment.name)}</span>
                 <div>
                     <h4>{treatment.name}</h4>
-                    <p>{treatment.age} years · {treatment.id}</p>
+                    <p>{treatment.age !== undefined ? `${treatment.age} years · ` : ''}{treatment.id}</p>
                 </div>
             </div>
             <div className="treatment-diagnosis">
@@ -38,7 +47,16 @@ function TreatmentRow({ treatment, onView }: TreatmentRowProps) {
                 <span />
                 {stateLabels[treatment.state]}
             </span>
-            <div className="treatment-actions">
+            <div className="treatment-actions row-actions">
+                {canStart && (
+                    <Button size="sm" variant="primary" onClick={onStart} disabled={busy}>Start</Button>
+                )}
+                {canComplete && (
+                    <Button size="sm" variant="success" onClick={onComplete} disabled={busy}>Complete</Button>
+                )}
+                {canResolve && (
+                    <Button size="sm" variant="warning" onClick={onResolve} disabled={busy}>Resolve</Button>
+                )}
                 <Button size="sm" variant="outline-secondary" onClick={onView}>Details</Button>
             </div>
         </article>

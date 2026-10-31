@@ -3,14 +3,22 @@ import { Button, Form, Modal } from 'react-bootstrap';
 
 interface AddAssignmentModalProps {
     show: boolean;
+    busy: boolean;
     onHide: () => void;
+    onSubmit: (name: string) => Promise<boolean>;
 }
 
-function AddAssignmentModal({ show, onHide }: AddAssignmentModalProps) {
+function AddAssignmentModal({ show, busy, onHide, onSubmit }: AddAssignmentModalProps) {
     const [name, setName] = useState('');
+    const trimmed = name.trim();
 
-    function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
+    async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
+        if (!trimmed) return;
+        if (await onSubmit(trimmed)) {
+            setName('');
+            onHide();
+        }
     }
 
     return (
@@ -19,12 +27,13 @@ function AddAssignmentModal({ show, onHide }: AddAssignmentModalProps) {
                 <Modal.Header closeButton><Modal.Title>Add assignment or test</Modal.Title></Modal.Header>
                 <Modal.Body>
                     <Form.Label htmlFor="assignment-name">Assignment or test name</Form.Label>
-                    <Form.Control id="assignment-name" value={name} onChange={(event) => setName(event.target.value)} maxLength={80} required />
-                    <p className="action-placeholder-note">This form is not connected yet. Nothing will be added.</p>
+                    <Form.Control id="assignment-name" value={name} onChange={(event) => setName(event.target.value)} maxLength={80} required autoFocus />
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="outline-secondary" onClick={onHide}>Cancel</Button>
-                    <Button type="submit" className="workflow-primary-button">Add assignment / test</Button>
+                    <Button variant="outline-secondary" onClick={onHide} disabled={busy}>Cancel</Button>
+                    <Button type="submit" className="workflow-primary-button" disabled={busy || !trimmed}>
+                        {busy ? 'Adding...' : 'Add assignment / test'}
+                    </Button>
                 </Modal.Footer>
             </Form>
         </Modal>

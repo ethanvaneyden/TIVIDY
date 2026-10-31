@@ -1,12 +1,15 @@
 import { useState } from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
+import { Alert, Container, Row, Col } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router';
 import '../styles/ScenarioInstanceSelect.css';
 import '../styles/Scenario.css';
 import CreateInstanceModal from '../components/modals/CreateInstanceModal';
 import DeleteInstanceModal from '../components/modals/DeleteInstanceModal';
-import { listMockInstances } from '../data/mockData';
+import { LoadFailure, Loading } from '../components/shared/LoadState';
+import { INSTANCE_DELETE_ENABLED } from '../api/workflow';
+import { useInstances } from '../hooks/useInstances';
 import type { ScenarioId, ScenarioInstance } from '../types/types';
+import '../styles/Shared.css';
 
 function ScenarioInstanceSelect() {
     const { scenario: scenarioId } = useParams();
@@ -32,7 +35,7 @@ function ScenarioInstanceSelect() {
 function ScenarioChooser({ scenario }: { scenario: ScenarioId }) {
     const navigate = useNavigate();
     const scenarioName = scenario === 'education' ? 'Assignment marking' : 'Patient admissions';
-    const instances = listMockInstances(scenario);
+    const hub = useInstances(scenario);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedInstance, setSelectedInstance] = useState<ScenarioInstance>();
@@ -66,9 +69,23 @@ function ScenarioChooser({ scenario }: { scenario: ScenarioId }) {
                 <span>Select one to continue</span>
             </div>
 
-            {instances.length > 0 ? (
+            {hub.actionError && (
+                <Alert variant="danger" className="chooser-error" dismissible onClose={hub.clearActionError}>
+                    {hub.actionError}
+                </Alert>
+            )}
+
+            {hub.loading && hub.instances.length === 0 ? (
+                <Loading label="Loading instances..." />
+            ) : hub.loadError && hub.instances.length === 0 ? (
+                <LoadFailure
+                    title="Could not load instances"
+                    message={hub.loadError}
+                    onRetry={() => void hub.refresh()}
+                />
+            ) : hub.instances.length > 0 ? (
             <Row className="g-3 chooser-grid">
-                {instances.map((instance, index) => (
+                {hub.instances.map((instance, index) => (
                     <Col key={instance.id} xs={12} md={6}>
                         <div className="scenario-instance-wrapper">
                             <button
@@ -85,17 +102,19 @@ function ScenarioChooser({ scenario }: { scenario: ScenarioId }) {
                                 </span>
                                 <span className="instance-open" aria-hidden="true">↗</span>
                             </button>
-                            <button
-                                type="button"
-                                className="scenario-instance-delete"
-                                aria-label={`Delete instance ${instance.name}`}
-                                onClick={() => {
-                                    setSelectedInstance(instance);
-                                    setShowDeleteModal(true);
-                                }}
-                            >
-                                ×
-                            </button>
+                            {INSTANCE_DELETE_ENABLED && (
+                                <button
+                                    type="button"
+                                    className="scenario-instance-delete"
+                                    aria-label={`Delete instance ${instance.name}`}
+                                    onClick={() => {
+                                        setSelectedInstance(instance);
+                                        setShowDeleteModal(true);
+                                    }}
+                                >
+                                    ×
+                                </button>
+                            )}
                         </div>
                     </Col>
                 ))}
@@ -104,7 +123,7 @@ function ScenarioChooser({ scenario }: { scenario: ScenarioId }) {
                 <div className="chooser-empty">
                     <span className="chooser-empty-icon" aria-hidden="true">＋</span>
                     <h2>No instances yet</h2>
-                    <p>No workspace instances are available.</p>
+                    <p>Create an instance to start a workflow.</p>
                 </div>
             )}
 
@@ -114,6 +133,7 @@ function ScenarioChooser({ scenario }: { scenario: ScenarioId }) {
                         type="button"
                         className="cta-button chooser-create"
                         onClick={() => setShowCreateModal(true)}
+                        disabled={hub.busy}
                     >
                         <span aria-hidden="true">+</span>
                         Create new instance
@@ -123,15 +143,24 @@ function ScenarioChooser({ scenario }: { scenario: ScenarioId }) {
 
             <CreateInstanceModal
                 show={showCreateModal}
+                busy={hub.busy}
                 onHide={() => setShowCreateModal(false)}
+                onSubmit={async (name) => {
+                    const id = await hub.create(name);
+                    if (id === undefined) return false;
+                    navigate(`/${scenario}/${id}`);
+                    return true;
+                }}
             />
             <DeleteInstanceModal
                 show={showDeleteModal}
                 instanceName={selectedInstance?.name}
+                busy={hub.busy}
                 onHide={() => {
                     setShowDeleteModal(false);
                     setSelectedInstance(undefined);
                 }}
+                onConfirm={() => hub.remove(selectedInstance?.id ?? '')}
             />
         </Container>
     );

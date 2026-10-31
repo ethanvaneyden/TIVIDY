@@ -1,0 +1,63 @@
+.workflow-header-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.workflow-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 2rem 0;
+}
+
+.modal-hint {
+    margin: 0.75rem 0 0;
+    font-size: 0.85rem;
+    color: #5b6573;
+}
+
+.history-panel {
+    margin-top: 1.5rem;
+    border: 1px solid #dde2e8;
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: #fff;
+}
+
+.history-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.history-count {
+    font-size: 0.8rem;
+    color: #5b6573;
+}
+
+.history-list {
+    margin: 0;
+    padding-left: 1.25rem;
+    max-height: 18rem;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.history-empty {
+    margin: 0;
+    color: #5b6573;
+}
+
+.row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    justify-content: flex-end;
+}
+
+.chooser-error {
+    margin-bottom: 1rem;
+}

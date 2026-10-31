@@ -61,6 +61,14 @@ add_library(tividy_core
     member5_education/Submission.cpp
 
     # --- Member 6: hospital scenario ---
+    member6_hospital/Treatment.cpp
+    member6_hospital/HospitalPolicies.cpp
+    member6_hospital/HospitalApprovalChain.cpp
+    member6_hospital/HospitalAdmissionBuilder.cpp
+    member6_hospital/HospitalAdmissionDirector.cpp
+    member6_hospital/HospitalAdmissionCoordinator.cpp
+    member6_hospital/HospitalSeed.cpp
+
     # --- Member 7: integration, factories ---
     member7_integration/WorkflowDirector.cpp
     member7_integration/EducationWorkflowFactory.cpp
@@ -86,6 +94,7 @@ target_include_directories(tividy_core PUBLIC
     member5_education
     member5_education/include
     member6_hospital
+    member6_hospital/include
     member7_integration
     member7_integration/include
 )
@@ -130,6 +139,7 @@ target_include_directories(tividy_tests PRIVATE
     member5_education
     member5_education/include
     member6_hospital
+    member6_hospital/include
     member7_integration
     member7_integration/include
 )

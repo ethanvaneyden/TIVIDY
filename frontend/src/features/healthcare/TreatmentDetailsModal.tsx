@@ -18,7 +18,7 @@ function TreatmentDetailsModal({ treatment, onHide }: TreatmentDetailsModalProps
                         <span className="submission-detail-id">{treatment.id}</span>
                         <h3>{treatment.name}</h3>
                         <dl>
-                            <div><dt>Age</dt><dd>{treatment.age}</dd></div>
+                            <div><dt>Age</dt><dd>{treatment.age ?? 'Not recorded'}</dd></div>
                             <div><dt>Diagnosis</dt><dd>{treatment.diagnosis || 'Not recorded'}</dd></div>
                             <div><dt>Severity</dt><dd>{treatment.severity ?? 'Not recorded'}</dd></div>
                             <div><dt>Status</dt><dd>{formatState(treatment.state)}</dd></div>
