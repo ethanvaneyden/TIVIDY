@@ -398,3 +398,150 @@ TEST_F(ItemReviewTest, ReplacingABatchReviewRecordsTheLatestReviewer)
     EXPECT_EQ(worker.getPendingTasks(), 0);
     EXPECT_EQ(other.getPendingTasks(), 0);
 }
+
+#include "WorkflowMediator.h"
+#include <functional>
+#include <vector>
+
+namespace {
+class RecordingLifecycleMediator : public WorkflowMediator {
+public:
+    std::vector<std::string> events;
+    std::function<void(const std::string&, Item*)> inspect;
+    Participant* participant = nullptr;
+    int value = 0;
+    std::string reason;
+    void record(const std::string& event, Item* item) {
+        events.push_back(event);
+        if (inspect) inspect(event, item);
+    }
+    void onItemAssigned(Item* i, Participant* p) override { participant = p; record("assigned", i); }
+    void onItemStarted(Item* i) override { record("started", i); }
+    void onItemCompleted(Item* i, int v) override { value = v; record("completed", i); }
+    void onItemRejected(Item* i, const std::string& r) override { reason = r; record("rejected", i); }
+    void onItemOverridden(Item* i, Participant* p, int v, const std::string& r) override {
+        participant = p; value = v; reason = r; record("overridden", i);
+    }
+    void onPhaseAdvanced(Container*) override { events.push_back("phase"); }
+    void onItemAdded(Item*) override { events.push_back("added"); }
+    void onAssignmentFailed(Item*, const std::string&) override { events.push_back("assignment-failed"); }
+    void onContainerApprovalRequested(Container*, Participant*) override { events.push_back("approval-requested"); }
+    void onContainerRejected(Container*, const std::string&) override { events.push_back("container-rejected"); }
+    void onApprovalResolved(Item*, bool) override { events.push_back("approval-resolved"); }
+    std::vector<std::string> getHistoryAsStrings() const override { return events; }
+};
+
+class LifecycleNotificationTest : public ::testing::Test {
+protected:
+    RecordingLifecycleMediator mediator;
+    Participant worker{"worker", "Worker", "Worker"};
+    Participant reviewer{"reviewer", "Reviewer", "Reviewer"};
+    Item item{"item", "work", "Item"};
+    Container container{"container", "batch", "Batch"};
+    void SetUp() override {
+        container.add(&item);
+        container.advancePhase();
+        item.setMediator(&mediator);
+    }
+    void enterReview() {
+        item.assign(&worker);
+        item.start();
+        item.complete(60);
+        container.advancePhase();
+    }
+};
+}
+
+TEST_F(LifecycleNotificationTest, ReportsExactArgumentsInOrderAfterStateAndDataChange) {
+    mediator.inspect = [&](const std::string& event, Item* actual) {
+        EXPECT_EQ(actual, &item);
+        if (event == "assigned") {
+            EXPECT_EQ(item.getStateName(), "Assigned");
+            EXPECT_EQ(item.getAssignee(), &worker);
+            EXPECT_EQ(mediator.participant, &worker);
+            EXPECT_EQ(worker.getPendingTasks(), 1);
+        } else if (event == "started") {
+            EXPECT_EQ(item.getStateName(), "InProgress");
+        } else if (event == "completed") {
+            EXPECT_EQ(item.getStateName(), "Completed");
+            EXPECT_EQ(item.getResult(), 60);
+            EXPECT_EQ(mediator.value, 60);
+            EXPECT_EQ(worker.getPendingTasks(), 0);
+        } else if (event == "rejected") {
+            EXPECT_EQ(item.getStateName(), "Rejected");
+            EXPECT_EQ(mediator.reason, "Check result");
+            EXPECT_EQ(item.getRejectionReason(), "Check result");
+            EXPECT_EQ(item.getReviewer(), nullptr);
+            EXPECT_TRUE(item.getReviewMethod().empty());
+        } else if (event == "overridden") {
+            EXPECT_EQ(item.getStateName(), "Completed");
+            EXPECT_EQ(item.getReviewer(), &reviewer);
+            EXPECT_EQ(item.getReviewMethod(), "Personal");
+            EXPECT_EQ(item.getResult(), 82);
+            EXPECT_EQ(mediator.participant, &reviewer);
+            EXPECT_EQ(mediator.value, 82);
+            EXPECT_EQ(mediator.reason, "Corrected by operator");
+        }
+    };
+    enterReview();
+    item.recordReview(&reviewer, "Batch");
+    item.reject("Check result");
+    item.resolveReview(&reviewer, 82, "Corrected by operator");
+    EXPECT_EQ(mediator.events, (std::vector<std::string>{
+        "assigned", "started", "completed", "rejected", "overridden"}));
+}
+
+TEST_F(LifecycleNotificationTest, InvalidActionsDoNotSendSuccessCallbacks) {
+    EXPECT_THROW(item.assign(nullptr), std::invalid_argument);
+    EXPECT_THROW(item.complete(5), InvalidTransition);
+    EXPECT_TRUE(mediator.events.empty());
+    enterReview();
+    mediator.events.clear();
+    EXPECT_THROW(item.assign(&worker), InvalidTransition);
+    EXPECT_THROW(item.start(), InvalidTransition);
+    EXPECT_THROW(item.complete(5), InvalidTransition);
+    EXPECT_THROW(item.reject(""), std::invalid_argument);
+    EXPECT_THROW(item.resolveReview(&reviewer, 5), InvalidTransition);
+    EXPECT_THROW(item.resolveReview(nullptr, 5), std::invalid_argument);
+    EXPECT_TRUE(mediator.events.empty());
+    item.reject("Check");
+    mediator.events.clear();
+    EXPECT_THROW(item.reject("Again"), InvalidTransition);
+    EXPECT_TRUE(mediator.events.empty());
+}
+
+TEST_F(LifecycleNotificationTest, DetachedMediatorReceivesNoFurtherNotifications) {
+    item.assign(&worker);
+    item.setMediator(nullptr);
+    item.start();
+    item.complete(60);
+    container.advancePhase();
+    item.reject("Check");
+    item.resolveReview(&reviewer, 82);
+    EXPECT_EQ(mediator.events, (std::vector<std::string>{"assigned"}));
+    EXPECT_TRUE(item.isReviewed());
+}
+
+TEST_F(LifecycleNotificationTest, CallbackExceptionsPropagateAfterTransitionWithoutRollbackOrDuplicateEvents) {
+    mediator.inspect = [](const std::string&, Item*) { throw std::runtime_error("callback failure"); };
+    EXPECT_THROW(item.assign(&worker), std::runtime_error);
+    EXPECT_EQ(item.getStateName(), "Assigned");
+    EXPECT_EQ(worker.getPendingTasks(), 1);
+    EXPECT_THROW(item.assign(&worker), InvalidTransition);
+    EXPECT_THROW(item.start(), std::runtime_error);
+    EXPECT_EQ(item.getStateName(), "InProgress");
+    EXPECT_THROW(item.complete(60), std::runtime_error);
+    EXPECT_EQ(item.getResult(), 60);
+    EXPECT_EQ(worker.getPendingTasks(), 0);
+    container.advancePhase();
+    item.recordReview(&reviewer, "Batch");
+    EXPECT_THROW(item.reject("Check"), std::runtime_error);
+    EXPECT_EQ(item.getStateName(), "Rejected");
+    EXPECT_EQ(item.getReviewer(), nullptr);
+    EXPECT_THROW(item.resolveReview(&reviewer, 82, "Corrected"), std::runtime_error);
+    EXPECT_TRUE(item.isReviewed());
+    EXPECT_EQ(item.getResult(), 82);
+    EXPECT_EQ(item.getReviewer(), &reviewer);
+    EXPECT_EQ(mediator.events, (std::vector<std::string>{
+        "assigned", "started", "completed", "rejected", "overridden"}));
+}
