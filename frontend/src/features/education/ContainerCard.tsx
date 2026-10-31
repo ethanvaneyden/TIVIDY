@@ -5,11 +5,29 @@ import '../../styles/ContainerCard.css';
 
 interface ContainerCardProps {
     assignment: Assignment;
+    busy: boolean;
     onViewSubmission: (submission: Submission) => void;
     onAddSubmission: () => void;
+    onOpen: () => void;
+    onApprove: () => void;
+    onStartSubmission: (submission: Submission) => void;
+    onCompleteSubmission: (submission: Submission) => void;
+    onResolveSubmission: (submission: Submission) => void;
 }
 
-function ContainerCard({ assignment, onViewSubmission, onAddSubmission }: ContainerCardProps) {
+function ContainerCard({
+    assignment,
+    busy,
+    onViewSubmission,
+    onAddSubmission,
+    onOpen,
+    onApprove,
+    onStartSubmission,
+    onCompleteSubmission,
+    onResolveSubmission,
+}: ContainerCardProps) {
+    const inIntake = assignment.phase === 'Intake';
+
     return (
         <Card className="container-card">
             <Card.Header className="container-card-header">
@@ -21,16 +39,39 @@ function ContainerCard({ assignment, onViewSubmission, onAddSubmission }: Contai
             </Card.Header>
             <Card.Body className="container-card-body">
                 <div className="assignment-actions">
-                    <Button variant="outline-primary" size="sm" onClick={onAddSubmission}>
-                        + Add submission
-                    </Button>
+                    {inIntake && (
+                        <>
+                            <Button variant="outline-primary" size="sm" onClick={onAddSubmission} disabled={busy}>
+                                + Add submission
+                            </Button>
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={onOpen}
+                                disabled={busy || assignment.items.length === 0}
+                                title={assignment.items.length === 0 ? 'Add at least one submission first' : undefined}
+                            >
+                                Start marking
+                            </Button>
+                        </>
+                    )}
+                    {assignment.phase === 'Review' && (
+                        <Button variant="success" size="sm" onClick={onApprove} disabled={busy}>
+                            Approve batch
+                        </Button>
+                    )}
                 </div>
                 <div className="submission-list">
                     {assignment.items.length > 0 ? assignment.items.map((item) => (
                         <SubmissionRow
                             key={item.id}
                             submission={item}
+                            phase={assignment.phase}
+                            busy={busy}
                             onView={() => onViewSubmission(item)}
+                            onStart={() => onStartSubmission(item)}
+                            onComplete={() => onCompleteSubmission(item)}
+                            onResolve={() => onResolveSubmission(item)}
                         />
                     )) : (
                         <div className="submission-empty">
