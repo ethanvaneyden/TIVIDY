@@ -1,3 +1,8 @@
+/** @file IntakePhase.cpp
+* @brief Implements the lifecycle transitions declared in IntakePhase.h.
+* @author Member 2
+* @date October 2026
+*/
 #include "IntakePhase.h"
 #include "ActivePhase.h"
 #include "Container.h"
