@@ -1,207 +1,139 @@
 /**
  * @file TividyWorkflow.cpp
- * @brief Implementation of the TividyWorkflow facade.
-*/
-
+ * @brief Implementation of the top-level TIVIDY facade.
+ */
 #include "TividyWorkflow.h"
-#include "Item.h"
-#include "Participant.h"
-#include "WorkflowInstance.h"
-#include "WorkRegistry.h"
-#include "WorkflowMediator.h"
-#include "AssignmentStrategy.h"
-#include "WorkflowBuilder.h"
-#include "Container.h"
+
+#include "EducationFacade.h"
+#include "HospitalFacade.h"
 #include "ParticipantRegistry.h"
-#include "EducationWorkflowFactory.h"
-
-#include <stdexcept>
-
-/* All methods below are scaffolds. They compile once Members 1 and 2
- * land their implementations. Each is marked with the dependency it
- * expects.*/
 
 TividyWorkflow::TividyWorkflow()
-    : participants(std::unique_ptr<ParticipantRegistry>(new ParticipantRegistry()))
 {
+    // 1. Create the shared participant registry.
+    participants = std::unique_ptr<ParticipantRegistry>(new ParticipantRegistry());
+
+    // 2. Create the scenario-specific facades.
+    educationFacade = std::unique_ptr<ScenarioFacade>(new education::EducationFacade(*participants));
+    healthcareFacade = std::unique_ptr<ScenarioFacade>(new hospital::HospitalFacade(*participants));
+
+    // 3. Register the facades with the instance index (initially empty).
+    // This is a placeholder; actual registration happens when instances are created.
 }
 
 TividyWorkflow::~TividyWorkflow() = default;
 
-WorkflowInstance* TividyWorkflow::findInstance(const std::string& instanceId)
+ScenarioFacade* TividyWorkflow::findFacade(const std::string& instanceId) const
 {
-    for(auto& inst : educationInstances)
-    {
-        if(inst->getInstanceId() == instanceId)
-        {
-            return inst.get();
-        }
-    }
-    for(auto& inst : healthcareInstances)
-    {
-        if(inst->getInstanceId() == instanceId)
-        {
-            return inst.get();
-        }
-    }
-    return nullptr;
-}
-
-const WorkflowInstance* TividyWorkflow::findInstance(const std::string& instanceId) const
-{
-    for(const auto& inst : educationInstances)
-    {
-        if(inst->getInstanceId() == instanceId)
-        {
-            return inst.get();
-        }
-    }
-    for(const auto& inst : healthcareInstances)
-    {
-        if(inst->getInstanceId() == instanceId)
-        {
-            return inst.get();
-        }
-    }
-    return nullptr;
+    const auto it = instanceIndex.find(instanceId);
+    return it != instanceIndex.end() ? it->second : nullptr;
 }
 
 std::string TividyWorkflow::startEducation(const std::string& name)
 {
-    static int counter = 0;
-    std::string id = "edu_" + std::to_string(counter++) + "_" + name;
-    EducationWorkflowFactory factory;
-    auto inst = factory.createInstance(id, nullptr, participants.get());
-    educationInstances.push_back(std::move(inst));
+    const std::string id = educationFacade->start(name);
+    if(!id.empty())
+    {
+        instanceIndex[id] = educationFacade.get();
+    }
     return id;
 }
 
 std::string TividyWorkflow::startHealthcare(const std::string& name)
 {
-    static int counter = 0;
-    std::string id = "hc_" + std::to_string(counter++) + "_" + name;
-    auto inst = std::unique_ptr<WorkflowInstance>(
-        new WorkflowInstance(
-            id, "healthcare",
-            nullptr, nullptr, nullptr, nullptr, nullptr,
-            participants.get()));
-    healthcareInstances.push_back(std::move(inst));
+    const std::string id = healthcareFacade->start(name);
+    if(!id.empty())
+    {
+        instanceIndex[id] = healthcareFacade.get();
+    }
     return id;
 }
 
 std::vector<std::string> TividyWorkflow::listEducationInstances() const
 {
-    std::vector<std::string> ids;
-    for(const auto& inst : educationInstances)
-    {
-        ids.push_back(inst->getInstanceId());
-    }
-    return ids;
+    return educationFacade->listInstances();
 }
 
 std::vector<std::string> TividyWorkflow::listHealthcareInstances() const
 {
-    std::vector<std::string> ids;
-    for(const auto& inst : healthcareInstances)
-    {
-        ids.push_back(inst->getInstanceId());
-    }
-    return ids;
+    return healthcareFacade->listInstances();
 }
 
 Root* TividyWorkflow::getTree(const std::string& instanceId) const
 {
-    const auto* inst = findInstance(instanceId);
-    if(inst == nullptr)
-    {
-        return nullptr;
-    }
-    return inst->getRoot();
+    ScenarioFacade* facade = findFacade(instanceId);
+    return facade != nullptr ? facade->getTree(instanceId) : nullptr;
 }
 
 std::vector<std::string> TividyWorkflow::getHistory(const std::string& instanceId) const
 {
-    const auto* inst = findInstance(instanceId);
-    if(inst == nullptr)
-    {
-        return {};
-    }
-    return inst->getHistory();
+    ScenarioFacade* facade = findFacade(instanceId);
+    return facade != nullptr ? facade->getHistory(instanceId) : std::vector<std::string>();
 }
 
-CommandResult TividyWorkflow::submitEducation(const std::string& instanceId,
-                                              const std::string& containerName)
+CommandResult TividyWorkflow::submit(const std::string& instanceId,
+                                    const std::string& containerName)
 {
-    auto* inst = findInstance(instanceId);
-    if(inst == nullptr)
+    ScenarioFacade* facade = findFacade(instanceId);
+    if(facade == nullptr)
     {
         return CommandResult::NotFound;
     }
-    /* [TBD — Member 2] call inst->addContainer(...) with a scenario-specific
-     * container ID. Until then, this is a no-op success.*/
-    return CommandResult::Success;
+    return facade->submit(instanceId, containerName);
 }
 
 CommandResult TividyWorkflow::startItem(const std::string& instanceId,
                                         const std::string& itemId)
 {
-    auto* inst = findInstance(instanceId);
-    if(inst == nullptr)
+    ScenarioFacade* facade = findFacade(instanceId);
+    if(facade == nullptr)
     {
         return CommandResult::NotFound;
     }
-    /* [TBD — Member 2] lookup the item by id, call Item::start(), catch
-     * InvalidTransition and translate.*/
-    return CommandResult::Success;
+    return facade->startItem(instanceId, itemId);
 }
 
 CommandResult TividyWorkflow::completeItem(const std::string& instanceId,
-                                           const std::string& itemId,
-                                           int value)
+                                            const std::string& itemId, int value)
 {
-    auto* inst = findInstance(instanceId);
-    if(inst == nullptr)
+    ScenarioFacade* facade = findFacade(instanceId);
+    if(facade == nullptr)
     {
         return CommandResult::NotFound;
     }
-    /* [TBD — Member 2] inst->completeItem(itemId, value);*/
-    return CommandResult::Success;
+    return facade->completeItem(instanceId, itemId, value);
 }
 
 CommandResult TividyWorkflow::approveContainer(const std::string& instanceId,
-                                               const std::string& containerId)
+                                                const std::string& containerId)
 {
-    auto* inst = findInstance(instanceId);
-    if(inst == nullptr)
+    ScenarioFacade* facade = findFacade(instanceId);
+    if(facade == nullptr)
     {
         return CommandResult::NotFound;
     }
-    /* [TBD — Member 2 + Member 4] inst->approveContainer(containerId) which
-     * runs the chain.*/
-    return CommandResult::Success;
+    return facade->approveContainer(instanceId, containerId);
 }
 
 CommandResult TividyWorkflow::overrideItem(const std::string& instanceId,
-                                           const std::string& itemId,
-                                           int value, bool accept)
+                                            const std::string& itemId, int value, bool accept)
 {
-    auto* inst = findInstance(instanceId);
-    if(inst == nullptr)
+    ScenarioFacade* facade = findFacade(instanceId);
+    if(facade == nullptr)
     {
         return CommandResult::NotFound;
     }
-    /* [TBD — Member 2 + Member 4] resolve a Rejected item.*/
-    return CommandResult::Success;
+    return facade->overrideItem(instanceId, itemId, value, accept);
 }
 
 CommandResult TividyWorkflow::admitPatient(const std::string& instanceId,
-                                           const std::string& containerName)
+                                            const std::string& containerName)
 {
-    auto* inst = findInstance(instanceId);
-    if(inst == nullptr)
+    ScenarioFacade* facade = findFacade(instanceId);
+    if(facade == nullptr)
     {
         return CommandResult::NotFound;
     }
-    /* [TBD — Member 2] same as submitEducation, for healthcare.*/
-    return CommandResult::Success;
+    // admitPatient is semantically the same as submit for the hospital facade.
+    return facade->submit(instanceId, containerName);
 }

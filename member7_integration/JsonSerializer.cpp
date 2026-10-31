@@ -18,7 +18,7 @@ namespace
 
     Json serializeItemValue(const Item* item)
     {
-        if (item == nullptr)
+        if(item == nullptr)
             return nullptr;
 
         Json value = {
@@ -44,11 +44,11 @@ namespace
 
     Json serializeComponentValue(const Component* component)
     {
-        if (component == nullptr)
+        if(component == nullptr)
             return nullptr;
 
         const Item* item = dynamic_cast<const Item*>(component);
-        if (item != nullptr)
+        if(item != nullptr)
             return serializeItemValue(item);
 
         Json children = Json::array();
@@ -82,7 +82,7 @@ std::string JsonSerializer::serializeTree(const Component* root)
 
 std::string JsonSerializer::serializeParticipant(const Participant* participant)
 {
-    if (participant == nullptr)
+    if(participant == nullptr)
         return "null";
 
     return nlohmann::json{
@@ -115,7 +115,7 @@ std::string JsonSerializer::getString(
 {
     const nlohmann::json object = parseObject(input);
     const nlohmann::json::const_iterator value = object.find(field);
-    if (value == object.end() || !value->is_string())
+    if(value == object.end() || !value->is_string())
         return fallback;
 
     return value->get<std::string>();
@@ -128,20 +128,20 @@ int JsonSerializer::getInt(
 {
     const nlohmann::json object = parseObject(input);
     const nlohmann::json::const_iterator value = object.find(field);
-    if (value == object.end() || !value->is_number_integer())
+    if(value == object.end() || !value->is_number_integer())
         return fallback;
 
-    if (value->is_number_unsigned())
+    if(value->is_number_unsigned())
     {
         const unsigned long long number = value->get<unsigned long long>();
-        if (number > static_cast<unsigned long long>(
+        if(number > static_cast<unsigned long long>(
                          std::numeric_limits<int>::max()))
             return fallback;
         return static_cast<int>(number);
     }
 
     const long long number = value->get<long long>();
-    if (number < std::numeric_limits<int>::min() ||
+    if(number < std::numeric_limits<int>::min() ||
         number > std::numeric_limits<int>::max())
         return fallback;
     return static_cast<int>(number);
