@@ -41,4 +41,4 @@ std::vector<DemoSubmission> EducationSeed::demoSubmissions()
     return result;
 }
 
-} // namespace education
+}

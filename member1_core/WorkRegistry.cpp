@@ -1,81 +1,83 @@
+// WorkRegistry.cpp
 #include "WorkRegistry.h"
 #include "Container.h"
 #include "InvalidTransition.h"
-
 #include <stdexcept>
+
+namespace
+{
+    void validateRemoval(const Component* component)
+    {
+        const Container* removingContainer = dynamic_cast<const Container*>(component);
+        if (removingContainer != nullptr &&
+            removingContainer->getPhaseName() != "Intake")
+        {
+            throw InvalidTransition("Containers can only be removed during the Intake phase");
+        }
+
+        const Component* parent = component->getParent();
+        const Container* parentContainer = dynamic_cast<const Container*>(parent);
+        if (parentContainer != nullptr &&
+            parentContainer->getPhaseName() != "Intake")
+        {
+            throw InvalidTransition("Work can only be removed during the Intake phase");
+        }
+
+        const std::vector<Component*> children = component->getChildren();
+        for (std::vector<Component*>::const_iterator child = children.begin();
+             child != children.end(); ++child)
+        {
+            validateRemoval(*child);
+        }
+    }
+}
 
 WorkRegistry::WorkRegistry() = default;
 WorkRegistry::~WorkRegistry() = default;
 
-Component *WorkRegistry::add(std::unique_ptr<Component> item)
-{
-    if (!item)
-    {
-        throw std::invalid_argument("Cannot register null component");
-    }
+Component* WorkRegistry::add(std::unique_ptr<Component> item) {
+    if (!item) throw std::invalid_argument("Cannot register null component");
     std::string id = item->getId();
-    if (components.count(id) > 0)
-    {
-        throw std::invalid_argument("Duplicate id inserted");
-    }
-    Component *raw = item.get();
+    if (components.count(id)) throw std::invalid_argument("Duplicate ID: " + id);
+    
+    Component* raw = item.get();
     components.emplace(id, std::move(item));
     return raw;
 }
 
-Component *WorkRegistry::get(const std::string &id) const
-{
-    auto pair = components.find(id);
-    if (pair == components.end())
-    {
-        return nullptr;
-    }
-    return pair->second.get();
+Component* WorkRegistry::get(const std::string& id) const {
+    auto it = components.find(id);
+    return it != components.end() ? it->second.get() : nullptr;
 }
 
-void WorkRegistry::remove(const std::string &id)
-{
-    auto pair = components.find(id);
-    if (pair == components.end())
-        return;
+void WorkRegistry::remove(const std::string& id) {
+    auto it = components.find(id);
+    if (it == components.end()) return;
 
-    Component *component = pair->second.get();
+    validateRemoval(it->second.get());
 
-    Component *parent = component->getParent();
-    Container *parentContainer = dynamic_cast<Container*>(parent);
-    if (parentContainer && parentContainer->getPhaseName() != "Intake")
-        throw InvalidTransition("Components can only be removed during Intake");
+    // Detach from parent
+    if (it->second->getParent()) {
+        it->second->getParent()->remove(id);
+    }
 
-    auto children = component->getChildren();
-    for (auto *child : children)
-    {
+    // Recursively remove children
+    auto children = it->second->getChildren();
+    for (auto* child : children) {
         remove(child->getId());
     }
 
-    if (parent)
-    {
-        parent->remove(id);
-    }
-
-    components.erase(id);
+    components.erase(it);
 }
 
-bool WorkRegistry::contains(const std::string &id) const
-{
+bool WorkRegistry::contains(const std::string& id) const {
     return components.count(id) > 0;
 }
 
-size_t WorkRegistry::size() const
-{
-    return components.size();
-}
+size_t WorkRegistry::size() const { return components.size(); }
 
-std::vector<std::string> WorkRegistry::getAllIds() const
-{
-    std::vector<std::string> ids = {};
-    for (auto &pair : components)
-    {
-        ids.push_back(pair.first);
-    }
+std::vector<std::string> WorkRegistry::getAllIds() const {
+    std::vector<std::string> ids;
+    for (const auto& pair : components) ids.push_back(pair.first);
     return ids;
 }

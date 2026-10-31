@@ -1,99 +1,90 @@
+// Container.h
 #pragma once
+
 #include "Component.h"
 #include <vector>
 #include <memory>
 
-#include "WorkflowPhase.h"
+class WorkflowPhase;
 
 /**
- * @brief A workflow component that groups and manages work items.
- *
- * A container holds non-owning references to its child components and tracks
- * the workflow phase shared by those children. Items may be added or removed
- * only during the Intake phase. The phase sequence is Intake, Active, Review,
- * and Publish.
+ * @brief Holds work items and manages the 4-phase lifecycle.
  */
 class Container : public Component {
 private:
-    std::vector<Component*> children;
-    std::unique_ptr<WorkflowPhase> phase;
-
-    /// @brief Replaces the current phase.
-    /// @param next The phase to install; must not be null.
+    std::vector<Component*> children;          ///< Non-owning items.
+    std::unique_ptr<WorkflowPhase> phase;      ///< Owned phase state.
     void setPhase(std::unique_ptr<WorkflowPhase> next);
-    friend class IntakePhase;
-    friend class ActivePhase;
-    friend class ReviewPhase;
-    friend class PublishPhase;
 
 public:
     /**
-     * @brief Constructs a container in the Intake phase.
-     * @param id Unique identifier for this component.
-     * @param type Component type.
+     * @brief Creates a container with an initial intake phase.
+     * @param id Unique component ID.
+     * @param type Scenario-specific type.
      * @param name Display name.
-     * @param parent Optional non-owning reference to the parent component.
+     * @throws std::invalid_argument If ID or type is empty.
      */
-    Container(std::string id, std::string type, std::string name, Component* parent = nullptr);
+    Container(std::string id, std::string type, std::string name);
 
-    /// @brief Destroys the container without destroying its child components.
-    virtual ~Container() override;
+    /**
+     * @brief Destroys the container and its owned phase object.
+     */
+    ~Container() override;
 
     /**
      * @brief Adds an item to this container.
-     * @param c Item to add; the container does not take ownership.
-     * @throws std::invalid_argument If the item is null, is not an Item, already
-     *         belongs to another container, or duplicates an existing child.
-     * @throws InvalidTransition If the container is not in the Intake phase.
+     * @param c Non-owning pointer to the child.
+     * @throws std::invalid_argument If child is a Container (no deep nesting).
+     * @throws std::invalid_argument If null, already parented, or duplicate ID.
      */
     void add(Component* c) override;
 
     /**
-     * @brief Removes a child item by identifier.
-     * @param id Identifier of the item to remove.
-     * @throws InvalidTransition If the container is not in the Intake phase.
-     *
-     * If no child has the given identifier, this operation has no effect.
+     * @brief Detaches a direct child by ID.
+     * @param id Child ID.
      */
     void remove(const std::string& id) override;
 
-    /// @brief Returns a copy of the list of non-owning child references.
+    /**
+     * @brief Returns direct non-owning children.
+     * @return Child pointers.
+     */
     std::vector<Component*> getChildren() const override;
 
     /**
-     * @brief Creates an iterator for traversing this container's children.
-     * @return An iterator, or nullptr when traversal is unavailable.
-     */
-    Iterator* createIterator() override;
-
-    /**
-     * @brief Checks whether this container has children and all are completed.
-     * @return true if at least one child exists and every child is completed.
+     * @brief Checks whether every child is complete.
+     * @return True when the non-empty container's children are complete.
      */
     bool isCompleted() const override;
 
     /**
-     * @brief Advances the container to the next workflow phase.
-     * @throws InvalidTransition If the phase transition is not permitted.
-     *
-     * A successful transition notifies the associated workflow mediator, when
-     * one is available.
-     */
-    void advancePhase();
-
-    /// @brief Returns the name of the current workflow phase.
-    std::string getPhaseName() const;
-
-    /**
-     * @brief Checks whether all children are completed and reviewed.
-     * @return true if the container has children and all are ready to publish.
+     * @brief Checks whether the container is eligible for publishing.
+     * @return True when every child is complete and reviewed.
      */
     bool isReadyToPublish() const;
 
     /**
-     * @brief Attempts to advance a ready container from Review to Publish.
-     * @return true if publishing was started; otherwise false without changing
-     *         the phase.
+     * @brief Creates a depth-first iterator rooted at this container.
+     * @return Caller-owned iterator, or nullptr if empty.
      */
-    bool tryPublish();
+    Iterator* createIterator() override;
+
+    /**
+     * @brief Creates an iterator filtered by item state.
+     * @param state State name to match.
+     * @return Caller-owned iterator.
+     */
+    Iterator* createIterator(const std::string& state) override;
+
+    /**
+     * @brief Advances to the next workflow phase.
+     */
+    void advancePhase();
+
+    /**
+     * @brief Returns the current phase name.
+     * @return Phase name.
+     */
+    std::string getPhaseName() const;
+
 };

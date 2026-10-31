@@ -1,3 +1,4 @@
+// WorkRegistry.h
 #pragma once
 
 #include <unordered_map>
@@ -7,58 +8,41 @@
 #include "Component.h"
 
 /**
- * @brief Owns and indexes workflow components by identifier.
- *
- * The registry takes ownership of components passed to add(). Components
- * returned from lookup and insertion are non-owning pointers. Removing a
- * component also removes its registered descendants and detaches it from its
- * parent when applicable.
+ * @brief The single owner of all components in a WorkflowInstance.
+ * 
+ * Uses std::unique_ptr to guarantee memory safety. Returns non-owning 
+ * raw pointers to the rest of the system.
  */
-class WorkRegistry
-{
+class WorkRegistry {
 private:
+    /// @brief The actual storage mapping ID to owned Component.
     std::unordered_map<std::string, std::unique_ptr<Component>> components;
 
 public:
-    /// @brief Constructs an empty component registry.
     WorkRegistry();
-
-    /// @brief Destroys all components owned by the registry.
     ~WorkRegistry();
 
     /**
-     * @brief Registers and takes ownership of a component.
-     * @param item Component to register.
-     * @return Non-owning pointer to the registered component.
-     * @throws std::invalid_argument If item is null or its identifier is
-     *         already registered.
+     * @brief Takes ownership of a component.
+     * @param item The unique_ptr transferring ownership.
+     * @return Non-owning raw pointer for tree wiring.
+     * @throws std::invalid_argument If null or duplicate ID.
      */
-    Component *add(std::unique_ptr<Component> item);
+    Component* add(std::unique_ptr<Component> item);
 
     /**
-     * @brief Looks up a component by identifier.
-     * @param id Component identifier.
-     * @return Non-owning pointer to the component, or nullptr if not found.
+     * @brief Looks up a component.
+     * @return Non-owning pointer, or nullptr if not found.
      */
-    Component *get(const std::string &id) const;
+    Component* get(const std::string& id) const;
 
     /**
-     * @brief Removes a component and any registered descendants.
-     * @param id Identifier of the component to remove.
-     * @throws InvalidTransition If a child cannot be removed in its current
-     *         container phase.
-     *
-     * Has no effect if the identifier is not registered. Components are
-     * detached from their parents before destruction.
+     * @brief Recursively removes a component and all its children.
+     * @param id The ID of the component to remove.
      */
-    void remove(const std::string &id);
+    void remove(const std::string& id);
 
-    /// @brief Checks whether an identifier is registered.
-    bool contains(const std::string &id) const;
-
-    /// @brief Returns the number of registered components.
-    size_t size() const;
-
-    /// @brief Returns all registered component identifiers.
-    std::vector<std::string> getAllIds() const;
+    bool contains(const std::string& id) const; ///< @return True if exists.
+    size_t size() const;                        ///< @return Number of items.
+    std::vector<std::string> getAllIds() const; ///< @return All IDs.
 };

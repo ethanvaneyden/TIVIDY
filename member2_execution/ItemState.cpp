@@ -1,7 +1,27 @@
 #include "ItemState.h"
 #include "InvalidTransition.h"
 
-void ItemState::assign(Item&) { throw InvalidTransition("Cannot assign an item in " + name()); }
-void ItemState::start(Item&) { throw InvalidTransition("Cannot start an item in " + name()); }
-void ItemState::complete(Item&, int) { throw InvalidTransition("Cannot complete an item in " + name()); }
-void ItemState::reject(Item&, const std::string&) { throw InvalidTransition("Cannot reject an item in " + name()); }
+std::unique_ptr<ItemState> InvalidTransitionState::assign(Item&, Participant*)
+{
+    throw InvalidTransition("Cannot assign an item in " + name());
+}
+
+std::unique_ptr<ItemState> InvalidTransitionState::start(Item&)
+{
+    throw InvalidTransition("Cannot start an item in " + name());
+}
+
+std::unique_ptr<ItemState> InvalidTransitionState::complete(Item&, int)
+{
+    throw InvalidTransition("Cannot complete an item in " + name());
+}
+
+std::unique_ptr<ItemState> InvalidTransitionState::reject(Item&, const std::string&)
+{
+    throw InvalidTransition("Cannot reject an item in " + name());
+}
+
+std::unique_ptr<ItemState> InvalidTransitionState::resolveReview(Item&, Participant*, int)
+{
+    throw InvalidTransition("Cannot resolve a review in " + name());
+}

@@ -31,6 +31,20 @@ TEST(RootTest, TracksContainersAndEnforcesSingleParent)
     EXPECT_TRUE(root.getChildren().empty());
 }
 
+TEST(RootTest, RejectsRemovingContainerOutsideIntake)
+{
+    Root root("root", "workflow", "Workflow");
+    Container container("container", "group", "Container");
+    Item item("item", "work", "Item");
+    root.add(&container);
+    container.add(&item);
+    container.advancePhase();
+
+    EXPECT_THROW(root.remove("container"), InvalidTransition);
+    ASSERT_EQ(root.getChildren().size(), 1u);
+    EXPECT_EQ(container.getParent(), &root);
+}
+
 TEST(RootTest, CreatesDepthFirstIteratorForWorkflowTree)
 {
     Root root("root", "workflow", "Workflow");
@@ -45,6 +59,22 @@ TEST(RootTest, CreatesDepthFirstIteratorForWorkflowTree)
         names.push_back(iterator->current()->getName());
 
     EXPECT_EQ(names, (std::vector<std::string>{"Workflow", "Container", "Item"}));
+}
+
+TEST(ContainerTest, CreatesDepthFirstIteratorFromContainer)
+{
+    Container container("container", "group", "Container");
+    Item first("first", "work", "First");
+    Item second("second", "work", "Second");
+    container.add(&first);
+    container.add(&second);
+
+    std::unique_ptr<Iterator> iterator(container.createIterator());
+    std::vector<std::string> names;
+    for (iterator->first(); !iterator->isDone(); iterator->next())
+        names.push_back(iterator->current()->getName());
+
+    EXPECT_EQ(names, (std::vector<std::string>{"Container", "First", "Second"}));
 }
 
 TEST(WorkRegistryTest, RemovesRegisteredTreeAndDetachesDescendants)
@@ -82,4 +112,19 @@ TEST(WorkRegistryTest, RejectsRemovalOutsideIntakeWithoutChangingTree)
     ASSERT_EQ(container->getChildren().size(), 1u);
     EXPECT_EQ(container->getChildren().front(), item);
     EXPECT_EQ(item->getParent(), container);
+}
+
+TEST(WorkRegistryTest, RejectsRemovingContainerOutsideIntake)
+{
+    WorkRegistry registry;
+    Container* container = static_cast<Container*>(
+        registry.add(std::unique_ptr<Component>(new Container("container", "group", "Container"))));
+    Item* item = static_cast<Item*>(
+        registry.add(std::unique_ptr<Component>(new Item("item", "work", "Item"))));
+    container->add(item);
+    container->advancePhase();
+
+    EXPECT_THROW(registry.remove("container"), InvalidTransition);
+    EXPECT_TRUE(registry.contains("container"));
+    EXPECT_TRUE(registry.contains("item"));
 }

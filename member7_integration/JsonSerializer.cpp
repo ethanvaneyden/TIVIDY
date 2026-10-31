@@ -1,205 +1,148 @@
 /**
  * @file JsonSerializer.cpp
- * @brief Implementation of JsonSerializer.
-*/
+ * @brief Implementation of JsonSerializer using nlohmann/json.
+ */
 
 #include "JsonSerializer.h"
-#include "Container.h"
+#include "Component.h"
 #include "Item.h"
 #include "Participant.h"
 
-#include <sstream>
+#include "json.h"
+#include <limits>
+#include <utility>
 
-std::string JsonSerializer::escape(const std::string& s)
+namespace
 {
-    std::string out;
-    out.reserve(s.size());
-    for(char c : s)
+    using Json = nlohmann::json;
+
+    Json serializeItemValue(const Item* item)
     {
-        switch(c)
-        {
-            case '"': out += "\\\""; break;
-            case '\\': out += "\\\\"; break;
-            case '\n': out += "\\n"; break;
-            case '\r': out += "\\r"; break;
-            case '\t': out += "\\t"; break;
-            default: out += c; break;
-        }
+        if (item == nullptr)
+            return nullptr;
+
+        Json value = {
+            {"id", item->getId()},
+            {"type", "Item"},
+            {"name", item->getName()},
+            {"state", item->getStateName()},
+            {"reviewMethod", item->getReviewMethod()}
+        };
+
+        const Participant* assignee = item->getAssignee();
+        value["assignee"] = assignee != nullptr
+            ? Json(assignee->getId())
+            : Json(nullptr);
+
+        const Participant* reviewer = item->getReviewer();
+        value["reviewer"] = reviewer != nullptr
+            ? Json(reviewer->getId())
+            : Json(nullptr);
+
+        return value;
     }
-    return out;
+
+    Json serializeComponentValue(const Component* component)
+    {
+        if (component == nullptr)
+            return nullptr;
+
+        const Item* item = dynamic_cast<const Item*>(component);
+        if (item != nullptr)
+            return serializeItemValue(item);
+
+        Json children = Json::array();
+        for (const Component* child : component->getChildren())
+            children.push_back(serializeComponentValue(child));
+
+        return Json{
+            {"id", component->getId()},
+            {"type", component->getType()},
+            {"name", component->getName()},
+            {"children", std::move(children)}
+        };
+    }
+
+    Json parseObject(const std::string& input)
+    {
+        Json value = Json::parse(input);
+        return value.is_object() ? value : Json::object();
+    }
 }
 
 std::string JsonSerializer::serializeItem(const Item* item)
 {
-    if(item == nullptr)
-    {
+    return serializeItemValue(item).dump();
+}
+
+std::string JsonSerializer::serializeTree(const Component* root)
+{
+    return serializeComponentValue(root).dump();
+}
+
+std::string JsonSerializer::serializeParticipant(const Participant* participant)
+{
+    if (participant == nullptr)
         return "null";
-    }
-    std::ostringstream os;
-    os << "{";
-    os << "\"id\":\"" << escape(item->getId()) << "\",";
-    os << "\"type\":\"Item\",";
-    os << "\"name\":\"" << escape(item->getName()) << "\",";
-    os << "\"state\":\"" << escape(item->getStateName()) << "\",";
-    os << "\"assignee\":";
-    auto* assignee = item->getAssignee();
-    if(assignee != nullptr)
-    {
-        os << "\"" << escape(assignee->getId()) << "\"";
-    }
-    else
-    {
-        os << "null";
-    }
-    os << ",\"reviewer\":";
-    auto* reviewer = item->getReviewer();
-    if(reviewer != nullptr)
-    {
-        os << "\"" << escape(reviewer->getId()) << "\"";
-    }
-    else
-    {
-        os << "null";
-    }
-    os << ",\"reviewMethod\":\"" << escape(item->getReviewMethod()) << "\"";
-    os << "}";
-    return os.str();
+
+    return nlohmann::json{
+        {"id", participant->getId()},
+        {"name", participant->getName()},
+        {"role", participant->getRole()}
+    }.dump();
 }
 
-void JsonSerializer::serializeComponent(const Component* c, std::string& out)
+std::string JsonSerializer::serializeHistory(
+    const std::vector<std::string>& records)
 {
-    if(c == nullptr)
-    {
-        out += "null";
-        return;
-    }
-    const auto* item = dynamic_cast<const Item*>(c);
-    if(item != nullptr)
-    {
-        out += serializeItem(item);
-        return;
-    }
-    /* Container: recurse.*/
-    out += "{";
-    out += "\"id\":\"" + escape(c->getId()) + "\",";
-    out += "\"type\":\"" + escape(c->getType()) + "\",";
-    out += "\"name\":\"" + escape(c->getName()) + "\",";
-    out += "\"children\":[";
-    auto children = c->getChildren();
-    for(size_t i = 0; i < children.size(); ++i)
-    {
-        if(i != 0)
-        {
-            out += ",";
-        }
-        serializeComponent(children[i], out);
-    }
-    out += "]}";
+    return nlohmann::json(records).dump();
 }
 
-std::string JsonSerializer::serializeTree(const Container* root)
+std::string JsonSerializer::serializeError(
+    const std::string& error,
+    const std::string& message)
 {
-    if(root == nullptr)
-    {
-        return "null";
-    }
-    std::string out;
-    serializeComponent(root, out);
-    return out;
+    return nlohmann::json{
+        {"error", error},
+        {"message", message}
+    }.dump();
 }
 
-std::string JsonSerializer::serializeParticipant(const Participant* p)
+std::string JsonSerializer::getString(
+    const std::string& input,
+    const std::string& field,
+    const std::string& fallback)
 {
-    if(p == nullptr)
-    {
-        return "null";
-    }
-    std::ostringstream os;
-    os << "{";
-    os << "\"id\":\"" << escape(p->getId()) << "\",";
-    os << "\"name\":\"" << escape(p->getName()) << "\",";
-    os << "\"role\":\"" << escape(p->getRole()) << "\"";
-    os << "}";
-    return os.str();
+    const nlohmann::json object = parseObject(input);
+    const nlohmann::json::const_iterator value = object.find(field);
+    if (value == object.end() || !value->is_string())
+        return fallback;
+
+    return value->get<std::string>();
 }
 
-std::string JsonSerializer::serializeHistory(const std::vector<std::string>& records)
+int JsonSerializer::getInt(
+    const std::string& input,
+    const std::string& field,
+    int fallback)
 {
-    std::ostringstream os;
-    os << "[";
-    for(size_t i = 0; i < records.size(); ++i)
-    {
-        if(i != 0)
-        {
-            os << ",";
-        }
-        os << "\"" << escape(records[i]) << "\"";
-    }
-    os << "]";
-    return os.str();
-}
+    const nlohmann::json object = parseObject(input);
+    const nlohmann::json::const_iterator value = object.find(field);
+    if (value == object.end() || !value->is_number_integer())
+        return fallback;
 
-std::string JsonSerializer::serializeError(const std::string& error,
-                                           const std::string& message)
-{
-    std::ostringstream os;
-    os << "{\"error\":\"" << escape(error) << "\",";
-    os << "\"message\":\"" << escape(message) << "\"}";
-    return os.str();
-}
+    if (value->is_number_unsigned())
+    {
+        const unsigned long long number = value->get<unsigned long long>();
+        if (number > static_cast<unsigned long long>(
+                         std::numeric_limits<int>::max()))
+            return fallback;
+        return static_cast<int>(number);
+    }
 
-std::string JsonSerializer::getString(const std::string& json,
-                                      const std::string& field,
-                                      const std::string& fallback)
-{
-    std::string needle = "\"" + field + "\"";
-    auto pos = json.find(needle);
-    if(pos == std::string::npos)
-    {
+    const long long number = value->get<long long>();
+    if (number < std::numeric_limits<int>::min() ||
+        number > std::numeric_limits<int>::max())
         return fallback;
-    }
-    auto colon = json.find(':', pos + needle.size());
-    if(colon == std::string::npos)
-    {
-        return fallback;
-    }
-    auto firstQuote = json.find('"', colon + 1);
-    if(firstQuote == std::string::npos)
-    {
-        return fallback;
-    }
-    auto secondQuote = json.find('"', firstQuote + 1);
-    if(secondQuote == std::string::npos)
-    {
-        return fallback;
-    }
-    return json.substr(firstQuote + 1, secondQuote - firstQuote - 1);
-}
-
-int JsonSerializer::getInt(const std::string& json,
-                           const std::string& field,
-                           int fallback)
-{
-    std::string needle = "\"" + field + "\"";
-    auto pos = json.find(needle);
-    if(pos == std::string::npos)
-    {
-        return fallback;
-    }
-    auto colon = json.find(':', pos + needle.size());
-    if(colon == std::string::npos)
-    {
-        return fallback;
-    }
-    auto start = json.find_first_of("-0123456789", colon + 1);
-    if(start == std::string::npos)
-    {
-        return fallback;
-    }
-    auto end = json.find_first_not_of("0123456789", start + (json[start] == '-' ? 1 : 0));
-    if(end == std::string::npos)
-    {
-        end = json.size();
-    }
-    return std::stoi(json.substr(start, end - start));
+    return static_cast<int>(number);
 }

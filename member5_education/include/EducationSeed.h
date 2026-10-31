@@ -1,6 +1,10 @@
 /**
  * @file EducationSeed.h
  * @brief Demo data for the Education scenario: participants and sample
+ *        submissions.
+ *
+ * EducationWorkflowFactory can call seedParticipants() when it
+ * sets up an education instance. Nothing here is used by the generic engine.
  */
 
 #pragma once
@@ -19,9 +23,9 @@ namespace education
  */
 struct DemoSubmission
 {
-    std::string itemId;      /**< Item identifier, e.g. "SUB-A". */
-    std::string studentName; /**< Student who submitted. */
-    int mark;                /**< Mark the operator will enter on completion. */
+    std::string itemId;      /* Item identifier, e.g. "SUB-A". */
+    std::string studentName; /* Student who submitted. */
+    int mark;                /* Mark the operator will enter on completion. */
 };
 
 /**
@@ -46,4 +50,5 @@ class EducationSeed
         static std::vector<DemoSubmission> demoSubmissions();
 };
 
-} // namespace education
+}
+

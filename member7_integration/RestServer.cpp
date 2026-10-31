@@ -7,6 +7,7 @@
 #include "TividyWorkflow.h"
 #include "JsonSerializer.h"
 #include "Container.h"
+#include "Root.h"
 
 #include "httplib.h"
 
@@ -48,6 +49,8 @@ RestServer::RestServer()
     : facade(std::unique_ptr<TividyWorkflow>(new TividyWorkflow()))
 {
 }
+
+RestServer::~RestServer() = default;
 
 bool RestServer::run(const std::string& host, int port)
 {
@@ -103,7 +106,7 @@ bool RestServer::run(const std::string& host, int port)
         {
             auto id = req.path_params.at("instanceId");
             std::lock_guard<std::mutex> lock(engineMutex);
-            Container* tree = facade->getTree(id);
+            Root* tree = facade->getTree(id);
             if(tree == nullptr)
             {
                 res.status = 404;
@@ -216,7 +219,7 @@ bool RestServer::run(const std::string& host, int port)
         {
             auto id = req.path_params.at("instanceId");
             std::lock_guard<std::mutex> lock(engineMutex);
-            Container* tree = facade->getTree(id);
+            Root* tree = facade->getTree(id);
             if(tree == nullptr)
             {
                 res.status = 404;

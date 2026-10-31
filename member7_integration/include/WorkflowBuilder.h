@@ -1,56 +1,42 @@
-/**
- * @file WorkflowBuilder.h
- * @brief Abstract Builder for constructing the workflow tree.
-*/
-
 #pragma once
 
-#include <memory>
+#include "Root.h"
+
 #include <string>
 
-class Root;
-class Container;
-class Item;
-
 /**
- * @class WorkflowBuilder
- * @brief GoF Builder interface. Constructs a Root -> Container -> Item tree.
+ * @brief Scenario-neutral factory interface for workflow components.
  *
- * Concrete builders (AssignmentMarkingBuilder, HospitalAdmissionBuilder)
- * live in Members 5 and 6's folders. They construct the tree; they do
- * not execute it. Execution is the engine's job.
-*/
+ * Concrete builders create and register education- or healthcare-specific
+ * components. The WorkRegistry owns the component tree.
+ */
 class WorkflowBuilder
 {
-    public:
-        WorkflowBuilder() = default;
-        virtual ~WorkflowBuilder() = default;
+public:
+    /**
+     * @brief Destroys the polymorphic builder.
+     */
+    virtual ~WorkflowBuilder() = default;
 
-        /**
-         * @brief Start a new tree.
-         * @param rootName Human-readable name for the root.
-        */
-        virtual void buildRoot(const std::string& rootName) = 0;
+    /** @brief Build and register the workflow root. */
+    virtual void buildRoot(const std::string& rootName) = 0;
 
-        /**
-         * @brief Add a container under the current parent.
-         * @param containerId Unique identifier.
-         * @param name Human-readable name.
-        */
-        virtual void buildContainer(const std::string& containerId,
-                                    const std::string& name) = 0;
+    /**
+     * @brief Build and register a scenario-specific container.
+     * @param containerId Unique ID for the container.
+     * @param name Display name for the container.
+     */
+    virtual void buildContainer(const std::string& containerId,
+                                const std::string& name) = 0;
 
-        /**
-         * @brief Add an item under the current container.
-         * @param itemId Unique identifier.
-         * @param name Human-readable name.
-        */
-        virtual void buildItem(const std::string& itemId,
-                               const std::string& name) = 0;
+    /**
+     * @brief Build and register a scenario-specific leaf item.
+     * @param itemId Unique ID for the item.
+     * @param name Display name for the item.
+     */
+    virtual void buildItem(const std::string& itemId,
+                           const std::string& name) = 0;
 
-        /**
-         * @brief Return the constructed root.
-         * @return Owning pointer to the new tree.
-        */
-        virtual std::unique_ptr<Root> getResult() = 0;
+    /** @return the root built so far (owned by the registry), or nullptr. */
+    virtual Root* getRoot() const = 0;
 };
