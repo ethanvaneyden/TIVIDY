@@ -257,3 +257,144 @@ TEST_F(ItemLifecycleTest, PublishedItemRejectsReviewChanges)
     expectRejected<InvalidTransition>([&] { item.recordReview(&worker, "Personal"); });
     expectRejected<InvalidTransition>([&] { item.resolveReview(&worker, 99); });
 }
+
+namespace
+{
+class ItemReviewTest : public ItemLifecycleTest
+{
+protected:
+    void SetUp() override
+    {
+        ItemLifecycleTest::SetUp();
+        item.assign(&worker);
+        item.start();
+        item.complete(72);
+        container.advancePhase();
+    }
+};
+}
+
+TEST_F(ItemReviewTest, BatchReviewApprovesWithoutChangingCompletedWork)
+{
+    item.recordReview(&other, "Batch");
+
+    EXPECT_EQ(item.getStateName(), "Completed");
+    EXPECT_TRUE(item.isCompleted());
+    EXPECT_TRUE(item.isReviewed());
+    EXPECT_EQ(item.getReviewer(), &other);
+    EXPECT_EQ(item.getReviewMethod(), "Batch");
+    ASSERT_TRUE(item.hasResult());
+    EXPECT_EQ(item.getResult(), 72);
+    EXPECT_EQ(item.getAssignee(), &worker);
+    EXPECT_TRUE(item.getRejectionReason().empty());
+    EXPECT_EQ(worker.getPendingTasks(), 0);
+    EXPECT_EQ(other.getPendingTasks(), 0);
+}
+
+TEST_F(ItemReviewTest, RejectionRetainsResultAndAssigneeForPersonalReview)
+{
+    item.reject("Outside automatic approval band");
+
+    EXPECT_EQ(item.getStateName(), "Rejected");
+    EXPECT_FALSE(item.isCompleted());
+    EXPECT_FALSE(item.isReviewed());
+    ASSERT_TRUE(item.hasResult());
+    EXPECT_EQ(item.getResult(), 72);
+    EXPECT_EQ(item.getAssignee(), &worker);
+    EXPECT_EQ(item.getRejectionReason(), "Outside automatic approval band");
+    EXPECT_EQ(item.getReviewer(), nullptr);
+    EXPECT_TRUE(item.getReviewMethod().empty());
+    EXPECT_EQ(worker.getPendingTasks(), 0);
+}
+
+TEST_F(ItemReviewTest, RejectionClearsPreviousApproval)
+{
+    item.recordReview(&other, "Batch");
+    ASSERT_TRUE(item.isReviewed());
+
+    item.reject("Approval needs reconsideration");
+
+    EXPECT_EQ(item.getStateName(), "Rejected");
+    EXPECT_FALSE(item.isReviewed());
+    EXPECT_EQ(item.getReviewer(), nullptr);
+    EXPECT_TRUE(item.getReviewMethod().empty());
+    EXPECT_EQ(item.getAssignee(), &worker);
+    EXPECT_EQ(item.getResult(), 72);
+    EXPECT_EQ(item.getRejectionReason(), "Approval needs reconsideration");
+}
+
+TEST_F(ItemReviewTest, PersonalReviewCanAcceptTheExistingResult)
+{
+    item.reject("Needs a personal decision");
+    item.resolveReview(&other, item.getResult());
+
+    EXPECT_EQ(item.getStateName(), "Completed");
+    EXPECT_TRUE(item.isCompleted());
+    EXPECT_TRUE(item.isReviewed());
+    ASSERT_TRUE(item.hasResult());
+    EXPECT_EQ(item.getResult(), 72);
+    EXPECT_EQ(item.getAssignee(), &worker);
+    EXPECT_EQ(item.getReviewer(), &other);
+    EXPECT_EQ(item.getReviewMethod(), "Personal");
+    EXPECT_EQ(item.getRejectionReason(), "Needs a personal decision");
+    EXPECT_EQ(worker.getPendingTasks(), 0);
+    EXPECT_EQ(other.getPendingTasks(), 0);
+}
+
+TEST_F(ItemReviewTest, PersonalReviewCanCorrectTheRejectedResult)
+{
+    item.reject("Result needs correction");
+    item.resolveReview(&other, 85, "Corrected after checking the work");
+
+    EXPECT_EQ(item.getStateName(), "Completed");
+    EXPECT_TRUE(item.isCompleted());
+    EXPECT_TRUE(item.isReviewed());
+    ASSERT_TRUE(item.hasResult());
+    EXPECT_EQ(item.getResult(), 85);
+    EXPECT_EQ(item.getAssignee(), &worker);
+    EXPECT_EQ(item.getReviewer(), &other);
+    EXPECT_EQ(item.getReviewMethod(), "Personal");
+    // Resolution preserves the rejection reason for later inspection.
+    EXPECT_EQ(item.getRejectionReason(), "Result needs correction");
+    EXPECT_EQ(worker.getPendingTasks(), 0);
+    EXPECT_EQ(other.getPendingTasks(), 0);
+}
+
+TEST_F(ItemReviewTest, RepeatedReviewCyclesReplaceApprovalAndKeepLatestRejection)
+{
+    item.reject("First review required");
+    item.resolveReview(&other, 80);
+    ASSERT_TRUE(item.isReviewed());
+
+    item.reject("Second review required");
+    EXPECT_FALSE(item.isReviewed());
+    EXPECT_EQ(item.getReviewer(), nullptr);
+    EXPECT_TRUE(item.getReviewMethod().empty());
+    EXPECT_EQ(item.getResult(), 80);
+
+    item.resolveReview(&worker, 81);
+    EXPECT_EQ(item.getStateName(), "Completed");
+    EXPECT_TRUE(item.isReviewed());
+    EXPECT_EQ(item.getResult(), 81);
+    EXPECT_EQ(item.getReviewer(), &worker);
+    EXPECT_EQ(item.getAssignee(), &worker);
+    EXPECT_EQ(item.getReviewMethod(), "Personal");
+    EXPECT_EQ(item.getRejectionReason(), "Second review required");
+    EXPECT_EQ(worker.getPendingTasks(), 0);
+}
+
+TEST_F(ItemReviewTest, ReplacingABatchReviewRecordsTheLatestReviewer)
+{
+    item.recordReview(&other, "Batch");
+    ASSERT_EQ(item.getReviewer(), &other);
+
+    item.recordReview(&worker, "Batch");
+
+    EXPECT_TRUE(item.isReviewed());
+    EXPECT_EQ(item.getReviewer(), &worker);
+    EXPECT_EQ(item.getReviewMethod(), "Batch");
+    EXPECT_EQ(item.getAssignee(), &worker);
+    EXPECT_EQ(item.getResult(), 72);
+    EXPECT_EQ(worker.getPendingTasks(), 0);
+    EXPECT_EQ(other.getPendingTasks(), 0);
+}
