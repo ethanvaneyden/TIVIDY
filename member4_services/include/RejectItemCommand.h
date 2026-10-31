@@ -2,7 +2,7 @@
 #define TIVIDY_REJECTITEMCOMMAND_H
 
 #include "WorkCommand.h"
-#include "Item.h"
+#include "../member1_core/include/Item.h"
 #include <string>
 
 class RejectItemCommand : public WorkCommand {

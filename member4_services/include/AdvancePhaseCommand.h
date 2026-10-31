@@ -2,8 +2,8 @@
 #define TIVIDY_ADVANCEPHASECOMMAND_H
 
 #include "WorkCommand.h"
-#include "Container.h"
-#include <string>
+#include "../member1_core/include/Container.h"
+#incdlude <string>
 
 class AdvancePhaseCommand : public WorkCommand {
 private:
