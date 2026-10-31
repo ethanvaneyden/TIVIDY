@@ -1,3 +1,8 @@
+/** @file ReviewPhase.cpp
+* @brief Implements the lifecycle transitions declared in ReviewPhase.h.
+* @author Member 2
+* @date October 2026
+*/
 #include "ReviewPhase.h"
 #include "PublishPhase.h"
 #include "Container.h"

@@ -1,3 +1,8 @@
+/** @file ActivePhase.cpp 
+* @brief Implements the lifecycle transitions declared in ActivePhase.h.
+* @author Member 2
+* @date October 2026
+*/
 #include "ActivePhase.h"
 #include "ReviewPhase.h"
 #include "Container.h"
