@@ -1,17 +1,20 @@
 #include "AssignmentMarkingDirector.h"
 
+#include "AssignmentMarkingBuilder.h"
 #include "EducationSeed.h"
 #include "WorkflowBuilder.h"
 
-#include <vector>
+#include <stdexcept>
 
 namespace education
 {
 
-AssignmentMarkingDirector::AssignmentMarkingDirector(WorkflowBuilder& workflowBuilder)
+AssignmentMarkingDirector::AssignmentMarkingDirector(AssignmentMarkingBuilder& workflowBuilder)
     : builder(workflowBuilder)
 {
 }
+
+AssignmentMarkingDirector::~AssignmentMarkingDirector() {}
 
 const char* AssignmentMarkingDirector::moduleName()
 {
@@ -31,14 +34,83 @@ void AssignmentMarkingDirector::buildEmptyWorkflow()
 
 void AssignmentMarkingDirector::buildDemoWorkflow()
 {
-    buildEmptyWorkflow();
+    buildDemo(builder, moduleName());
+}
+
+void AssignmentMarkingDirector::buildDemo(WorkflowBuilder& target, const std::string& rootName)
+{
+    target.buildRoot(rootName);
+    target.buildContainer(assignmentId(), "Assignment 1");
+
+    // Only our own builder can keep the student number.
+    AssignmentMarkingBuilder* education = dynamic_cast<AssignmentMarkingBuilder*>(&target);
 
     const std::vector<DemoSubmission> submissions = EducationSeed::demoSubmissions();
     for (std::vector<DemoSubmission>::const_iterator s = submissions.begin();
          s != submissions.end(); ++s)
     {
-        builder.buildItem(s->itemId, s->studentName);
+        if (education != nullptr)
+        {
+            education->buildSubmission(s->itemId, s->studentName, s->studentId);
+        }
+        else
+        {
+            target.buildItem(s->itemId, s->studentName);
+        }
     }
 }
 
+Root* AssignmentMarkingDirector::buildDemoTree(WorkflowBuilder& target,
+                                               const std::string& rootName)
+{
+    buildDemo(target, rootName);
+    return target.getRoot();
 }
+
+Root* AssignmentMarkingDirector::buildTree(
+    WorkflowBuilder& target,
+    const std::string& rootName,
+    const std::vector<std::pair<std::string, std::string>>& containers,
+    const std::vector<std::tuple<std::string, std::string, std::string>>& items)
+{
+    // Check first, so a bad specification builds nothing.
+    for (std::vector<std::tuple<std::string, std::string, std::string>>::const_iterator i = items.begin();
+         i != items.end(); ++i)
+    {
+        bool known = false;
+        for (std::vector<std::pair<std::string, std::string>>::const_iterator c = containers.begin();
+             c != containers.end(); ++c)
+        {
+            if (c->first == std::get<0>(*i))
+            {
+                known = true;
+                break;
+            }
+        }
+        if (!known)
+        {
+            throw std::invalid_argument("Item " + std::get<1>(*i) +
+                                        " names an unknown container: " + std::get<0>(*i));
+        }
+    }
+
+    target.buildRoot(rootName);
+    for (std::vector<std::pair<std::string, std::string>>::const_iterator c = containers.begin();
+         c != containers.end(); ++c)
+    {
+        target.buildContainer(c->first, c->second);
+
+        // The container just built is the builder's current one.
+        for (std::vector<std::tuple<std::string, std::string, std::string>>::const_iterator i = items.begin();
+             i != items.end(); ++i)
+        {
+            if (std::get<0>(*i) == c->first)
+            {
+                target.buildItem(std::get<1>(*i), std::get<2>(*i));
+            }
+        }
+    }
+    return target.getRoot();
+}
+
+} // namespace education

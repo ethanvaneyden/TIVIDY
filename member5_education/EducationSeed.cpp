@@ -17,16 +17,16 @@ void EducationSeed::seedParticipants(ParticipantRegistry& registry)
 
 std::vector<DemoSubmission> EducationSeed::demoSubmissions()
 {
-    struct Row { const char* id; const char* student; int mark; };
+    struct Row { const char* id; const char* student; const char* studentId; int mark; };
     static const Row rows[] = {
-        { "SUB-A", "Student A", 78 },  // Lecturer band
-        { "SUB-B", "Student B", 65 },  // TA band
-        { "SUB-C", "Student C", 45 },  // Moderator band
-        { "SUB-D", "Student D", 50 },  // lowest mark of the TA band
-        { "SUB-E", "Student E", 40 },  // lowest auto-approvable mark
-        { "SUB-F", "Student F", 71 },  // lowest mark of the Lecturer band
-        { "SUB-G", "Student G", 35 },  // Rejected: lecturer must resolve
-        { "SUB-H", "Student H", 0 }    // Rejected: lecturer must resolve
+        { "SUB-A", "Student A", "u1001", 78 },  // Lecturer band
+        { "SUB-B", "Student B", "u1002", 65 },  // TA band
+        { "SUB-C", "Student C", "u1003", 45 },  // Moderator band
+        { "SUB-D", "Student D", "u1004", 50 },  // lowest mark of the TA band
+        { "SUB-E", "Student E", "u1005", 40 },  // lowest auto-approvable mark
+        { "SUB-F", "Student F", "u1006", 71 },  // lowest mark of the Lecturer band
+        { "SUB-G", "Student G", "u1007", 35 },  // Rejected: lecturer must resolve
+        { "SUB-H", "Student H", "u1008", 0 }    // Rejected: lecturer must resolve
     };
 
     std::vector<DemoSubmission> result;
@@ -35,6 +35,7 @@ std::vector<DemoSubmission> EducationSeed::demoSubmissions()
         DemoSubmission s;
         s.itemId = rows[i].id;
         s.studentName = rows[i].student;
+        s.studentId = rows[i].studentId;
         s.mark = rows[i].mark;
         result.push_back(s);
     }

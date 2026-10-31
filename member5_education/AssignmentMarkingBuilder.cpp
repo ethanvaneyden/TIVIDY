@@ -66,25 +66,69 @@ void AssignmentMarkingBuilder::buildContainer(const std::string& containerId,
     currentContainer = raw;
 }
 
+Container* AssignmentMarkingBuilder::findAssignment(const std::string& containerId) const
+{
+    if (registry == nullptr || root == nullptr)
+    {
+        throw std::logic_error("buildRoot must be called before choosing an assignment");
+    }
+
+    Container* assignment = dynamic_cast<Container*>(registry->get(containerId));
+    if (assignment == nullptr || assignment->getParent() != root)
+    {
+        throw std::invalid_argument("Unknown assignment: " + containerId);
+    }
+    return assignment;
+}
+
+void AssignmentMarkingBuilder::attachSubmission(Container* target,
+                                                const std::string& itemId,
+                                                const std::string& name,
+                                                const std::string& studentId)
+{
+    std::unique_ptr<Submission> node(new Submission(itemId, name, studentId));
+    Submission* raw = node.get();
+    registry->add(std::move(node));
+    try
+    {
+        target->add(raw);
+    }
+    catch (...)
+    {
+        registry->remove(itemId); // do not leave an orphan in the registry
+        throw;
+    }
+}
+
 void AssignmentMarkingBuilder::buildItem(const std::string& itemId, const std::string& name)
+{
+    buildSubmission(itemId, name, itemId);
+}
+
+void AssignmentMarkingBuilder::buildSubmission(const std::string& itemId,
+                                               const std::string& name,
+                                               const std::string& studentId)
 {
     if (currentContainer == nullptr)
     {
         throw std::logic_error("buildItem called before buildContainer");
     }
+    attachSubmission(currentContainer, itemId, name, studentId);
+}
 
-    std::unique_ptr<Submission> node(new Submission(itemId, name));
-    Submission* raw = node.get();
-    registry->add(std::move(node));
-    try
-    {
-        currentContainer->add(raw);
-    }
-    catch (...)
-    {
-        registry->remove(itemId);
-        throw;
-    }
+void AssignmentMarkingBuilder::buildSubmission(const std::string& parentContainerId,
+                                               const std::string& itemId,
+                                               const std::string& name,
+                                               const std::string& studentId)
+{
+    Container* target = findAssignment(parentContainerId);
+    attachSubmission(target, itemId, name, studentId);
+    currentContainer = target; // only once the submission is attached
+}
+
+void AssignmentMarkingBuilder::selectContainer(const std::string& containerId)
+{
+    currentContainer = findAssignment(containerId);
 }
 
 Root* AssignmentMarkingBuilder::getRoot() const
