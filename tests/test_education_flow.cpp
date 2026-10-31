@@ -36,7 +36,7 @@ using education::EducationRoles;
 using education::EducationSeed;
 using education::Submission;
 
-// ---- builder and director ---------------------------------------------------
+// Builder and director
 
 TEST(AssignmentMarkingBuilderTest, BuildsModuleAssignmentAndSubmissions)
 {
@@ -107,7 +107,7 @@ TEST(AssignmentMarkingBuilderTest, DuplicateItemIdIsRefusedAndLeavesNoOrphan)
 }
 
 
-// ---- adding to a named assignment (parent id) ---------------------------------
+// Adding to a named assignment (parent id)
 
 namespace
 {
@@ -265,7 +265,7 @@ TEST(AssignmentMarkingBuilderParentTest, OpenedAssignmentRefusesNewSubmissionsAn
     EXPECT_EQ(1u, registry.get("A1")->getChildren().size());
 }
 
-// ---- director extends WorkflowDirector ----------------------------------------
+// Director extends WorkflowDirector
 
 TEST(AssignmentMarkingDirectorTest, IsAWorkflowDirector)
 {
@@ -423,7 +423,7 @@ TEST(AssignmentMarkingDirectorTest, DemoWorkflowHasOneSubmissionPerDemoRow)
     EXPECT_EQ(rows.front().studentId, first->getStudentId());
 }
 
-// ---- full flow ----------------------------------------------------------------
+// Full flow
 
 class AssignmentFlowTest : public ::testing::Test
 {
@@ -675,7 +675,7 @@ TEST_F(AssignmentFlowTest, HistoryRecordsTheWholeFlow)
     EXPECT_TRUE(sawBatch);
 }
 
-// ---- no TAs available ---------------------------------------------------------
+// No TAs available
 
 TEST(AssignmentMarkingCoordinatorNoMarkersTest, SubmissionsStayAvailableAndTheFailureIsLogged)
 {

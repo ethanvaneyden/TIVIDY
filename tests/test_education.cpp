@@ -9,7 +9,7 @@ using education::EducationPolicies;
 using education::EducationRoles;
 using education::EducationSeed;
 
-// ---- mark validation -------------------------------------------------
+// Mark validation
 
 TEST(EducationPoliciesTest, AcceptsMarksFromZeroToHundred)
 {
@@ -25,7 +25,7 @@ TEST(EducationPoliciesTest, RefusesMarksOutsideZeroToHundred)
     EXPECT_FALSE(EducationPolicies::isValidMark(-300));
 }
 
-// ---- approval bands (boundaries) --------------------------------------
+// Approval bands (boundaries)
 
 TEST(EducationPoliciesTest, MarkBelowFortyIsNotAutoApprovable)
 {
@@ -81,7 +81,7 @@ TEST(EducationPoliciesTest, EveryValidMarkMapsToExactlyOneOutcome)
     }
 }
 
-// ---- approver selection -----------------------------------------------
+// Approver selection
 
 class EducationApproverTest : public ::testing::Test
 {
@@ -172,7 +172,7 @@ TEST(EducationApproverIsolationTest, NullAssigneeStillFindsAnApprover)
     EXPECT_NE(nullptr, EducationPolicies::selectApprover(60, nullptr, registry));
 }
 
-// ---- demo data -------------------------------------------------------
+// Demo data
 
 TEST(EducationSeedTest, DemoSubmissionsCoverEveryBand)
 {

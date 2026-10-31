@@ -126,7 +126,7 @@ TEST(EducationChainIsolationTest, OnlyOneTAMeansTAMarkIsNotApproved)
     EXPECT_EQ(nullptr, item.getReviewer());
 }
 
-// ---- coordinator: events -----------------------------------------------
+// Coordinator: events
 
 class AssignmentMarkingCoordinatorTest : public ::testing::Test
 {
