@@ -1,13 +1,6 @@
 /**
  * @file ApprovalHandler.h
- * @brief STUB - replaced by Member 4's full implementation.
- *
- * Minimal Chain of Responsibility handler so Members 5 and 6 can write their
- * concrete handlers now. When Member 4 pushes the real ApprovalHandler.h,
- * take theirs (a merge conflict on this path is expected and intended) and
- * adjust EducationBandHandler::handle() in EducationApprovalChain.cpp to the
- * real signature. That is the only place in the education code that touches
- * this interface.
+ * @brief STUB - to be replaced if needed (Basic Approval).
  *
  * Contract assumed here:
  *   - handle() returns true if some handler approved the item,
