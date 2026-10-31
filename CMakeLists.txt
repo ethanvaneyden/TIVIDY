@@ -62,12 +62,14 @@ add_library(tividy_core
 
     # --- Member 6: hospital scenario ---
     # --- Member 7: integration, factories ---
-    # member7_integration/WorkflowDirector.cpp
-    # member7_integration/EducationWorkflowFactory.cpp
-    # member7_integration/HospitalWorkflowFactory.cpp
-    # member7_integration/TividyWorkflow.cpp
-    # member7_integration/JsonSerializer.cpp
-    # member7_integration/RestServer.cpp
+    member7_integration/WorkflowDirector.cpp
+    member7_integration/EducationWorkflowFactory.cpp
+    member7_integration/HospitalWorkflowFactory.cpp
+    member7_integration/TividyWorkflow.cpp
+    member7_integration/JsonSerializer.cpp
+    member7_integration/RestServer.cpp
+    member7_integration/EducationFacade.cpp
+    member7_integration/HospitalFacade.cpp    
 )
 
 # Every member folder is on the include path, so `#include "Header.h"`
