@@ -1,6 +1,17 @@
 /**
  * @file EducationApprovalChain.h
  * @brief Concrete Chain of Responsibility for marks.
+ *
+ * Pattern roles:
+ *   Handler          : ApprovalHandler (Member 4)
+ *   ConcreteHandlers : TAApprovalHandler, ModeratorApprovalHandler,
+ *                      LecturerApprovalHandler
+ *
+ * Each handler owns one mark band (see EducationPolicies). A handler that
+ * recognises the mark picks an approver from its role, records them as the
+ * item's reviewer ("Batch") and stops the chain. Otherwise it passes the
+ * request on. A mark that no handler accepts falls off the end of the chain;
+ * the caller (EducationMediator) then marks the item Rejected.
  */
 
 #pragma once
@@ -91,5 +102,5 @@ class EducationApprovalChain
         bool approve(Item& item, int value);
 };
 
-}
+} // namespace education
 

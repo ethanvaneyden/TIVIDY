@@ -11,11 +11,14 @@
 #pragma once
 
 #include "WorkflowMediator.h"
+#include "AssignmentStrategy.h"
 #include "EducationApprovalChain.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
+class AssignmentEngine;
 class ParticipantRegistry;
 
 namespace education
@@ -40,13 +43,26 @@ class AssignmentMarkingCoordinator : public WorkflowMediator
 
     private:
         EducationApprovalChain chain;
+        std::unique_ptr<AssignmentEngine> engine;
         std::vector<std::string> history;
         BatchResult lastBatch;
 
         void log(const std::string& line);
 
+        /** @brief Assign a TA to every Available submission (Active phase only). */
+        void assignMarkers(const Container& assignment);
+
+        /** @brief Publish the assignment if it is in Review and every submission is reviewed. */
+        void publishIfReady(Container* assignment);
+
     public:
-        explicit AssignmentMarkingCoordinator(ParticipantRegistry& participants);
+        /**
+         * @param registry Where TAs and approvers are looked up.
+         * @param strategy Assignment strategy for TAs; round robin is used when null.
+         */
+        explicit AssignmentMarkingCoordinator(
+            ParticipantRegistry& registry,
+            std::unique_ptr<AssignmentStrategy> strategy = std::unique_ptr<AssignmentStrategy>());
         virtual ~AssignmentMarkingCoordinator();
 
         // Tree events
@@ -72,10 +88,24 @@ class AssignmentMarkingCoordinator : public WorkflowMediator
         // Education operations
 
         /**
+         * @brief Open an assignment for marking: Intake -> Active, then assign
+         *        a TA to every available submission through the assignment engine.
+         *
+         * Submissions can only be assigned in the Active phase, so assignment is
+         * done here (or when the container reports that it became Active).
+         *
+         * @return the number of submissions that have a TA after opening.
+         * @throws InvalidTransition if the assignment is empty or not in Intake.
+         */
+        int openAssignment(Container& assignment);
+
+        /**
          * @brief Run the approval chain over every completed, unreviewed submission.
          *
          * Approved submissions get their reviewer recorded ("Batch").
          * Submissions the chain cannot approve are rejected.
+         * Called through onContainerApprovalRequested, it also publishes the
+         * assignment when nothing is left rejected.
          *
          * @throws InvalidTransition if the container is not in the Review phase.
          */

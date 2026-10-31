@@ -3,7 +3,11 @@
  * @brief Education-specific mark rules: validation, approval bands and
  *        approver selection.
  *
- * Bands (agreed default):
+ * These rules belong to the Education scenario, not to the generic engine.
+ * The engine only needs to know "an item has a result and a chain decides
+ * who approves it"; the numbers below are the scenario's configuration.
+ *
+ * Bands (agreed default, confirm with the team):
  *   - below 40   : no approver, the chain cannot approve -> item is Rejected
  *   - 40 to 49   : Moderator
  *   - 50 to 70   : TA (must be a different TA from the one assigned)
@@ -75,6 +79,12 @@ class EducationPolicies
 
         /**
          * @brief Pick the participant who approves a mark.
+         *
+         * Looks up everyone with the approving role and skips the item's
+         * assignee, so nobody approves their own work. Among the eligible
+         * participants the one with the fewest pending tasks wins; ties go
+         * to the first in registry order.
+         *
          * @param mark     The mark awaiting approval.
          * @param assignee Participant who produced the mark (may be null).
          * @param registry Where participants are looked up.
@@ -85,5 +95,5 @@ class EducationPolicies
                                            const ParticipantRegistry& registry);
 };
 
-}
+} // namespace education
 

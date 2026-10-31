@@ -2,7 +2,7 @@
  * @file Submission.h
  * @brief Concrete Leaf for the Education scenario: one student's submission.
  *
- * Extends the shared Item only to hold a mark. Item's lifecycle (states,
+ * Extends the shared Item only to hold the student number and a mark. Item's lifecycle (states,
  * assignee, reviewer, phase rules) is inherited unchanged, and nothing from
  * Item is overridden.
  *
@@ -25,17 +25,22 @@ class Submission : public Item
         static const int NO_MARK = -1;
 
     private:
+        std::string studentId;
         int mark;
 
     public:
         /**
          * @param id          Unique submission id (for example "SUB-A").
          * @param studentName Shown as the item's name.
+         * @param studentId   Student number this submission belongs to (may be empty).
          */
-        Submission(const std::string& id, const std::string& studentName);
+        Submission(const std::string& id,
+                   const std::string& studentName,
+                   const std::string& studentId = std::string());
         virtual ~Submission();
 
         const std::string& getStudentName() const;
+        const std::string& getStudentId() const;
 
         /** @return true once a mark has been recorded. */
         bool hasMark() const;
@@ -47,5 +52,5 @@ class Submission : public Item
         void setMark(int value);
 };
 
-}
+} // namespace education
 
