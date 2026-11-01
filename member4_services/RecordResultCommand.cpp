@@ -6,7 +6,7 @@ RecordResultCommand::RecordResultCommand(Item* item, int newValue)
 
 void RecordResultCommand::execute() {
     if (item != nullptr) {
-        item->setResult(newValue);
+        item->complete(newValue);
     }
 }
 

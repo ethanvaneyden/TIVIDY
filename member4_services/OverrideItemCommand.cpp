@@ -5,8 +5,7 @@ OverrideItemCommand::OverrideItemCommand(Item* item, Participant* operatorPartic
 
 void OverrideItemCommand::execute() {
     if (item != nullptr && operatorParticipant != nullptr) {
-        item->setResult(newValue);
-        item->setReviewer(operatorParticipant, "Personal");
+        item->resolveReview(operatorParticipant, newValue, reason);
     }
 }
 
