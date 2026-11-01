@@ -1,18 +1,28 @@
-#ifndef COLLEAGUE_H
-#define COLLEAGUE_H
+#pragma once
+
 class WorkflowMediator;
 
-class Colleague
-{
+/**
+ * @brief Base class for objects that communicate through a Mediator.
+ * 
+ * Inherited by Component, AssignmentEngine, ApprovalHandler, etc.
+ * Holds a non-owning pointer to the Mediator.
+ */
+class Colleague {
 protected:
-    WorkflowMediator *mediator = nullptr;
+    WorkflowMediator* mediator = nullptr;
 
 public:
-    Colleague() = default;
     virtual ~Colleague() = default;
 
-    void setMediator(WorkflowMediator *m);
-    WorkflowMediator *getMediator() const;
-};
+    /**
+     * @brief Injects the Mediator into this colleague.
+     * @param m Non-owning pointer to the Mediator.
+     */
+    void setMediator(WorkflowMediator* m);
 
-#endif
+    /**
+     * @brief Returns the current Mediator (or nullptr).
+     */
+    WorkflowMediator* getMediator() const;
+};

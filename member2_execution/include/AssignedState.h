@@ -1,13 +1,10 @@
-#ifndef ASSIGNEDSTATE_H
-#define ASSIGNEDSTATE_H
+#pragma once
 
 #include "ItemState.h"
 
-class AssignedState : public ItemState
+class AssignedState : public InvalidTransitionState
 {
 public:
-    void start(Item& item) override;
+    std::unique_ptr<ItemState> start(Item& item) override;
     std::string name() const override;
 };
-
-#endif

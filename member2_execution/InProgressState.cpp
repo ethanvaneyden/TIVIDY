@@ -1,11 +1,10 @@
 #include "InProgressState.h"
 #include "CompletedState.h"
-#include "Item.h"
 #include <memory>
 
-void InProgressState::complete(Item& item, int)
+std::unique_ptr<ItemState> InProgressState::complete(Item&, int)
 {
-    item.setState(std::unique_ptr<ItemState>(new CompletedState()));
+    return std::unique_ptr<ItemState>(new CompletedState());
 }
 
 std::string InProgressState::name() const { return "InProgress"; }

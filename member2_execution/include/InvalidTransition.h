@@ -1,5 +1,4 @@
-#ifndef INVALIDTRANSITION_H
-#define INVALIDTRANSITION_H
+#pragma once
 
 #include <stdexcept>
 #include <string>
@@ -10,5 +9,3 @@ public:
     explicit InvalidTransition(const std::string& message)
         : std::logic_error(message) {}
 };
-
-#endif

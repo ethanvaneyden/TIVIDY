@@ -43,7 +43,7 @@ export interface Submission {
 export interface Treatment {
     id: string;
     name: string;
-    age: number;
+    age?: number;
     diagnosis: string;
     state: WorkflowItemState;
     assignee: string;

@@ -3,8 +3,7 @@
  * @brief Abstract Factory implementation for the education scenario.
 */
 
-#ifndef EDUCATIONWORKFLOWFACTORY_H
-#define EDUCATIONWORKFLOWFACTORY_H
+#pragma once
 
 #include "WorkflowComponentFactory.h"
 
@@ -18,8 +17,5 @@ class EducationWorkflowFactory : public WorkflowComponentFactory
 
         std::unique_ptr<WorkflowBuilder> createBuilder() const override;
         std::unique_ptr<AssignmentStrategy> createStrategy() const override;
-        std::unique_ptr<ExternalSystem> createExternalSystem() const override;
         std::string scenarioName() const override;
 };
-
-#endif /*EDUCATIONWORKFLOWFACTORY_*/

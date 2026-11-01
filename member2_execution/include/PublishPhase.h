@@ -1,13 +1,10 @@
-#ifndef PUBLISHPHASE_H
-#define PUBLISHPHASE_H
+#pragma once
 
 #include "WorkflowPhase.h"
 
 class PublishPhase : public WorkflowPhase
 {
 public:
-    void advance(Container& container) override;
+    std::unique_ptr<WorkflowPhase> advance(Container& container) override;
     std::string name() const override;
 };
-
-#endif

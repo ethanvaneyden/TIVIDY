@@ -1,13 +1,10 @@
-#ifndef ACTIVEPHASE_H
-#define ACTIVEPHASE_H
+#pragma once
 
 #include "WorkflowPhase.h"
 
 class ActivePhase : public WorkflowPhase
 {
 public:
-    void advance(Container& container) override;
+    std::unique_ptr<WorkflowPhase> advance(Container& container) override;
     std::string name() const override;
 };
-
-#endif

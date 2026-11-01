@@ -1,13 +1,10 @@
-#ifndef INPROGRESSSTATE_H
-#define INPROGRESSSTATE_H
+#pragma once
 
 #include "ItemState.h"
 
-class InProgressState : public ItemState
+class InProgressState : public InvalidTransitionState
 {
 public:
-    void complete(Item& item, int) override;
+    std::unique_ptr<ItemState> complete(Item& item, int value) override;
     std::string name() const override;
 };
-
-#endif

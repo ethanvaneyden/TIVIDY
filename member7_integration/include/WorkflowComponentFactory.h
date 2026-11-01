@@ -3,15 +3,13 @@
  * @brief Abstract Factory for scenario-specific workflow components.
 */
 
-#ifndef WORKFLOWCOMPONENTFACTORY_H
-#define WORKFLOWCOMPONENTFACTORY_H
+#pragma once
 
 #include <memory>
 #include <string>
 
 class WorkflowBuilder;
 class AssignmentStrategy;
-class ExternalSystem;
 
 /**
  * @class WorkflowComponentFactory
@@ -40,14 +38,7 @@ class WorkflowComponentFactory
         virtual std::unique_ptr<AssignmentStrategy> createStrategy() const = 0;
 
         /**
-         * @brief Create the scenario's external system adapter.
-        */
-        virtual std::unique_ptr<ExternalSystem> createExternalSystem() const = 0;
-
-        /**
          * @brief scenario specific name (e.g. "education", "healthcare").
         */
         virtual std::string scenarioName() const = 0;
 };
-
-#endif /*WORKFLOWCOMPONENTFACTORY_H*/

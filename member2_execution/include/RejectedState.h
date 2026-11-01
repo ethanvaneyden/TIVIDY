@@ -1,14 +1,14 @@
-#ifndef REJECTEDSTATE_H
-#define REJECTEDSTATE_H
+#pragma once
 
 #include "ItemState.h"
 
-class RejectedState : public ItemState
+class RejectedState : public InvalidTransitionState
 {
 public:
-    void complete(Item& item, int) override;
+    std::unique_ptr<ItemState> resolveReview(
+        Item& item,
+        Participant* reviewer,
+        int newValue) override;
     std::string name() const override;
     bool isRejected() const override { return true; }
 };
-
-#endif

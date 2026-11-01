@@ -1,14 +1,11 @@
-#ifndef COMPLETEDSTATE_H
-#define COMPLETEDSTATE_H
+#pragma once
 
 #include "ItemState.h"
 
-class CompletedState : public ItemState
+class CompletedState : public InvalidTransitionState
 {
 public:
-    void reject(Item& item, const std::string&) override;
+    std::unique_ptr<ItemState> reject(Item& item, const std::string& reason) override;
     std::string name() const override;
     bool isCompleted() const override { return true; }
 };
-
-#endif
