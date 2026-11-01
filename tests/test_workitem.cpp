@@ -29,6 +29,17 @@ TEST(ItemWorkloadTest, WorkloadRemainsPendingUntilWorkIsCompleted)
     EXPECT_EQ(item.getAssignee(), &worker);
 }
 
+TEST(ItemStructureTest, ItemCannotContainChildren)
+{
+    Item item("item", "work", "Leaf item");
+    Item child("child", "work", "Child item");
+
+    EXPECT_THROW(item.add(&child), std::logic_error);
+    EXPECT_THROW(item.remove(child.getId()), std::logic_error);
+    EXPECT_TRUE(item.getChildren().empty());
+    EXPECT_EQ(child.getParent(), nullptr);
+}
+
 TEST(ItemWorkloadTest, CompletingAnItemReleasesOnlyItsOwnPendingTask)
 {
     // Participants outlive items; the container detaches both before they die.

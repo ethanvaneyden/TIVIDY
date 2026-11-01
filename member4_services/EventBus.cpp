@@ -1,16 +1,16 @@
 #include "include/EventBus.h"
 
-void EventBus::subscribe(Observer* observer) {
-    if (observer != nullptr) {
-        subscribers.push_back(observer);
+#include <utility>
+
+void EventBus::subscribe(unique_ptr<Observer> observer) {
+    if (observer) {
+        subscribers.push_back(std::move(observer));
     }
 }
 
 void EventBus::publish(const WorkflowEvent& event) {
-    for (Observer* observer : subscribers) {
-        if (observer != nullptr) {
-            observer->update(event);
-        }
+    for (const unique_ptr<Observer>& observer : subscribers) {
+        observer->update(event);
     }
 }
 

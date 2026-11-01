@@ -43,6 +43,7 @@ class AssignmentMarkingCoordinator : public WorkflowMediator
     private:
         EducationApprovalChain chain;
         std::unique_ptr<AssignmentEngine> engine;
+        ParticipantRegistry* participants;
         std::vector<std::string> history;
         BatchResult lastBatch;
 
@@ -121,4 +122,3 @@ class AssignmentMarkingCoordinator : public WorkflowMediator
 };
 
 }
-
