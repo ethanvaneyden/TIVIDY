@@ -3,11 +3,11 @@
  * @brief Education-specific mark rules: validation, approval bands and
  *        approver selection.
  *
- * Bands (agreed default):
- *   - below 40   : no approver, the chain cannot approve -> item is Rejected
- *   - 40 to 49   : Moderator
- *   - 50 to 70   : TA (must be a different TA from the one assigned)
- *   - 71 to 100  : Lecturer
+ * Bands (default):
+ *   - below 40  : no approver, the chain cannot approve -> Rejected
+ *   - 40 to 49  : Moderator
+ *   - 50 to 70  : TA (a different TA from the assignee)
+ *   - 71 to 100 : Lecturer
  */
 
 #pragma once
@@ -52,33 +52,26 @@ class EducationPolicies
     public:
         /**
          * @brief Is this a mark the operator is allowed to enter?
-         * @param mark Candidate mark.
-         * @return true if 0 <= mark <= 100. Invalid input is refused by the
-         *         command; it never reaches the approval chain.
+         * @return true if MIN_MARK <= mark <= MAX_MARK.
          */
         static bool isValidMark(int mark);
 
-        /**
-         * @brief Can the chain approve this mark automatically?
-         * @param mark A valid mark (0-100).
-         * @return true for 40-100, false for 0-39 and for invalid marks.
-         */
+        /** @return true for 40-100, false for 0-39 and for invalid marks. */
         static bool isAutoApprovable(int mark);
 
         /**
          * @brief Which role approves this mark?
-         * @param mark Candidate mark.
-         * @return Role name, or an empty string when nobody can approve it
-         *         (below 40, or outside 0-100).
+         * @return Role name, or an empty string when nobody can approve it.
          */
         static std::string approverRoleFor(int mark);
 
         /**
          * @brief Pick the participant who approves a mark.
          * @param mark     The mark awaiting approval.
-         * @param assignee Participant who produced the mark (may be null).
+         * @param assignee Participant who produced it (never selected; may be null).
          * @param registry Where participants are looked up.
-         * @return The approver, or nullptr when no one is eligible.
+         * @return The approver with the fewest pending tasks, or nullptr when
+         *         no one is eligible.
          */
         static Participant* selectApprover(int mark,
                                            const Participant* assignee,

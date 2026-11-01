@@ -7,6 +7,9 @@
 #include "ParticipantRegistry.h"
 #include "Submission.h"
 #include "AssignmentEngine.h"
+#include "RoundRobinStrategy.h"
+
+#include <utility>
 
 namespace education
 {
@@ -14,6 +17,8 @@ namespace education
     namespace
     {
         const char *const REJECTED_STATE = "Rejected";
+        const char *const AVAILABLE_STATE = "Available";
+        const char *const INTAKE_PHASE = "Intake";
         const char *const ACTIVE_PHASE = "Active";
         const char *const REVIEW_PHASE = "Review";
 
@@ -23,9 +28,17 @@ namespace education
         }
     }
 
-    AssignmentMarkingCoordinator::AssignmentMarkingCoordinator(ParticipantRegistry &participants)
-        : chain(participants)
+    AssignmentMarkingCoordinator::AssignmentMarkingCoordinator(
+        ParticipantRegistry &registry, std::unique_ptr<AssignmentStrategy> strategy)
+        : chain(registry)
     {
+        if (!strategy)
+        {
+            strategy.reset(new RoundRobinStrategy());
+        }
+        engine.reset(new AssignmentEngine(std::move(strategy)));
+        assignmentEngine = engine.get();
+        participants = &registry;
     }
 
     AssignmentMarkingCoordinator::~AssignmentMarkingCoordinator() {}
@@ -35,11 +48,46 @@ namespace education
         history.push_back(line);
     }
 
+    void AssignmentMarkingCoordinator::assignMarkers(const Container &assignment)
+    {
+        const std::vector<Participant *> markers = participants->getByRole(EducationRoles::ta());
+
+        const std::vector<Component *> children = assignment.getChildren();
+        for (std::vector<Component *>::const_iterator c = children.begin();
+             c != children.end(); ++c)
+        {
+            Submission *submission = dynamic_cast<Submission *>(*c);
+            if (submission == nullptr || submission->getStateName() != AVAILABLE_STATE)
+            {
+                continue;
+            }
+
+            Participant *marker = assignmentEngine->assign(*submission, markers);
+            if (marker != nullptr)
+            {
+                submission->assign(marker);
+            }
+            else if (submission->getMediator() == nullptr)
+            {
+                onAssignmentFailed(submission, "No marker is available");
+            }
+        }
+    }
+
+    void AssignmentMarkingCoordinator::publishIfReady(Container *assignment)
+    {
+        if (assignment != nullptr &&
+            assignment->getPhaseName() == REVIEW_PHASE &&
+            assignment->isReadyToPublish())
+        {
+            assignment->advancePhase();
+        }
+    }
+
     // Tree events
 
     void AssignmentMarkingCoordinator::onItemAssigned(Item *item, Participant *assignee)
     {
-        assignee->incrementPendingTasks();
         log("Submission " + describe(item) + " assigned to " +
             (assignee == nullptr ? std::string("<nobody>") : assignee->getName()));
     }
@@ -51,7 +99,6 @@ namespace education
 
     void AssignmentMarkingCoordinator::onItemCompleted(Item *item, int value)
     {
-        item->getAssignee()->decrementPendingTasks();
         Submission *submission = dynamic_cast<Submission *>(item);
         if (submission == nullptr)
         {
@@ -74,10 +121,6 @@ namespace education
 
     void AssignmentMarkingCoordinator::onItemRejected(Item *item, const std::string &reason)
     {
-        if (item != nullptr && item->getAssignee() != nullptr)
-        {
-            item->getAssignee()->decrementPendingTasks();
-        }
         log("Submission " + describe(item) + " rejected: " + reason);
     }
 
@@ -93,6 +136,8 @@ namespace education
             (reviewer == nullptr ? std::string("<nobody>") : reviewer->getName()) +
             " with mark " + std::to_string(newValue) +
             (reason.empty() ? "" : " (" + reason + ")"));
+
+        publishIfReady(item == nullptr ? nullptr : dynamic_cast<Container *>(item->getParent()));
     }
 
     void AssignmentMarkingCoordinator::onPhaseAdvanced(Container *container)
@@ -102,15 +147,18 @@ namespace education
             return;
         }
         log("Assignment " + container->getId() + " moved to " + container->getPhaseName());
+
+        if (container->getPhaseName() == ACTIVE_PHASE)
+        {
+            assignMarkers(*container);
+        }
     }
 
     // Assignment and batch events
 
     void AssignmentMarkingCoordinator::onItemAdded(Item *item)
     {
-        auto eligble = participants->getByRole("TA");
-        assignmentEngine->assign(*item, eligble);
-        log("Submission " + describe(item) + " added");
+        log("Submission " + describe(item) + " added; a marker is assigned when the assignment opens");
     }
 
     void AssignmentMarkingCoordinator::onAssignmentFailed(Item *item, const std::string &reason)
@@ -140,6 +188,8 @@ namespace education
         log("Batch approval by " + who + " on " + container->getId() + ": " +
             std::to_string(lastBatch.approvedIds.size()) + " approved, " +
             std::to_string(lastBatch.rejectedIds.size()) + " rejected");
+
+        publishIfReady(container);
     }
 
     void AssignmentMarkingCoordinator::onContainerRejected(Container *container,
@@ -160,6 +210,30 @@ namespace education
     }
 
     // Education operations
+
+    int AssignmentMarkingCoordinator::openAssignment(Container &assignment)
+    {
+        if (assignment.getPhaseName() != INTAKE_PHASE)
+        {
+            throw InvalidTransition("An assignment can only be opened from the Intake phase");
+        }
+
+        assignment.advancePhase();
+        assignMarkers(assignment);
+
+        int assigned = 0;
+        const std::vector<Component *> children = assignment.getChildren();
+        for (std::vector<Component *>::const_iterator c = children.begin();
+             c != children.end(); ++c)
+        {
+            const Item *item = dynamic_cast<const Item *>(*c);
+            if (item != nullptr && item->getAssignee() != nullptr)
+            {
+                ++assigned;
+            }
+        }
+        return assigned;
+    }
 
     AssignmentMarkingCoordinator::BatchResult
     AssignmentMarkingCoordinator::approveBatch(const Container &container)
@@ -199,8 +273,7 @@ namespace education
             }
             else
             {
-                // The mark normally arrives through onItemCompleted(); if the
-                // item was completed without that event, take it from the result.
+                // Fall back to the item's result if onItemCompleted() was missed.
                 if (!submission->hasMark() && submission->hasResult())
                 {
                     submission->setMark(submission->getResult());
@@ -247,8 +320,10 @@ namespace education
             return false;
         }
 
-        item.resolveReview(lecturer, finalMark);
+        item.resolveReview(lecturer, finalMark, "Lecturer override");
         item.setMark(finalMark);
+
+        publishIfReady(dynamic_cast<Container *>(item.getParent()));
         return true;
     }
 
