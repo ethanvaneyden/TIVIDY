@@ -1,13 +1,19 @@
 #include "HospitalAdmissionCoordinator.h"
+#include "ActionHistory.h"
 #include "AssignmentEngine.h"
 #include "Container.h"
+#include "EventBus.h"
+#include "HospitalAuditCommand.h"
+#include "HospitalEvents.h"
 #include "HospitalPolicies.h"
 #include "InvalidTransition.h"
 #include "Participant.h"
 #include "ParticipantRegistry.h"
 #include "Treatment.h"
+#include "WorkflowEvent.h"
 #include "WorkloadStrategy.h"
 
+#include <exception>
 #include <utility>
 
 namespace hospital
@@ -34,7 +40,7 @@ namespace
 
 HospitalAdmissionCoordinator::HospitalAdmissionCoordinator(
     ParticipantRegistry& registry, std::unique_ptr<AssignmentStrategy> strategy)
-    : chain(registry)
+    : chain(registry), eventBus(nullptr), actionHistory(nullptr)
 {
     if (!strategy)
     {
@@ -46,9 +52,56 @@ HospitalAdmissionCoordinator::HospitalAdmissionCoordinator(
 
 HospitalAdmissionCoordinator::~HospitalAdmissionCoordinator() {}
 
-void HospitalAdmissionCoordinator::log(const std::string& line)
+void HospitalAdmissionCoordinator::connect(EventBus* bus, ActionHistory* actions)
+{
+    eventBus = bus;
+    actionHistory = actions;
+}
+
+void HospitalAdmissionCoordinator::store(const std::string& line)
 {
     history.push_back(line);
+    if (actionHistory == nullptr)
+    {
+        return;
+    }
+    try
+    {
+        actionHistory->execute(std::unique_ptr<WorkCommand>(new HospitalAuditCommand(line)));
+    }
+    catch (...)
+    {
+        history.push_back("Audit record could not be stored");
+    }
+}
+
+void HospitalAdmissionCoordinator::record(const char* eventType,
+                                          const std::string& recipientId,
+                                          const std::string& line)
+{
+    store(line);
+    if (eventBus == nullptr)
+    {
+        return;
+    }
+
+    WorkflowEvent event;
+    event.type = eventType;
+    event.recipientId = recipientId;
+    event.payload = line;
+
+    try
+    {
+        eventBus->publish(event);
+    }
+    catch (const std::exception& error)
+    {
+        store(std::string("Notification for ") + eventType + " failed: " + error.what());
+    }
+    catch (...)
+    {
+        store(std::string("Notification for ") + eventType + " failed");
+    }
 }
 
 void HospitalAdmissionCoordinator::publishIfReady(Container* ward)
@@ -66,12 +119,15 @@ void HospitalAdmissionCoordinator::publishIfReady(Container* ward)
 
 void HospitalAdmissionCoordinator::onItemAssigned(Item* item, Participant* assignee)
 {
-    log("Treatment " + describe(item) + " assigned to " + who(assignee));
+    record(events::TREATMENT_ASSIGNED, assignee == nullptr ? std::string() : assignee->getId(),
+           "Treatment " + describe(item) + " assigned to " + who(assignee));
 }
 
 void HospitalAdmissionCoordinator::onItemStarted(Item* item)
 {
-    log("Treatment started on " + describe(item));
+    record(events::TREATMENT_STARTED,
+           (item == nullptr || item->getAssignee() == nullptr) ? std::string() : item->getAssignee()->getId(),
+           "Treatment started on " + describe(item));
 }
 
 void HospitalAdmissionCoordinator::onItemCompleted(Item* item, int value)
@@ -83,9 +139,11 @@ void HospitalAdmissionCoordinator::onItemCompleted(Item* item, int value)
     }
 
     treatment->setSeverity(value);
-    log("Treatment " + treatment->getId() + " completed with severity " +
-        std::to_string(value) +
-        (HospitalPolicies::isValidSeverity(value) ? "" : " (invalid severity)"));
+    record(events::TREATMENT_COMPLETED,
+           treatment->getAssignee() == nullptr ? std::string() : treatment->getAssignee()->getId(),
+           "Treatment " + treatment->getId() + " completed with severity " +
+           std::to_string(value) +
+           (HospitalPolicies::isValidSeverity(value) ? "" : " (invalid severity)"));
 
     Container* ward = dynamic_cast<Container*>(treatment->getParent());
     if (ward != nullptr &&
@@ -99,7 +157,9 @@ void HospitalAdmissionCoordinator::onItemCompleted(Item* item, int value)
 
 void HospitalAdmissionCoordinator::onItemRejected(Item* item, const std::string& reason)
 {
-    log("Treatment " + describe(item) + " rejected: " + reason);
+    record(events::TREATMENT_REJECTED,
+           (item == nullptr || item->getAssignee() == nullptr) ? std::string() : item->getAssignee()->getId(),
+           "Treatment " + describe(item) + " rejected: " + reason);
 }
 
 void HospitalAdmissionCoordinator::onItemOverridden(Item* item, Participant* reviewer,
@@ -111,9 +171,10 @@ void HospitalAdmissionCoordinator::onItemOverridden(Item* item, Participant* rev
         treatment->setSeverity(newValue);
     }
 
-    log("Treatment " + describe(item) + " settled by " + who(reviewer) +
-        " with severity " + std::to_string(newValue) +
-        (reason.empty() ? "" : " (" + reason + ")"));
+    record(events::TREATMENT_SETTLED, reviewer == nullptr ? std::string() : reviewer->getId(),
+           "Treatment " + describe(item) + " settled by " + who(reviewer) +
+           " with severity " + std::to_string(newValue) +
+           (reason.empty() ? "" : " (" + reason + ")"));
 
     publishIfReady(item == nullptr ? nullptr : dynamic_cast<Container*>(item->getParent()));
 }
@@ -124,19 +185,22 @@ void HospitalAdmissionCoordinator::onPhaseAdvanced(Container* container)
     {
         return;
     }
-    log("Ward " + container->getId() + " moved to " + container->getPhaseName());
+    record(events::WARD_PHASE_ADVANCED, container->getId(),
+           "Ward " + container->getId() + " moved to " + container->getPhaseName());
 }
 
 // Assignment and batch events
 
 void HospitalAdmissionCoordinator::onItemAdded(Item* item)
 {
-    log("Treatment " + describe(item) + " added; doctor is assigned when the ward opens");
+    record(events::TREATMENT_ADDED, std::string(),
+           "Treatment " + describe(item) + " added; doctor is assigned when the ward opens");
 }
 
 void HospitalAdmissionCoordinator::onAssignmentFailed(Item* item, const std::string& reason)
 {
-    log("No doctor available for " + describe(item) + ": " + reason);
+    record(events::ASSIGNMENT_FAILED, std::string(),
+           "No doctor available for " + describe(item) + ": " + reason);
 }
 
 void HospitalAdmissionCoordinator::onContainerApprovalRequested(Container* container,
@@ -149,15 +213,17 @@ void HospitalAdmissionCoordinator::onContainerApprovalRequested(Container* conta
 
     if (container->getPhaseName() != REVIEW_PHASE)
     {
-        log("Batch approval by " + who(operatorParticipant) + " ignored: " +
-            container->getId() + " is in " + container->getPhaseName());
+        record(events::BATCH_IGNORED, container->getId(),
+               "Batch approval by " + who(operatorParticipant) + " ignored: " +
+               container->getId() + " is in " + container->getPhaseName());
         return;
     }
 
     lastBatch = approveBatch(*container);
-    log("Batch approval by " + who(operatorParticipant) + " on " + container->getId() + ": " +
-        std::to_string(lastBatch.approvedIds.size()) + " approved, " +
-        std::to_string(lastBatch.rejectedIds.size()) + " rejected");
+    record(events::BATCH_PROCESSED, container->getId(),
+           "Batch approval by " + who(operatorParticipant) + " on " + container->getId() + ": " +
+           std::to_string(lastBatch.approvedIds.size()) + " approved, " +
+           std::to_string(lastBatch.rejectedIds.size()) + " rejected");
 
     publishIfReady(container);
 }
@@ -165,13 +231,16 @@ void HospitalAdmissionCoordinator::onContainerApprovalRequested(Container* conta
 void HospitalAdmissionCoordinator::onContainerRejected(Container* container,
                                                        const std::string& reason)
 {
-    log("Ward " + (container == nullptr ? std::string("<none>") : container->getId()) +
-        " rejected: " + reason);
+    record(events::WARD_REJECTED, container == nullptr ? std::string() : container->getId(),
+           "Ward " + (container == nullptr ? std::string("<none>") : container->getId()) +
+           " rejected: " + reason);
 }
 
 void HospitalAdmissionCoordinator::onApprovalResolved(Item* item, bool approved)
 {
-    log("Treatment " + describe(item) + (approved ? " approved" : " could not be approved"));
+    record(events::APPROVAL_RESOLVED,
+           (item == nullptr || item->getReviewer() == nullptr) ? std::string() : item->getReviewer()->getId(),
+           "Treatment " + describe(item) + (approved ? " approved" : " could not be approved"));
 }
 
 std::vector<std::string> HospitalAdmissionCoordinator::getHistoryAsStrings() const

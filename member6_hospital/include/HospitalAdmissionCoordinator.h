@@ -17,7 +17,9 @@
 #include <string>
 #include <vector>
 
+class ActionHistory;
 class AssignmentEngine;
+class EventBus;
 class ParticipantRegistry;
 
 namespace hospital
@@ -46,8 +48,11 @@ class HospitalAdmissionCoordinator : public WorkflowMediator
         ParticipantRegistry* participants;
         std::vector<std::string> history;
         BatchResult lastBatch;
+        EventBus* eventBus;
+        ActionHistory* actionHistory;
 
-        void log(const std::string& line);
+        void store(const std::string& line);
+        void record(const char* eventType, const std::string& recipientId, const std::string& line);
         void publishIfReady(Container* ward);
 
     public:
@@ -60,6 +65,21 @@ class HospitalAdmissionCoordinator : public WorkflowMediator
             ParticipantRegistry& registry,
             std::unique_ptr<AssignmentStrategy> strategy = std::unique_ptr<AssignmentStrategy>());
         virtual ~HospitalAdmissionCoordinator();
+
+        /**
+         * @brief Link the coordinator to the shared services.
+         *
+         * Once linked, every recorded action is also stored in the ActionHistory
+         * as an audit command and published on the EventBus as a WorkflowEvent.
+         * A failing observer never undoes the action that was already applied:
+         * the failure is noted in the history and the workflow carries on.
+         *
+         * @param bus     Where events are published; may be null.
+         * @param actions Where actions are recorded; may be null.
+         *
+         * Both are non-owning and must outlive the coordinator.
+         */
+        void connect(EventBus* bus, ActionHistory* actions);
 
         // Tree events
         virtual void onItemAssigned(Item* item, Participant* assignee);
@@ -79,6 +99,8 @@ class HospitalAdmissionCoordinator : public WorkflowMediator
         virtual void onApprovalResolved(Item* item, bool approved);
 
         // Utility
+
+        /** @return this coordinator's own history, whether or not it is linked. */
         virtual std::vector<std::string> getHistoryAsStrings() const;
 
         // Hospital operations
