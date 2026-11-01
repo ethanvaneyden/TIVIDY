@@ -1,17 +1,21 @@
-#include "include/AssignItemCommand.h"
+#include "AssignItemCommand.h"
 
-AssignItemCommand::AssignItemCommand(Item* item, Participant* newAssignee) : item(item), newAssignee(newAssignee) {
+AssignItemCommand::AssignItemCommand(Item *item, Participant *newAssignee) : item(item), newAssignee(newAssignee)
+{
 }
 
 void AssignItemCommand::execute()
 {
-    if (item != nullptr && newAssignee != nullptr) {
+    if (item != nullptr && newAssignee != nullptr)
+    {
         item->assign(newAssignee);
     }
 }
 
-std::string AssignItemCommand::description() const {
-    if (item == nullptr || newAssignee == nullptr) {
+std::string AssignItemCommand::description() const
+{
+    if (item == nullptr || newAssignee == nullptr)
+    {
         return "Invalid item assignment";
     }
     return "Assigned " + item->getId() + " to " + newAssignee->getId();

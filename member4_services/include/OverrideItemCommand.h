@@ -2,18 +2,20 @@
 #define TIVIDY_OVERRIDEITEMCOMMAND_H
 
 #include "WorkCommand.h"
-#include "../member1_core/include/Item.h"
-#include "../member1_core/include/Participant.h"
+#include "Item.h"
+#include "Participant.h"
 #include <string>
 
-class OverrideItemCommand : public WorkCommand {
+class OverrideItemCommand : public WorkCommand
+{
 private:
-    Item* item;
-    Participant* operatorParticipant;
+    Item *item;
+    Participant *operatorParticipant;
     int newValue;
     std::string reason;
+
 public:
-    OverrideItemCommand(Item* item, Participant* operatorParticipant, int newValue, const std::string& reason);
+    OverrideItemCommand(Item *item, Participant *operatorParticipant, int newValue, const std::string &reason);
     void execute() override;
     std::string description() const override;
 };

@@ -126,7 +126,7 @@ add_executable(tividy_tests
     tests/test_events.cpp
     tests/test_history.cpp
     tests/test_hospital.cpp
-    # tests/test_integration.cpp
+    tests/test_integration.cpp
     tests/test_iterators.cpp
     tests/test_json_serializer.cpp
     tests/test_participants.cpp
