@@ -1,3 +1,8 @@
+/** @file AssignedState.cpp
+* @brief Implements the lifecycle transitions declared in AssignedState.h.
+* @author Member 2
+* @date October 2026
+*/
 #include "AssignedState.h"
 #include "InProgressState.h"
 #include <memory>

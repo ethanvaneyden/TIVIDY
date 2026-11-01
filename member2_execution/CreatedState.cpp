@@ -1,3 +1,8 @@
+/** @file CreatedState.cpp
+* @brief Implements the lifecycle transitions declared in CreatedState.h.
+* @author Member 2
+* @date October 2026
+*/
 #include "CreatedState.h"
 #include "AssignedState.h"
 #include <memory>
