@@ -1,70 +1,69 @@
+/**
+ * @file Participant.cpp
+ * @brief Implementation of the Participant class.
+ * @author Member 1
+ */
+
 #include "Participant.h"
-#include "Item.h"
+#include <limits>
+#include <stdexcept>
+#include <utility>
 
 Participant::Participant(std::string id, std::string name, std::string role)
-    : id(id), name(name), role(role), pendingTasks(0)
-{
+    : id(std::move(id)), 
+      name(std::move(name)), 
+      role(std::move(role)), 
+      pendingTasks(0),
+      itemUses(0) {}
+
+const std::string& Participant::getId() const { 
+    return id; 
 }
 
-Participant::~Participant()
-{
-    for (const auto& reference : itemReferences)
-        reference.first->participantDestroyed(this);
+const std::string& Participant::getName() const { 
+    return name; 
 }
 
-const std::string &Participant::getId() const
-{
-    return id;
+const std::string& Participant::getRole() const { 
+    return role; 
 }
 
-const std::string &Participant::getName() const
-{
-    return name;
+void Participant::setName(const std::string& newName) {
+    name = newName;
 }
 
-const std::string &Participant::getRole() const
-{
-    return role;
+int Participant::getPendingTasks() const { 
+    return pendingTasks; 
 }
 
-void Participant::setName(const std::string &name)
-{
-    this->name = name;
+void Participant::incrementPendingTasks() { 
+    if (pendingTasks == std::numeric_limits<int>::max())
+        throw std::overflow_error("Participant pending-task count overflow");
+    ++pendingTasks; 
 }
 
-int Participant::getPendingTasks()
-{
-    return pendingTasks;
-}
-
-void Participant::incrementPendingTasks()
-{
-    pendingTasks++;
-}
-
-void Participant::decrementPendingTasks()
-{
-    if(pendingTasks < 1) {
-        return;
+void Participant::decrementPendingTasks() { 
+    if (pendingTasks > 0) {
+        --pendingTasks; 
     }
-    pendingTasks--;
 }
 
-void Participant::addItemReference(Item* item)
+bool Participant::hasItemUses() const
 {
-    ++itemReferences[item];
+    return itemUses != 0;
 }
 
-void Participant::removeItemReference(Item* item)
+void Participant::retainItemUse()
 {
-    auto reference = itemReferences.find(item);
-    if (reference == itemReferences.end())
-        return;
-    if (--reference->second == 0)
-        itemReferences.erase(reference);
+    if (itemUses == std::numeric_limits<std::size_t>::max())
+        throw std::overflow_error("Participant item-use count overflow");
+    ++itemUses;
 }
 
-bool Participant::hasItemReferences() const
+void Participant::releaseItemUse()
 {
-    return !itemReferences.empty();
+    if (itemUses > 0)
+    {
+        --itemUses;
+    }
 }

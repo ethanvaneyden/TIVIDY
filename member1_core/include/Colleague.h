@@ -1,29 +1,28 @@
 #pragma once
+
 class WorkflowMediator;
 
 /**
- * @brief Base class for objects that communicate through a workflow mediator.
- *
- * The mediator pointer is non-owning; its lifetime is managed elsewhere.
+ * @brief Base class for objects that communicate through a Mediator.
+ * 
+ * Inherited by Component, AssignmentEngine, ApprovalHandler, etc.
+ * Holds a non-owning pointer to the Mediator.
  */
-class Colleague
-{
+class Colleague {
 protected:
-    WorkflowMediator *mediator = nullptr;
+    WorkflowMediator* mediator = nullptr;
 
 public:
-    /// @brief Constructs a colleague with no mediator.
-    Colleague() = default;
-
-    /// @brief Destroys the colleague.
     virtual ~Colleague() = default;
 
     /**
-     * @brief Sets the mediator used for workflow coordination.
-     * @param m Non-owning mediator pointer, or nullptr to clear it.
+     * @brief Injects the Mediator into this colleague.
+     * @param m Non-owning pointer to the Mediator.
      */
-    void setMediator(WorkflowMediator *m);
+    void setMediator(WorkflowMediator* m);
 
-    /// @brief Returns the current non-owning mediator, or nullptr if unset.
-    WorkflowMediator *getMediator() const;
+    /**
+     * @brief Returns the current Mediator (or nullptr).
+     */
+    WorkflowMediator* getMediator() const;
 };
