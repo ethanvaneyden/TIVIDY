@@ -795,15 +795,15 @@ namespace
         director.buildDemoWorkflow();
         Root* root = builder.getRoot();
 
-        std::unique_ptr<WorkflowMediator> coordinator(
-            new AssignmentMarkingCoordinator(participants));
         std::unique_ptr<AssignmentStrategy> strategy(new WorkloadStrategy());
+        std::unique_ptr<WorkflowMediator> coordinator(
+            new AssignmentMarkingCoordinator(participants, std::move(strategy)));
         std::unique_ptr<WorkflowBuilder> runtimeBuilder(
             new AssignmentMarkingBuilder(*registry));
 
         return std::unique_ptr<WorkflowInstance>(new WorkflowInstance(
             "edu_1", "education", std::move(registry), root, std::move(coordinator),
-            std::move(strategy), std::move(runtimeBuilder), &participants));
+            std::move(runtimeBuilder), &participants));
     }
 }
 
@@ -873,4 +873,20 @@ TEST_F(EducationInstanceTest, DuplicateItemIdIsRefusedAndTheFirstStaysPut)
                                        "SUB-NEW", "Student Again", "u2002"));
 
     EXPECT_EQ(before, instance->getItems().size());
+}
+
+// ---- strategy can be changed at runtime ------------------------------------
+
+TEST(AssignmentMarkingCoordinatorStrategyTest, StrategyCanBeChangedAndNullIsRefused)
+{
+    ParticipantRegistry participants;
+    AssignmentMarkingCoordinator coordinator(participants);
+    EXPECT_EQ("RoundRobin", coordinator.getAssignmentStrategyName());
+
+    coordinator.setAssignmentStrategy(std::unique_ptr<AssignmentStrategy>(new WorkloadStrategy()));
+    EXPECT_EQ("Workload", coordinator.getAssignmentStrategyName());
+
+    EXPECT_THROW(coordinator.setAssignmentStrategy(std::unique_ptr<AssignmentStrategy>()),
+                 std::invalid_argument);
+    EXPECT_EQ("Workload", coordinator.getAssignmentStrategyName());
 }
