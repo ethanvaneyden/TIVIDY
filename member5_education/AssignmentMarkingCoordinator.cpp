@@ -8,6 +8,13 @@
 #include "Submission.h"
 #include "AssignmentEngine.h"
 #include "RoundRobinStrategy.h"
+#include "AdvancePhaseCommand.h"
+#include "AssignItemCommand.h"
+#include "OverrideItemCommand.h"
+#include "RejectItemCommand.h"
+#include "SystemLogCommand.h"
+#include "WorkflowEvent.h"
+#include "EducationObserver.h"
 
 #include <utility>
 
@@ -21,6 +28,7 @@ namespace education
         const char *const INTAKE_PHASE = "Intake";
         const char *const ACTIVE_PHASE = "Active";
         const char *const REVIEW_PHASE = "Review";
+        const char *const PUBLISH_PHASE = "Publish";
 
         std::string describe(const Item *item)
         {
@@ -30,21 +38,36 @@ namespace education
 
     AssignmentMarkingCoordinator::AssignmentMarkingCoordinator(
         ParticipantRegistry &registry, std::unique_ptr<AssignmentStrategy> strategy)
-        : chain(registry)
+        : chain(registry),
+          history(new ActionHistory()),
+          eventBus(new EventBus())
     {
         if (!strategy)
         {
             strategy.reset(new RoundRobinStrategy());
         }
         engine.reset(new AssignmentEngine(std::move(strategy)));
+        assignmentEngine = engine.get();
         participants = &registry;
+        eventBus->subscribe(std::unique_ptr<Observer>(new EducationObserver(history.get())));
     }
 
     AssignmentMarkingCoordinator::~AssignmentMarkingCoordinator() {}
 
+    void AssignmentMarkingCoordinator::run(WorkCommand *command)
+    {
+        history->execute(std::unique_ptr<WorkCommand>(command));
+    }
+
     void AssignmentMarkingCoordinator::log(const std::string &line)
     {
-        history.push_back(line);
+        run(new SystemLogCommand(line));
+    }
+
+    void AssignmentMarkingCoordinator::advance(Container *container)
+    {
+        run(new AdvancePhaseCommand(container));
+        onPhaseAdvanced(container);
     }
 
     void AssignmentMarkingCoordinator::assignMarkers(const Container &assignment)
@@ -61,10 +84,10 @@ namespace education
                 continue;
             }
 
-            Participant *marker = engine->assign(*submission, markers);
+            Participant *marker = assignmentEngine->assign(*submission, markers);
             if (marker != nullptr)
             {
-                submission->assign(marker);
+                run(new AssignItemCommand(submission, marker));
             }
             else if (submission->getMediator() == nullptr)
             {
@@ -79,7 +102,7 @@ namespace education
             assignment->getPhaseName() == REVIEW_PHASE &&
             assignment->isReadyToPublish())
         {
-            assignment->advancePhase();
+            advance(assignment);
         }
     }
 
@@ -114,7 +137,7 @@ namespace education
             assignment->getPhaseName() == ACTIVE_PHASE &&
             assignment->isCompleted())
         {
-            assignment->advancePhase();
+            advance(assignment);
         }
     }
 
@@ -145,11 +168,27 @@ namespace education
         {
             return;
         }
+
+        // The engine may also notify; handle each phase once per container.
+        std::string &seen = handledPhase[container->getId()];
+        if (seen == container->getPhaseName())
+        {
+            return;
+        }
+        seen = container->getPhaseName();
+
         log("Assignment " + container->getId() + " moved to " + container->getPhaseName());
 
         if (container->getPhaseName() == ACTIVE_PHASE)
         {
             assignMarkers(*container);
+        }
+        else if (container->getPhaseName() == PUBLISH_PHASE)
+        {
+            WorkflowEvent event;
+            event.type = "ResultsPublished";
+            event.recipientId = container->getId();
+            eventBus->publish(event);
         }
     }
 
@@ -205,7 +244,7 @@ namespace education
 
     std::vector<std::string> AssignmentMarkingCoordinator::getHistoryAsStrings() const
     {
-        return history;
+        return history->getHistoryAsStrings();
     }
 
     // Education operations
@@ -217,8 +256,7 @@ namespace education
             throw InvalidTransition("An assignment can only be opened from the Intake phase");
         }
 
-        assignment.advancePhase();
-        assignMarkers(assignment);
+        advance(&assignment);
 
         int assigned = 0;
         const std::vector<Component *> children = assignment.getChildren();
@@ -286,8 +324,8 @@ namespace education
                 }
                 else
                 {
-                    submission->reject("Mark " + std::to_string(mark) +
-                                       " cannot be auto-approved");
+                    run(new RejectItemCommand(submission, "Mark " + std::to_string(mark) +
+                                                  " cannot be auto-approved"));
                     result.rejectedIds.push_back(id);
                     onApprovalResolved(submission, false);
                 }
@@ -319,7 +357,7 @@ namespace education
             return false;
         }
 
-        item.resolveReview(lecturer, finalMark, "Lecturer override");
+        run(new OverrideItemCommand(&item, lecturer, finalMark, "Lecturer override"));
         item.setMark(finalMark);
 
         publishIfReady(dynamic_cast<Container *>(item.getParent()));

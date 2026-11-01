@@ -12,7 +12,10 @@
 #include "WorkflowMediator.h"
 #include "AssignmentStrategy.h"
 #include "EducationApprovalChain.h"
+#include "ActionHistory.h"
+#include "EventBus.h"
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -43,11 +46,21 @@ class AssignmentMarkingCoordinator : public WorkflowMediator
     private:
         EducationApprovalChain chain;
         std::unique_ptr<AssignmentEngine> engine;
+        std::unique_ptr<ActionHistory> history;
+        std::unique_ptr<EventBus> eventBus;
+        AssignmentEngine* assignmentEngine;
         ParticipantRegistry* participants;
-        std::vector<std::string> history;
         BatchResult lastBatch;
+        std::map<std::string, std::string> handledPhase; /* Last phase handled per container. */
 
+        /** @brief Record a line in the action history. */
         void log(const std::string& line);
+
+        /** @brief Run a command through the action history. */
+        void run(WorkCommand* command);
+
+        /** @brief Advance a container and handle the new phase (the engine does not notify). */
+        void advance(Container* container);
 
         /** @brief Assign a TA to every Available submission. */
         void assignMarkers(const Container& assignment);
@@ -122,3 +135,4 @@ class AssignmentMarkingCoordinator : public WorkflowMediator
 };
 
 }
+
