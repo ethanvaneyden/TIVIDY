@@ -15,7 +15,7 @@
 
 #include "HospitalAdmissionBuilder.h"
 #include "HospitalAdmissionDirector.h"
-#include "HospitalCoordinator.h"      
+#include "HospitalAdmissionCoordinator.h"      
 #include "HospitalPolicies.h"         
 #include "HospitalSeed.h"             
 
@@ -92,7 +92,7 @@ std::string HospitalFacade::start(const std::string& name)
 
     /* 2. Build the demo workflow via the scenario Director.*/
     hospital::HospitalAdmissionDirector director(builder);
-    director.buildDemoWorkflow();
+    director.buildDemoWard();
 
     Root* root = builder.getRoot();
     if(root == nullptr)
@@ -102,7 +102,7 @@ std::string HospitalFacade::start(const std::string& name)
 
     /* 3. Create the hospital mediator.*/
     std::unique_ptr<WorkflowMediator> coordinator(
-        new hospital::HospitalCoordinator(*participants));
+        new hospital::HospitalAdmissionCoordinator(*participants));
 
     /* 4. Create the assignment strategy.*/
     std::unique_ptr<AssignmentStrategy> strategy(new WorkloadStrategy());

@@ -14,8 +14,8 @@ TividyWorkflow::TividyWorkflow()
     participants = std::unique_ptr<ParticipantRegistry>(new ParticipantRegistry());
 
     // 2. Create the scenario-specific facades.
-    educationFacade = std::unique_ptr<ScenarioFacade>(new education::EducationFacade(*participants));
-    healthcareFacade = std::unique_ptr<ScenarioFacade>(new hospital::HospitalFacade(*participants));
+    educationFacade = std::unique_ptr<ScenarioFacade>(new EducationFacade(participants.get()));
+    healthcareFacade = std::unique_ptr<ScenarioFacade>(new HospitalFacade(participants.get()));
 
     // 3. Register the facades with the instance index (initially empty).
     // This is a placeholder; actual registration happens when instances are created.

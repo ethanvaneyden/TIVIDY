@@ -1,4 +1,3 @@
-// member7_integration/HospitalWorkflowFactory.cpp
 /**
  * @file HospitalWorkflowFactory.cpp
  * @brief Implementation of the Hospital scenario factory.
