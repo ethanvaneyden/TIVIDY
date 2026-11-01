@@ -24,8 +24,8 @@ private:
     std::unique_ptr<ActionHistory> history;
     std::unique_ptr<EventBus> eventBus;
 
-    WorkRegistry* registry;
-    ParticipantRegistry* participantRegistry;
+    WorkRegistry *registry;
+    ParticipantRegistry *participantRegistry;
 
 public:
     AssignmentCoordinator(

@@ -5,11 +5,13 @@
 #include "../member1_core/include/Container.h"
 #include <string>
 
-class AdvancePhaseCommand : public WorkCommand {
+class AdvancePhaseCommand : public WorkCommand
+{
 private:
-    Container* container;
+    Container *container;
+
 public:
-    explicit AdvancePhaseCommand(Container* container);
+    explicit AdvancePhaseCommand(Container *container);
     void execute() override;
     std::string description() const override;
 };
