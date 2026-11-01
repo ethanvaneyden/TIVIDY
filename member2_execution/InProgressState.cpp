@@ -1,3 +1,8 @@
+/** @file InProgressState.cpp
+* @brief Implements the lifecycle transitions declared in InProgressState.h.
+* @author Member 2
+* @date October 2026
+*/
 #include "InProgressState.h"
 #include "CompletedState.h"
 #include <memory>
