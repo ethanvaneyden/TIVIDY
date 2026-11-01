@@ -76,3 +76,10 @@ export function del<T>(path: string): Promise<T> {
 export function messageOf(error: unknown): string {
     return error instanceof Error ? error.message : 'Something went wrong.';
 }
+
+export function put<T>(path: string, body?: unknown): Promise<T> {
+    return request<T>(path, {
+        method: 'PUT',
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+}
