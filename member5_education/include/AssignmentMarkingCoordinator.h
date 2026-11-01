@@ -15,6 +15,7 @@
 #include "ActionHistory.h"
 #include "EventBus.h"
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -49,6 +50,7 @@ class AssignmentMarkingCoordinator : public WorkflowMediator
         ActionHistory history;
         EventBus eventBus;
         BatchResult lastBatch;
+        std::map<std::string, std::string> handledPhase; /* Last phase handled per container. */
 
         void log(const std::string& line);
 

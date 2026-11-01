@@ -180,6 +180,15 @@ namespace education
         {
             return;
         }
+
+        // Handle each phase once per container, even if notified twice.
+        std::string &seen = handledPhase[container->getId()];
+        if (seen == container->getPhaseName())
+        {
+            return;
+        }
+        seen = container->getPhaseName();
+
         log("Assignment " + container->getId() + " moved to " + container->getPhaseName());
 
         if (container->getPhaseName() == "Publish")
