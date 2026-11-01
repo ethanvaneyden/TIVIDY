@@ -64,7 +64,6 @@ add_library(tividy_core
     member4_services/ApproveContainerCommand.cpp
     member4_services/AdvancePhaseCommand.cpp
     member4_services/SystemLogCommand.cpp
-    member4_services/WorkflowMediator.cpp
 
     # --- Member 5: education scenario ---
     member5_education/AssignmentMarkingBuilder.cpp
