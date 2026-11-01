@@ -1,8 +1,9 @@
 #include "AssignmentMarkingBuilder.h"
 
 #include "Container.h"
-#include "Item.h"
 #include "Root.h"
+#include "Submission.h"
+#include "WorkRegistry.h"
 
 #include <stdexcept>
 #include <utility>
@@ -10,51 +11,90 @@
 namespace education
 {
 
-namespace
+AssignmentMarkingBuilder::AssignmentMarkingBuilder()
+    : registry(nullptr), root(nullptr), currentContainer(nullptr)
 {
-    const char* const MODULE_TYPE = "module";
-    const char* const ASSIGNMENT_TYPE = "assignment";
-    const char* const SUBMISSION_TYPE = "submission";
 }
 
-AssignmentMarkingBuilder::AssignmentMarkingBuilder() : currentContainer(nullptr) {}
+AssignmentMarkingBuilder::AssignmentMarkingBuilder(WorkRegistry& workRegistry)
+    : registry(&workRegistry), root(nullptr), currentContainer(nullptr)
+{
+}
 
 AssignmentMarkingBuilder::~AssignmentMarkingBuilder() {}
 
+void AssignmentMarkingBuilder::setRegistry(WorkRegistry& workRegistry)
+{
+    registry = &workRegistry;
+    root = nullptr;
+    currentContainer = nullptr;
+}
+
 void AssignmentMarkingBuilder::buildRoot(const std::string& rootName)
 {
-    root.reset(new Root(rootName, MODULE_TYPE, rootName));
+    if (registry == nullptr)
+    {
+        throw std::logic_error("buildRoot called before setRegistry");
+    }
+    std::unique_ptr<Root> node(new Root(rootName, "module", rootName));
+    Root* raw = node.get();
+    registry->add(std::move(node)); // throws on a duplicate id
+    root = raw;
     currentContainer = nullptr;
 }
 
 void AssignmentMarkingBuilder::buildContainer(const std::string& containerId,
                                               const std::string& name)
 {
-    if (!root)
+    if (root == nullptr)
     {
         throw std::logic_error("buildContainer called before buildRoot");
     }
-    // TODO(Member 1): ownership of the new node is not defined yet.
-    Container* container = new Container(containerId, ASSIGNMENT_TYPE, name);
-    root->add(container);
-    currentContainer = container;
+
+    std::unique_ptr<Container> node(new Container(containerId, "assignment", name));
+    Container* raw = node.get();
+    registry->add(std::move(node));
+    try
+    {
+        root->add(raw);
+    }
+    catch (...)
+    {
+        registry->remove(containerId); // do not leave an orphan in the registry
+        throw;
+    }
+    currentContainer = raw;
 }
 
-void AssignmentMarkingBuilder::buildItem(const std::string& itemId,
-                                         const std::string& name)
+void AssignmentMarkingBuilder::buildItem(const std::string& itemId, const std::string& name)
 {
     if (currentContainer == nullptr)
     {
         throw std::logic_error("buildItem called before buildContainer");
     }
-    // TODO(Member 1): ownership of the new node is not defined yet.
-    currentContainer->add(new Item(itemId, SUBMISSION_TYPE, name));
+
+    std::unique_ptr<Submission> node(new Submission(itemId, name));
+    Submission* raw = node.get();
+    registry->add(std::move(node));
+    try
+    {
+        currentContainer->add(raw);
+    }
+    catch (...)
+    {
+        registry->remove(itemId);
+        throw;
+    }
 }
 
-std::unique_ptr<Root> AssignmentMarkingBuilder::getResult()
+Root* AssignmentMarkingBuilder::getRoot() const
 {
-    currentContainer = nullptr;
-    return std::move(root);
+    return root;
 }
 
-} // namespace education
+Container* AssignmentMarkingBuilder::getCurrentContainer() const
+{
+    return currentContainer;
+}
+
+}

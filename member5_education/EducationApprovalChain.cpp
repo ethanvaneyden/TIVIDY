@@ -18,7 +18,7 @@ EducationBandHandler::~EducationBandHandler() {}
 
 bool EducationBandHandler::handle(Item& item, int value)
 {
-    // TODO(Member 4): adapt this signature if the real ApprovalHandler takes
+    // Notes: adapt this signature if the real ApprovalHandler takes
     // an ApprovalRequest instead of (Item&, int).
     if (EducationPolicies::approverRoleFor(value) == role)
     {
@@ -65,4 +65,4 @@ bool EducationApprovalChain::approve(Item& item, int value)
     return head().handle(item, value);
 }
 
-} // namespace education
+}
