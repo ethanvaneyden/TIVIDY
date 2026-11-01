@@ -138,7 +138,7 @@ TEST(JsonSerializerTest, SerializeErrorProducesValidObject)
     EXPECT_EQ(json, "{\"error\":\"NotFound\",\"message\":\"instance\"}");
 }
 
-////=================Waiting for memember 6
+////=================Waiting for member 6
 ///============================================
 ///============================================
 ///============================================
