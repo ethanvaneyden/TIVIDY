@@ -15,6 +15,9 @@
 #include "EducationPolicies.h"
 #include "EducationSeed.h"
 #include "InvalidTransition.h"
+#include "WorkflowMediator.h"
+#include "WorkloadStrategy.h"
+#include "WorkflowInstance.h"
 #include "Participant.h"
 #include "ParticipantRegistry.h"
 #include "Root.h"
@@ -246,8 +249,8 @@ TEST(AssignmentMarkingBuilderParentTest, DuplicateSubmissionKeepsTheCurrentAssig
 
 TEST(AssignmentMarkingBuilderParentTest, OpenedAssignmentRefusesNewSubmissionsAndLeavesNoOrphan)
 {
+    ParticipantRegistry participants; // must outlive the items that use it
     WorkRegistry registry;
-    ParticipantRegistry participants;
     EducationSeed::seedParticipants(participants);
     AssignmentMarkingCoordinator coordinator(participants);
 
@@ -564,7 +567,7 @@ TEST_F(AssignmentFlowTest, AssignmentCannotPublishWhileASubmissionIsRejected)
     approveBatch();
 
     EXPECT_FALSE(coordinator->isReadyToPublish(*assignment));
-    EXPECT_FALSE(assignment->tryPublish());
+    EXPECT_THROW(assignment->advancePhase(), InvalidTransition);
     EXPECT_EQ("Review", assignment->getPhaseName());
 }
 
@@ -700,4 +703,99 @@ TEST(AssignmentMarkingCoordinatorNoMarkersTest, SubmissionsStayAvailableAndTheFa
         if (history[i].find("No marker available") != std::string::npos) logged = true;
     }
     EXPECT_TRUE(logged);
+}
+
+
+// Used the way WorkflowInstance and the facade use it
+
+namespace
+{
+    // Mirrors EducationFacade::start(): demo tree built by the director, then a
+    // second registry-only builder handed to the instance for runtime additions.
+    std::unique_ptr<WorkflowInstance> makeInstance(ParticipantRegistry& participants)
+    {
+        std::unique_ptr<WorkRegistry> registry(new WorkRegistry());
+        AssignmentMarkingBuilder builder(*registry);
+        AssignmentMarkingDirector director(builder);
+        director.buildDemoWorkflow();
+        Root* root = builder.getRoot();
+
+        std::unique_ptr<WorkflowMediator> coordinator(
+            new AssignmentMarkingCoordinator(participants));
+        std::unique_ptr<AssignmentStrategy> strategy(new WorkloadStrategy());
+        std::unique_ptr<WorkflowBuilder> runtimeBuilder(
+            new AssignmentMarkingBuilder(*registry));
+
+        return std::unique_ptr<WorkflowInstance>(new WorkflowInstance(
+            "edu_1", "education", std::move(registry), root, std::move(coordinator),
+            std::move(strategy), std::move(runtimeBuilder), &participants));
+    }
+}
+
+class EducationInstanceTest : public ::testing::Test
+{
+    protected:
+        ParticipantRegistry participants; // declared first so it is destroyed last
+        std::unique_ptr<WorkflowInstance> instance;
+
+        void SetUp()
+        {
+            EducationSeed::seedParticipants(participants);
+            instance = makeInstance(participants);
+        }
+};
+
+TEST_F(EducationInstanceTest, AddItemPutsTheSubmissionUnderTheNamedAssignment)
+{
+    const size_t before = instance->getItems().size();
+
+    instance->addItem(AssignmentMarkingDirector::assignmentId(), "SUB-NEW", "Student New", "u2001");
+
+    Item* added = instance->getItem("SUB-NEW");
+    ASSERT_NE(nullptr, added);
+    ASSERT_NE(nullptr, added->getParent());
+    EXPECT_EQ(AssignmentMarkingDirector::assignmentId(), added->getParent()->getId());
+    EXPECT_EQ(before + 1, instance->getItems().size());
+    EXPECT_NE(nullptr, added->getMediator());
+}
+
+TEST_F(EducationInstanceTest, AddItemWorksForAnAssignmentThatIsNotTheLastBuilt)
+{
+    instance->addContainer("A2", "Assignment 2");
+
+    instance->addItem(AssignmentMarkingDirector::assignmentId(), "SUB-NEW", "Student New", "u2001");
+
+    EXPECT_EQ(AssignmentMarkingDirector::assignmentId(),
+              instance->getItem("SUB-NEW")->getParent()->getId());
+}
+
+TEST_F(EducationInstanceTest, AddItemToAnUnknownParentChangesNothing)
+{
+    const size_t before = instance->getItems().size();
+
+    EXPECT_THROW(instance->addItem("NOPE", "SUB-NEW", "Student New", "u2001"),
+                 std::runtime_error);
+
+    EXPECT_EQ(before, instance->getItems().size());
+    EXPECT_EQ(nullptr, instance->getItem("SUB-NEW"));
+}
+
+TEST_F(EducationInstanceTest, AddContainerAttachesAnAssignmentToTheModule)
+{
+    Container* added = instance->addContainer("A2", "Assignment 2");
+
+    ASSERT_NE(nullptr, added);
+    EXPECT_EQ(instance->getRoot(), added->getParent());
+    EXPECT_EQ("Intake", added->getPhaseName());
+}
+
+TEST_F(EducationInstanceTest, DuplicateItemIdIsRefusedAndTheFirstStaysPut)
+{
+    instance->addItem(AssignmentMarkingDirector::assignmentId(), "SUB-NEW", "Student New", "u2001");
+    const size_t before = instance->getItems().size();
+
+    EXPECT_ANY_THROW(instance->addItem(AssignmentMarkingDirector::assignmentId(),
+                                       "SUB-NEW", "Student Again", "u2002"));
+
+    EXPECT_EQ(before, instance->getItems().size());
 }

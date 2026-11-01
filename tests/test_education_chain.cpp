@@ -1,10 +1,12 @@
 // Tests for the approval chain and the coordinator's event handling.
-// Items here are detached (no container), so the phase checks in Item do not
-// apply; the full phase flow is covered in test_education_flow.cpp.
+// The real engine only lets an item be reviewed while its container is in the
+// Review phase, so each item here sits in its own small container that is
+// walked to Review. The full multi-item flow is in test_education_flow.cpp.
 
 #include <gtest/gtest.h>
 
 #include "AssignmentMarkingCoordinator.h"
+#include "Container.h"
 #include "EducationApprovalChain.h"
 #include "EducationPolicies.h"
 #include "EducationSeed.h"
@@ -22,12 +24,16 @@ using education::Submission;
 
 namespace
 {
-    // Walks a detached submission through the item lifecycle to Completed.
-    void completeWithMark(Submission& item, Participant* assignee, int mark)
+    // Puts the submission in the container, marks it, and moves the container
+    // to the Review phase.
+    void completeWithMark(Container& box, Submission& item, Participant* assignee, int mark)
     {
+        box.add(&item);
+        box.advancePhase(); // Intake -> Active
         item.assign(assignee);
         item.start();
         item.complete(mark);
+        box.advancePhase(); // Active -> Review
     }
 }
 
@@ -48,7 +54,8 @@ TEST_F(EducationChainTest, TAMarkIsApprovedByADifferentTA)
 {
     EducationApprovalChain chain(registry);
     Submission item("SUB-B", "Student B");
-    completeWithMark(item, assignee, 60);
+    Container box("BOX", "assignment", "Box");
+    completeWithMark(box, item, assignee, 60);
 
     EXPECT_TRUE(chain.approve(item, 60));
 
@@ -63,7 +70,8 @@ TEST_F(EducationChainTest, HighMarkIsApprovedByTheLecturer)
 {
     EducationApprovalChain chain(registry);
     Submission item("SUB-A", "Student A");
-    completeWithMark(item, assignee, 78);
+    Container box("BOX", "assignment", "Box");
+    completeWithMark(box, item, assignee, 78);
 
     EXPECT_TRUE(chain.approve(item, 78));
 
@@ -75,7 +83,8 @@ TEST_F(EducationChainTest, LowPassMarkIsApprovedByTheModerator)
 {
     EducationApprovalChain chain(registry);
     Submission item("SUB-C", "Student C");
-    completeWithMark(item, assignee, 45);
+    Container box("BOX", "assignment", "Box");
+    completeWithMark(box, item, assignee, 45);
 
     EXPECT_TRUE(chain.approve(item, 45));
 
@@ -87,7 +96,8 @@ TEST_F(EducationChainTest, MarkBelowFortyFallsOffTheChain)
 {
     EducationApprovalChain chain(registry);
     Submission item("SUB-G", "Student G");
-    completeWithMark(item, assignee, 39);
+    Container box("BOX", "assignment", "Box");
+    completeWithMark(box, item, assignee, 39);
 
     EXPECT_FALSE(chain.approve(item, 39));
     EXPECT_EQ(nullptr, item.getReviewer());
@@ -106,7 +116,8 @@ TEST_F(EducationChainTest, EveryBoundaryMarkGetsTheExpectedRole)
     for (unsigned i = 0; i < sizeof(marks) / sizeof(marks[0]); ++i)
     {
         Submission item("SUB", "Student");
-        completeWithMark(item, assignee, marks[i]);
+        Container box("BOX", "assignment", "Box");
+        completeWithMark(box, item, assignee, marks[i]);
         ASSERT_TRUE(chain.approve(item, marks[i])) << "mark " << marks[i];
         EXPECT_EQ(roles[i], item.getReviewer()->getRole()) << "mark " << marks[i];
     }
@@ -120,7 +131,8 @@ TEST(EducationChainIsolationTest, OnlyOneTAMeansTAMarkIsNotApproved)
     EducationApprovalChain chain(registry);
 
     Submission item("SUB-B", "Student B");
-    completeWithMark(item, solo, 60);
+    Container box("BOX", "assignment", "Box");
+    completeWithMark(box, item, solo, 60);
 
     EXPECT_FALSE(chain.approve(item, 60));
     EXPECT_EQ(nullptr, item.getReviewer());
