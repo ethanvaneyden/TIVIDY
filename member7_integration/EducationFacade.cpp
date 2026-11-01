@@ -99,26 +99,23 @@ std::string EducationFacade::start(const std::string& name)
     }
 
     /* 3. Create the education mediator. */
-    std::unique_ptr<WorkflowMediator> coordinator(
-        new education::AssignmentMarkingCoordinator(*participants));
-
-    /* 4. Create the assignment strategy. */
     std::unique_ptr<AssignmentStrategy> strategy(new WorkloadStrategy());
+    std::unique_ptr<WorkflowMediator> coordinator(
+        new education::AssignmentMarkingCoordinator(*participants, std::move(strategy)));
 
-    /* 5. Create a builder to hand to the instance (a second one - the
+    /* 4. Create a builder to hand to the instance (a second one - the
      *    instance's builder is used for later addContainer/addItem calls
      *    during runtime, not tree construction). */
     std::unique_ptr<WorkflowBuilder> runtimeBuilder(
         new education::AssignmentMarkingBuilder(*registry));
 
-    /* 6. Assemble the instance. */
+    /* 5. Assemble the instance. */
     std::unique_ptr<WorkflowInstance> instance(new WorkflowInstance(
         instanceId,
         name,
         std::move(registry),
         root,
         std::move(coordinator),
-        std::move(strategy),
         std::move(runtimeBuilder),
         participants));
 

@@ -42,6 +42,17 @@ namespace education
 
     AssignmentMarkingCoordinator::~AssignmentMarkingCoordinator() {}
 
+    void AssignmentMarkingCoordinator::setAssignmentStrategy(
+        std::unique_ptr<AssignmentStrategy> strategy)
+    {
+        engine->setStrategy(std::move(strategy));
+    }
+
+    std::string AssignmentMarkingCoordinator::getAssignmentStrategyName() const
+    {
+        return engine->strategyName();
+    }
+
     void AssignmentMarkingCoordinator::log(const std::string &line)
     {
         history.push_back(line);

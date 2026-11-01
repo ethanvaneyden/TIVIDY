@@ -720,15 +720,15 @@ namespace
         director.buildDemoWorkflow();
         Root* root = builder.getRoot();
 
-        std::unique_ptr<WorkflowMediator> coordinator(
-            new AssignmentMarkingCoordinator(participants));
         std::unique_ptr<AssignmentStrategy> strategy(new WorkloadStrategy());
+        std::unique_ptr<WorkflowMediator> coordinator(
+            new AssignmentMarkingCoordinator(participants, std::move(strategy)));
         std::unique_ptr<WorkflowBuilder> runtimeBuilder(
             new AssignmentMarkingBuilder(*registry));
 
         return std::unique_ptr<WorkflowInstance>(new WorkflowInstance(
             "edu_1", "education", std::move(registry), root, std::move(coordinator),
-            std::move(strategy), std::move(runtimeBuilder), &participants));
+            std::move(runtimeBuilder), &participants));
     }
 }
 

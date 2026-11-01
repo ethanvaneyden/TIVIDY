@@ -103,24 +103,21 @@ std::string HospitalFacade::start(const std::string& name)
     }
 
     /* 3. Create the hospital mediator.*/
-    std::unique_ptr<WorkflowMediator> coordinator(
-        new hospital::HospitalAdmissionCoordinator(*participants));
-
-    /* 4. Create the assignment strategy.*/
     std::unique_ptr<AssignmentStrategy> strategy(new WorkloadStrategy());
+    std::unique_ptr<WorkflowMediator> coordinator(
+        new hospital::HospitalAdmissionCoordinator(*participants, std::move(strategy)));
 
-    /* 5. Create a runtime builder (for addContainer/addItem during execution).*/
+    /* 4. Create a runtime builder (for addContainer/addItem during execution).*/
     std::unique_ptr<WorkflowBuilder> runtimeBuilder(
         new hospital::HospitalAdmissionBuilder(*registry));
 
-    /* 6. Assemble the instance.*/
+    /* 5. Assemble the instance.*/
     std::unique_ptr<WorkflowInstance> instance(new WorkflowInstance(
         instanceId,
         name,
         std::move(registry),
         root,
         std::move(coordinator),
-        std::move(strategy),
         std::move(runtimeBuilder),
         participants));
 

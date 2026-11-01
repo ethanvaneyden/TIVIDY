@@ -102,6 +102,9 @@ class HospitalAdmissionCoordinator : public WorkflowMediator
 
         /** @return this coordinator's own history, whether or not it is linked. */
         virtual std::vector<std::string> getHistoryAsStrings() const;
+        virtual void setAssignmentStrategy(
+            std::unique_ptr<AssignmentStrategy> strategy) override;
+        virtual std::string getAssignmentStrategyName() const override;
 
         // Hospital operations
 

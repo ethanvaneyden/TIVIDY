@@ -478,6 +478,8 @@ namespace
         void onContainerRejected(Container *, const std::string &) override { events.push_back("container-rejected"); }
         void onApprovalResolved(Item *, bool) override { events.push_back("approval-resolved"); }
         std::vector<std::string> getHistoryAsStrings() const override { return events; }
+        void setAssignmentStrategy(std::unique_ptr<AssignmentStrategy>) override {}
+        std::string getAssignmentStrategyName() const override { return "Test"; }
     };
 
     class LifecycleNotificationTest : public ::testing::Test

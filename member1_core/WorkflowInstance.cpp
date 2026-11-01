@@ -42,14 +42,12 @@ WorkflowInstance::WorkflowInstance(
     std::unique_ptr<WorkRegistry> registry,
     Root* root,
     std::unique_ptr<WorkflowMediator> coordinator,
-    std::unique_ptr<AssignmentStrategy> strategy,
     std::unique_ptr<WorkflowBuilder> builder,
     ParticipantRegistry* participants)
     : instanceId(std::move(instanceId)),
       definitionType(std::move(definitionType)),
       registry(std::move(registry)),
       coordinator(std::move(coordinator)),
-      strategy(std::move(strategy)),
       builder(std::move(builder)),
       participants(participants),
       root(root)
@@ -57,7 +55,6 @@ WorkflowInstance::WorkflowInstance(
     if (!this->root) throw std::invalid_argument("Root component cannot be null");
     if (!this->registry) throw std::invalid_argument("Registry cannot be null");
     if (!this->coordinator) throw std::invalid_argument("Coordinator cannot be null");
-    if (!this->strategy) throw std::invalid_argument("Assignment strategy cannot be null");
     if (!this->builder) throw std::invalid_argument("Workflow builder cannot be null");
     if (!this->participants) throw std::invalid_argument("Participant registry cannot be null");
     validateRegisteredComponents(this->root, *this->registry);
@@ -241,16 +238,26 @@ void WorkflowInstance::rejectContainer(const std::string& containerId, const std
     coordinator->onContainerRejected(container, reason);
 }
 
-void WorkflowInstance::setStrategy(std::unique_ptr<AssignmentStrategy> newStrategy)
+void WorkflowInstance::setAssignmentStrategy(
+    std::unique_ptr<AssignmentStrategy> strategy)
 {
-    if (newStrategy == nullptr)
-    {
-        throw std::invalid_argument("WorkflowInstance::setStrategy: null strategy");
-    }
-    strategy = std::move(newStrategy);
+    if (!strategy)
+        throw std::invalid_argument("Assignment strategy cannot be null");
+
+    coordinator->setAssignmentStrategy(std::move(strategy));
+}
+
+void WorkflowInstance::setStrategy(std::unique_ptr<AssignmentStrategy> strategy)
+{
+    setAssignmentStrategy(std::move(strategy));
+}
+
+std::string WorkflowInstance::getAssignmentStrategyName() const
+{
+    return coordinator->getAssignmentStrategyName();
 }
 
 std::string WorkflowInstance::getStrategyName() const
 {
-    return strategy != nullptr ? strategy->name() : "None";
+    return getAssignmentStrategyName();
 }
