@@ -5,6 +5,6 @@
 class IntakePhase : public WorkflowPhase
 {
 public:
-    void advance(Container& container) override;
+    std::unique_ptr<WorkflowPhase> advance(Container& container) override;
     std::string name() const override;
 };
