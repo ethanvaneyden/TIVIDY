@@ -1,14 +1,18 @@
+/** @file IntakePhase.cpp
+* @brief Implements the lifecycle transitions declared in IntakePhase.h.
+* @author Member 2
+* @date October 2026
+*/
 #include "IntakePhase.h"
 #include "ActivePhase.h"
 #include "Container.h"
 #include "InvalidTransition.h"
-#include <memory>
 
-void IntakePhase::advance(Container& container)
+std::unique_ptr<WorkflowPhase> IntakePhase::advance(Container& container)
 {
     if (container.getChildren().empty())
         throw InvalidTransition("Cannot activate an empty container");
-    container.setPhase(std::unique_ptr<WorkflowPhase>(new ActivePhase()));
+    return std::unique_ptr<WorkflowPhase>(new ActivePhase());
 }
 
 std::string IntakePhase::name() const { return "Intake"; }

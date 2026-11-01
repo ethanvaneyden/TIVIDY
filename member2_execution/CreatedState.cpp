@@ -1,11 +1,15 @@
+/** @file CreatedState.cpp
+* @brief Implements the lifecycle transitions declared in CreatedState.h.
+* @author Member 2
+* @date October 2026
+*/
 #include "CreatedState.h"
 #include "AssignedState.h"
-#include "Item.h"
 #include <memory>
 
-void CreatedState::assign(Item& item)
+std::unique_ptr<ItemState> CreatedState::assign(Item&, Participant*)
 {
-    item.setState(std::unique_ptr<ItemState>(new AssignedState()));
+    return std::unique_ptr<ItemState>(new AssignedState());
 }
 
 std::string CreatedState::name() const { return "Available"; }
