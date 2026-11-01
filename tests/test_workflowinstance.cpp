@@ -19,6 +19,44 @@
 
 namespace
 {
+class TrackedStrategy : public WorkloadStrategy
+{
+public:
+    explicit TrackedStrategy(bool& destroyed) : destroyed(destroyed) {}
+    ~TrackedStrategy() override { destroyed = true; }
+
+private:
+    bool& destroyed;
+};
+
+class TrackedBuilder : public hospital::HospitalAdmissionBuilder
+{
+public:
+    TrackedBuilder(WorkRegistry& registry, bool& destroyed)
+        : HospitalAdmissionBuilder(registry), destroyed(destroyed)
+    {
+    }
+
+    ~TrackedBuilder() override { destroyed = true; }
+
+private:
+    bool& destroyed;
+};
+
+class TrackedCoordinator : public hospital::HospitalAdmissionCoordinator
+{
+public:
+    TrackedCoordinator(ParticipantRegistry& participants, bool& destroyed)
+        : HospitalAdmissionCoordinator(participants), destroyed(destroyed)
+    {
+    }
+
+    ~TrackedCoordinator() override { destroyed = true; }
+
+private:
+    bool& destroyed;
+};
+
 std::unique_ptr<WorkflowInstance> makeHospitalInstance(
     const std::string& id,
     ParticipantRegistry& participants)
@@ -85,7 +123,47 @@ TEST(WorkflowInstanceTest, InstancesKeepTheirWorkTreesAndHistorySeparate)
     EXPECT_EQ(second->getItem("TRT-1"), nullptr);
     EXPECT_EQ(first->getContainer("W1")->getChildren().size(), 1u);
     EXPECT_TRUE(second->getContainer("W1")->getChildren().empty());
+    ASSERT_NE(first->getRoot()->getMediator(), nullptr);
+    EXPECT_EQ(first->getContainer("W1")->getMediator(), first->getRoot()->getMediator());
+    EXPECT_EQ(first->getItem("TRT-1")->getMediator(), first->getRoot()->getMediator());
+    EXPECT_NE(second->getRoot()->getMediator(), first->getRoot()->getMediator());
     ASSERT_EQ(first->getHistory().size(), 1u);
     EXPECT_NE(first->getHistory().front().find("TRT-1"), std::string::npos);
     EXPECT_TRUE(second->getHistory().empty());
+}
+
+TEST(WorkflowInstanceTest, OwnsItsCoordinatorStrategyAndBuilder)
+{
+    ParticipantRegistry participants;
+    std::unique_ptr<WorkRegistry> registry(new WorkRegistry());
+    bool coordinatorDestroyed = false;
+    bool strategyDestroyed = false;
+    bool builderDestroyed = false;
+    std::unique_ptr<TrackedBuilder> builder(
+        new TrackedBuilder(*registry, builderDestroyed));
+    builder->buildRoot("Hospital");
+    builder->buildContainer("W1", "Ward");
+    Root* root = builder->getRoot();
+
+    {
+        WorkflowInstance instance(
+            "tracked",
+            "healthcare",
+            std::move(registry),
+            root,
+            std::unique_ptr<WorkflowMediator>(
+                new TrackedCoordinator(participants, coordinatorDestroyed)),
+            std::unique_ptr<AssignmentStrategy>(
+                new TrackedStrategy(strategyDestroyed)),
+            std::move(builder),
+            &participants);
+
+        EXPECT_FALSE(coordinatorDestroyed);
+        EXPECT_FALSE(strategyDestroyed);
+        EXPECT_FALSE(builderDestroyed);
+    }
+
+    EXPECT_TRUE(coordinatorDestroyed);
+    EXPECT_TRUE(strategyDestroyed);
+    EXPECT_TRUE(builderDestroyed);
 }

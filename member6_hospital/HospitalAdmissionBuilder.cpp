@@ -12,12 +12,12 @@ namespace hospital
 {
 
 HospitalAdmissionBuilder::HospitalAdmissionBuilder()
-    : registry(nullptr), root(nullptr), currentContainer(nullptr)
+    : registry(nullptr), root(nullptr), currentContainer(nullptr), runtimeMode(false)
 {
 }
 
 HospitalAdmissionBuilder::HospitalAdmissionBuilder(WorkRegistry& workRegistry)
-    : registry(&workRegistry), root(nullptr), currentContainer(nullptr)
+    : registry(&workRegistry), root(nullptr), currentContainer(nullptr), runtimeMode(false)
 {
 }
 
@@ -28,6 +28,27 @@ void HospitalAdmissionBuilder::setRegistry(WorkRegistry& workRegistry)
     registry = &workRegistry;
     root = nullptr;
     currentContainer = nullptr;
+    runtimeMode = false;
+}
+
+void HospitalAdmissionBuilder::adoptRootFromRegistry()
+{
+    if (registry == nullptr || root != nullptr)
+    {
+        return;
+    }
+
+    const std::vector<std::string> ids = registry->getAllIds();
+    for (std::vector<std::string>::const_iterator id = ids.begin(); id != ids.end(); ++id)
+    {
+        Root* found = dynamic_cast<Root*>(registry->get(*id));
+        if (found != nullptr)
+        {
+            root = found;
+            runtimeMode = true;
+            return;
+        }
+    }
 }
 
 void HospitalAdmissionBuilder::buildRoot(const std::string& rootName)
@@ -46,6 +67,7 @@ void HospitalAdmissionBuilder::buildRoot(const std::string& rootName)
 void HospitalAdmissionBuilder::buildContainer(const std::string& containerId,
                                               const std::string& name)
 {
+    adoptRootFromRegistry();
     if (root == nullptr)
     {
         throw std::logic_error("buildContainer called before buildRoot");
@@ -67,6 +89,12 @@ void HospitalAdmissionBuilder::buildContainer(const std::string& containerId,
 
 void HospitalAdmissionBuilder::buildItem(const std::string& itemId, const std::string& name)
 {
+    adoptRootFromRegistry();
+    if (runtimeMode)
+    {
+        registry->add(std::unique_ptr<Component>(new Treatment(itemId, name, itemId, std::string())));
+        return;
+    }
     buildTreatment(itemId, name, itemId, std::string());
 }
 

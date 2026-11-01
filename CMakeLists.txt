@@ -83,6 +83,8 @@ add_library(tividy_core
     member6_hospital/HospitalSeed.cpp
 
     # --- Member 7: integration, factories ---
+    member7_integration/EducationWorkflowFactory.cpp
+    member7_integration/HospitalWorkflowFactory.cpp
    # member7_integration/WorkflowDirector.cpp
     #member7_integration/EducationWorkflowFactory.cpp
    # member7_integration/HospitalWorkflowFactory.cpp

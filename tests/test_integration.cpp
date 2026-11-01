@@ -32,25 +32,15 @@ TEST(TividyWorkflowTest, StartHealthcareReturnsNonEmptyId)
     EXPECT_FALSE(id.empty());
 }
 
-// TEST(TividyWorkflowTest, ListInstancesContainsStartedOnes)
-// {
-//     TividyWorkflow wf;
-//     auto e1 = wf.startEducation("E1");
-//     auto e2 = wf.startEducation("E2");
-//     auto ids = wf.listEducationInstances();
-//     EXPECT_NE(std::find(ids.begin(), ids.end(), e1), ids.end());
-//     EXPECT_NE(std::find(ids.begin(), ids.end(), e2), ids.end());
-// }
-
-//less strict for now as our method has stub
-//MUST FIX
 TEST(TividyWorkflowTest, ListInstancesContainsStartedOnes)
 {
     TividyWorkflow wf;
-    wf.startEducation("E1");
-    wf.startEducation("E2");
+    const std::string first = wf.startEducation("E1");
+    const std::string second = wf.startEducation("E2");
     auto ids = wf.listEducationInstances();
-    EXPECT_EQ(ids.size(), 2u);   // <- only check count
+    ASSERT_EQ(ids.size(), 2u);
+    EXPECT_NE(std::find(ids.begin(), ids.end(), first), ids.end());
+    EXPECT_NE(std::find(ids.begin(), ids.end(), second), ids.end());
 }
 
 TEST(TividyWorkflowTest, OperationsOnMissingInstanceReturnNotFound)
