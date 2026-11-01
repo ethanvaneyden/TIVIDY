@@ -9,7 +9,7 @@ RejectItemCommand::RejectItemCommand(
 
 void RejectItemCommand::execute() {
     if (item != nullptr) {
-        item->setRejectionReason(reason);
+        item->reject(reason);
     }
 }
 

@@ -3,7 +3,7 @@
 
 #include "WorkCommand.h"
 #include "../member1_core/include/Container.h"
-#incdlude <string>
+#include <string>
 
 class AdvancePhaseCommand : public WorkCommand {
 private:
