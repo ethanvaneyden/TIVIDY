@@ -1,14 +1,21 @@
 #pragma once
 
+#include <memory>
 #include <string>
+
 class Container;
 
-// Phase changes are validated here. Scenario policies and approvals are
-// coordinated by the mediator, rather than hard-coded into these phases.
-class WorkflowPhase
-{
+/**
+ * @brief Abstract State interface for Container phases.
+ *
+ * advance() returns the next phase, or nullptr when the current phase is
+ * terminal. Phase implementations must not call Container::setPhase().
+ */
+class WorkflowPhase {
 public:
     virtual ~WorkflowPhase() = default;
-    virtual void advance(Container& container) = 0;
+
+    virtual std::unique_ptr<WorkflowPhase> advance(Container& container) = 0;
+
     virtual std::string name() const = 0;
 };
