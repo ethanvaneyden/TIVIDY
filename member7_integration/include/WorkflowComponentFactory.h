@@ -10,7 +10,6 @@
 
 class WorkflowBuilder;
 class AssignmentStrategy;
-class ExternalSystem;
 
 /**
  * @class WorkflowComponentFactory
@@ -37,11 +36,6 @@ class WorkflowComponentFactory
          * @brief Create the scenario's assignment strategy.
         */
         virtual std::unique_ptr<AssignmentStrategy> createStrategy() const = 0;
-
-        /**
-         * @brief Create the scenario's external system adapter.
-        */
-        virtual std::unique_ptr<ExternalSystem> createExternalSystem() const = 0;
 
         /**
          * @brief scenario specific name (e.g. "education", "healthcare").

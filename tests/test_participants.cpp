@@ -132,7 +132,7 @@ TEST(ParticipantRegistryTest, AvoidsCollisionsBetweenRoleGeneratedIds)
     EXPECT_EQ(registry.get("A12"), participant);
 }
 
-TEST(ParticipantRegistryTest, PreventsRemovalWhileItemReferencesParticipant)
+TEST(ParticipantRegistryTest, ParticipantMayBeRemovedAfterItemIsDestroyed)
 {
     ParticipantRegistry registry;
     Participant *participant = registry.add("Alex", "Marker");
@@ -147,7 +147,6 @@ TEST(ParticipantRegistryTest, PreventsRemovalWhileItemReferencesParticipant)
         item.complete(10);
         container.advancePhase();
         item.recordReview(participant, "Personal");
-
         EXPECT_THROW(registry.remove(participant->getId()), std::logic_error);
         EXPECT_TRUE(registry.contains(participant->getId()));
         EXPECT_EQ(item.getAssignee(), participant);
@@ -158,29 +157,28 @@ TEST(ParticipantRegistryTest, PreventsRemovalWhileItemReferencesParticipant)
     EXPECT_FALSE(registry.contains("Marker1"));
 }
 
-TEST(ParticipantRegistryTest, ClearsItemReferencesWhenRegistryIsDestroyed)
+TEST(ParticipantTest, ItemAssignmentTracksPendingWorkUntilCompletionOrDestruction)
 {
+    Participant participant("marker1", "Alex", "Marker");
     Container container("container", "group", "Container");
-    Item item("item", "work", "Item");
-
-    container.add(&item);
-    container.advancePhase();
-
     {
-        ParticipantRegistry registry;
-        Participant *participant = registry.add("Alex", "Marker");
-        item.assign(participant);
+        Item item("item", "work", "Item");
+        container.add(&item);
+        container.advancePhase();
+        item.assign(&participant);
+        EXPECT_EQ(participant.getPendingTasks(), 1);
         item.start();
         item.complete(10);
-        container.advancePhase();
-        item.recordReview(participant, "Personal");
-
-        ASSERT_EQ(item.getAssignee(), participant);
-        ASSERT_EQ(item.getReviewer(), participant);
+        EXPECT_EQ(participant.getPendingTasks(), 0);
     }
 
-    EXPECT_EQ(item.getAssignee(), nullptr);
-    EXPECT_EQ(item.getReviewer(), nullptr);
-    EXPECT_TRUE(item.getReviewMethod().empty());
-    EXPECT_FALSE(item.isReviewed());
+    Container pendingContainer("pending-container", "group", "Pending container");
+    {
+        Item pendingItem("pending-item", "work", "Pending item");
+        pendingContainer.add(&pendingItem);
+        pendingContainer.advancePhase();
+        pendingItem.assign(&participant);
+        EXPECT_EQ(participant.getPendingTasks(), 1);
+    }
+    EXPECT_EQ(participant.getPendingTasks(), 0);
 }

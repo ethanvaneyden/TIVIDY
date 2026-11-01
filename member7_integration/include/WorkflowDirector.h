@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 #include <vector>
 #include <tuple>
@@ -30,9 +29,9 @@ class WorkflowDirector
          * @brief Build a small demo tree. Useful for tests and the smoke path.
          * @param builder The builder to drive.
          * @param rootName Name of the root container.
-         * @return The constructed tree.
+         * @return Non-owning pointer to the constructed, registry-owned tree.
         */
-        std::unique_ptr<Root> buildDemoTree(WorkflowBuilder& builder, const std::string& rootName);
+        virtual Root* buildDemoTree(WorkflowBuilder& builder, const std::string& rootName) = 0;
 
         /**
          * @brief Build a tree from an explicit specification.
@@ -41,11 +40,11 @@ class WorkflowDirector
          * @param rootName       Name of the root.
          * @param containers     Pairs of (containerId, name).
          * @param items          Triples of (containerId, itemId, name).
-         * @return The constructed tree.
+         * @return Non-owning pointer to the constructed, registry-owned tree.
         */
-        std::unique_ptr<Root> buildTree(
+        virtual Root* buildTree(
             WorkflowBuilder& builder,
             const std::string& rootName,
             const std::vector<std::pair<std::string, std::string>>& containers,
-            const std::vector<std::tuple<std::string, std::string, std::string>>& items);
+            const std::vector<std::tuple<std::string, std::string, std::string>>& items) = 0;
 };
