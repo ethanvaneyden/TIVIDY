@@ -19,6 +19,7 @@
 #include "AssignmentMarkingDirector.h"
 #include "EducationSeed.h"
 #include "EducationPolicies.h"
+#include "EducationWorkflowFactory.h"
 
 #include "WorkloadStrategy.h"
 #include "RoundRobinStrategy.h"
@@ -99,15 +100,16 @@ std::string EducationFacade::start(const std::string& name)
     }
 
     /* 3. Create the education mediator. */
-    std::unique_ptr<AssignmentStrategy> strategy(new WorkloadStrategy());
+    EducationWorkflowFactory factory;
+    std::unique_ptr<AssignmentStrategy> strategy = factory.createStrategy();
     std::unique_ptr<WorkflowMediator> coordinator(
         new education::AssignmentMarkingCoordinator(*participants, std::move(strategy)));
 
     /* 4. Create a builder to hand to the instance (a second one - the
      *    instance's builder is used for later addContainer/addItem calls
      *    during runtime, not tree construction). */
-    std::unique_ptr<WorkflowBuilder> runtimeBuilder(
-        new education::AssignmentMarkingBuilder(*registry));
+    std::unique_ptr<WorkflowBuilder> runtimeBuilder = factory.createBuilder();
+    runtimeBuilder->setRegistry(*registry);
 
     /* 5. Assemble the instance. */
     std::unique_ptr<WorkflowInstance> instance(new WorkflowInstance(

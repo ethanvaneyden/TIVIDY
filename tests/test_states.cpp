@@ -429,6 +429,7 @@ TEST_F(ItemReviewTest, ReplacingABatchReviewRecordsTheLatestReviewer)
 }
 
 #include "WorkflowMediator.h"
+#include "WorkCommand.h"
 #include <functional>
 #include <vector>
 
@@ -480,6 +481,11 @@ namespace
         std::vector<std::string> getHistoryAsStrings() const override { return events; }
         void setAssignmentStrategy(std::unique_ptr<AssignmentStrategy>) override {}
         std::string getAssignmentStrategyName() const override { return "Test"; }
+        void executeCommand(std::unique_ptr<WorkCommand> command) override
+        {
+            if (command)
+                command->execute();
+        }
     };
 
     class LifecycleNotificationTest : public ::testing::Test

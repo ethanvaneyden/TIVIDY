@@ -4,6 +4,8 @@
 
 #include <string>
 
+class WorkRegistry;
+
 /**
  * @brief Scenario-neutral factory interface for workflow components.
  *
@@ -17,6 +19,9 @@ public:
      * @brief Destroys the polymorphic builder.
      */
     virtual ~WorkflowBuilder() = default;
+
+    /** @brief Set the registry that owns components created by this builder. */
+    virtual void setRegistry(WorkRegistry& registry) = 0;
 
     /** @brief Build and register the workflow root. */
     virtual void buildRoot(const std::string& rootName) = 0;

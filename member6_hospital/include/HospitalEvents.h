@@ -21,6 +21,7 @@ const char* const APPROVAL_RESOLVED = "hospital.approval.resolved";
 const char* const BATCH_PROCESSED = "hospital.batch.processed";
 const char* const BATCH_IGNORED = "hospital.batch.ignored";
 const char* const WARD_PHASE_ADVANCED = "hospital.ward.phase";
+const char* const WARD_PUBLISHED = "WardPublished";
 const char* const WARD_REJECTED = "hospital.ward.rejected";
 
 }
