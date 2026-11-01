@@ -1,57 +1,145 @@
 import { useState } from 'react';
-import { Alert, Button } from 'react-bootstrap';
+import { Button, Alert, Spinner } from 'react-bootstrap';
 import AddPatientModal from './AddPatientModal';
 import AddWardModal from './AddWardModal';
 import TreatmentDetailsModal from './TreatmentDetailsModal';
 import WardCard from './WardCard';
-import CompleteItemModal from '../../components/modals/CompleteItemModal';
-import OverrideItemModal from '../../components/modals/OverrideItemModal';
 import HistoryPanel from '../../components/shared/HistoryPanel';
-import { LoadFailure, Loading } from '../../components/shared/LoadState';
+import FilteredItemList from '../../components/shared/FilteredItemList';
+import StateFilter from '../../components/shared/StateFilter';
+// import { getMockHospital } from '../../data/mockData';
 import { useHospital } from '../../hooks/useHospital';
-import type { Treatment } from '../../types/types';
+import { useFilteredItems } from '../../hooks/useFilteredItems';
+import type { Treatment, TreatmentContainer, WorkflowItemState } from '../../types/types';
 import '../../styles/ScenarioWorkflowContent.css';
 import '../../styles/ContainerCard.css';
-import '../../styles/Shared.css';
+import StrategySelector from '../../components/shared/StrategySelector';
+import type { FilteredItem } from '../../api/workflow';
 
 interface HealthcareWorkflowProps {
     instanceId: string;
 }
 
-const SEVERITY_HINT =
-    '1-3 is approved by a triage nurse, 4-6 by an admitting doctor and 7-10 by the chief of medicine. ' +
-    'A severity of 0 cannot be approved and is rejected at review.';
+function toTreatment(item: FilteredItem): Treatment {
+    return {
+        id: item.id,
+        name: item.name,
+        age: item.age ?? 0,
+        diagnosis: item.diagnosis ?? '',
+        state: normalizeState(item.state),
+        assignee: item.assignee ?? '',
+        reviewer: item.reviewer ?? '',
+        severity: item.result,
+        bed: item.bed,
+        discharged: item.discharged,
+    };
+}
+
+function normalizeState(name: string): WorkflowItemState {
+    switch (name.toLowerCase()) {
+        case 'assigned': return 'assigned';
+        case 'inprogress': return 'inprogress';
+        case 'completed': return 'completed';
+        case 'rejected': return 'rejected';
+        default: return 'available';
+    }
+}
+
+function capitalize(s: string): string {
+    if (s === 'inprogress') return 'InProgress';
+    return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// function HealthcareWorkflow({ instanceId }: HealthcareWorkflowProps) {
+//     const hospital = getMockHospital(instanceId);
+//     const [selectedTreatment, setSelectedTreatment] = useState<Treatment>();
+//     const [showAddWardModal, setShowAddWardModal] = useState(false);
+//     const [showAddPatientModal, setShowAddPatientModal] = useState(false);
+
+//     return (
+//         <div className="workflow-content healthcare-content">
+//             <header className="workflow-instance-heading">
+//                 <div>
+//                     <p className="workflow-instance-kicker">HOSPITAL</p>
+//                     <h2>{hospital.name}</h2>
+//                     <p>Wards and their treatment items.</p>
+//                 </div>
+//                 <Button className="healthcare-primary-button" onClick={() => setShowAddWardModal(true)}>
+//                     + Add ward
+//                 </Button>
+//             </header>
+
+//             <section className="ward-container-list" aria-label="Hospital wards">
+//                 {hospital.wards.map((ward: TreatmentContainer) => (
+//                     <WardCard
+//                         key={ward.id}
+//                         ward={ward}
+//                         onViewTreatment={setSelectedTreatment}
+//                         onAddPatient={() => setShowAddPatientModal(true)}
+//                     />
+//                 ))}
+//                 {hospital.wards.length === 0 && (
+//                     <div className="workflow-empty-state">
+//                         <h4>No wards yet</h4>
+//                         <p>No ward containers are available.</p>
+//                     </div>
+//                 )}
+//             </section>
+
+//             <TreatmentDetailsModal
+//                 treatment={selectedTreatment}
+//                 onHide={() => setSelectedTreatment(undefined)}
+//             />
+//             <AddWardModal
+//                 show={showAddWardModal}
+//                 onHide={() => setShowAddWardModal(false)}
+//             />
+//             <AddPatientModal
+//                 show={showAddPatientModal}
+//                 onHide={() => setShowAddPatientModal(false)}
+//             />
+//         </div>
+//     );
+// }
 
 function HealthcareWorkflow({ instanceId }: HealthcareWorkflowProps) {
-    const hc = useHospital(instanceId);
+    const {
+        hospital,
+        history,
+        loading,
+        busy,
+        loadError,
+        actionError,
+        clearActionError,
+        strategy,
+        changeStrategy,
+        addWard,
+        addPatient,
+        startTreatment,
+        completeTreatment,
+        approveWard,
+        overrideTreatment,
+    } = useHospital(instanceId);
+
     const [selectedTreatment, setSelectedTreatment] = useState<Treatment>();
-    const [completing, setCompleting] = useState<Treatment>();
-    const [overriding, setOverriding] = useState<Treatment>();
+    const [activeWardId, setActiveWardId] = useState<string>();
     const [showAddWardModal, setShowAddWardModal] = useState(false);
-    const [addPatientWardId, setAddPatientWardId] = useState<string>();
+    const [showAddPatientModal, setShowAddPatientModal] = useState(false);
+    const [stateFilter, setStateFilter] = useState<WorkflowItemState | ''>('');
 
-    if (hc.loading && !hc.hospital) {
-        return (
-            <div className="workflow-content">
-                <Loading label="Loading hospital..." />
-            </div>
-        );
+    const backendState = stateFilter === '' ? '' : capitalize(stateFilter);
+    const { items: filteredItems, loading: filterLoading, error: filterError } =
+        useFilteredItems('healthcare', instanceId, backendState);
+
+    if (loading) {
+        return <div className="text-center py-5"><Spinner animation="border" /></div>;
     }
-
-    if (!hc.hospital) {
-        return (
-            <div className="workflow-content">
-                <LoadFailure
-                    title="Could not load this hospital"
-                    message={hc.loadError}
-                    onRetry={() => void hc.refresh()}
-                />
-            </div>
-        );
+    if (loadError) {
+        return <Alert variant="danger">{loadError}</Alert>;
     }
-
-    const hospital = hc.hospital;
-    const addPatientWard = hospital.wards.find((ward) => ward.id === addPatientWardId);
+    if (!hospital) {
+        return <Alert variant="warning">No hospital instance data.</Alert>;
+    }
 
     return (
         <div className="workflow-content healthcare-content">
@@ -61,88 +149,95 @@ function HealthcareWorkflow({ instanceId }: HealthcareWorkflowProps) {
                     <h2>{hospital.name}</h2>
                     <p>Wards and their treatment items.</p>
                 </div>
-                <div className="workflow-header-buttons">
-                    <Button variant="outline-secondary" onClick={() => void hc.refresh()} disabled={hc.busy || hc.loading}>
-                        Refresh
-                    </Button>
-                    <Button className="healthcare-primary-button" onClick={() => setShowAddWardModal(true)} disabled={hc.busy}>
-                        + Add ward
-                    </Button>
-                </div>
+                <Button
+                    className="healthcare-primary-button"
+                    onClick={() => setShowAddWardModal(true)}
+                    disabled={busy}
+                >
+                    + Add ward
+                </Button>
             </header>
 
-            {hc.actionError && (
-                <Alert variant="danger" dismissible onClose={hc.clearActionError}>{hc.actionError}</Alert>
+            {actionError && (
+                <Alert variant="warning" dismissible onClose={clearActionError}>
+                    {actionError}
+                </Alert>
             )}
 
-            <section className="ward-container-list" aria-label="Hospital wards">
-                {hospital.wards.map((ward) => (
-                    <WardCard
-                        key={ward.id}
-                        ward={ward}
-                        busy={hc.busy}
-                        onViewTreatment={setSelectedTreatment}
-                        onAddPatient={() => setAddPatientWardId(ward.id)}
-                        onOpenWard={() => void hc.openWard(ward.id)}
-                        onApprove={() => void hc.approveWard(ward.id)}
-                        onStartTreatment={(treatment) => void hc.startTreatment(treatment.id)}
-                        onCompleteTreatment={setCompleting}
-                        onResolveTreatment={setOverriding}
-                    />
-                ))}
-                {hospital.wards.length === 0 && (
-                    <div className="workflow-empty-state">
-                        <h4>No wards yet</h4>
-                        <p>Add a ward to start admitting patients.</p>
-                    </div>
-                )}
-            </section>
+            <div className="workflow-filter-row d-flex justify-content-between align-items-end gap-3 mb-4">
+                <StateFilter value={stateFilter} onChange={setStateFilter} />
+                <StrategySelector
+                    value={strategy}
+                    disabled={busy}
+                    onChange={(name) => { void changeStrategy(name); }}
+                />
+            </div>
 
-            <HistoryPanel entries={hc.history} />
+            {stateFilter !== '' ? (
+                <section className="workflow-filtered" aria-label="Filtered patients">
+                    <div className="chooser-list-heading">
+                        <h2>Matching patients</h2>
+                        <span>
+                            {filterLoading ? 'Loading…' : `${filteredItems.length} found (from backend)`}
+                        </span>
+                    </div>
+                    {filterError ? (
+                        <Alert variant="danger">{filterError}</Alert>
+                    ) : (
+                        <FilteredItemList
+                            items={filteredItems.map(toTreatment)}
+                            emptyMessage="No patients match that state."
+                            onSelect={(item) => setSelectedTreatment(item as Treatment)}
+                        />
+                    )}
+                </section>
+            ) : (
+                <section className="ward-container-list" aria-label="Hospital wards">
+                    {hospital.wards.map((ward: TreatmentContainer) => (
+                        <WardCard
+                            key={ward.id}
+                            ward={ward}
+                            onViewTreatment={setSelectedTreatment}
+                            onAddPatient={() => {
+                                setActiveWardId(ward.id);
+                                setShowAddPatientModal(true);
+                            }}
+                            onApprove={() => approveWard(ward.id)}
+                        />
+                    ))}
+                    {hospital.wards.length === 0 && (
+                        <div className="workflow-empty-state">
+                            <h4>No wards yet</h4>
+                            <p>Create your first ward to get started.</p>
+                        </div>
+                    )}
+                </section>
+            )}
 
             <TreatmentDetailsModal
                 treatment={selectedTreatment}
                 onHide={() => setSelectedTreatment(undefined)}
+                busy={busy}
+                onStart={startTreatment}
+                onComplete={completeTreatment}
+                onOverride={overrideTreatment}
             />
+
+            <HistoryPanel entries={history} />
+
             <AddWardModal
                 show={showAddWardModal}
-                busy={hc.busy}
                 onHide={() => setShowAddWardModal(false)}
-                onSubmit={hc.addWard}
+                onSubmit={addWard}
             />
+
             <AddPatientModal
-                show={Boolean(addPatientWard)}
-                busy={hc.busy}
-                wardName={addPatientWard?.name}
-                onHide={() => setAddPatientWardId(undefined)}
-                onSubmit={(patient) => hc.addPatient(addPatientWardId ?? '', patient)}
-            />
-            <CompleteItemModal
-                key={completing?.id ?? 'complete-none'}
-                itemName={completing?.name}
-                title="Complete treatment"
-                label="Severity"
-                min={0}
-                max={10}
-                hint={SEVERITY_HINT}
-                busy={hc.busy}
-                primaryClassName="healthcare-primary-button"
-                onHide={() => setCompleting(undefined)}
-                onSubmit={(severity) => hc.completeTreatment(completing?.id ?? '', severity)}
-            />
-            <OverrideItemModal
-                key={overriding?.id ?? 'override-none'}
-                itemName={overriding?.name}
-                currentValue={overriding?.severity}
-                title="Resolve rejected treatment"
-                label="New severity"
-                min={1}
-                max={10}
-                deciderLabel="chief of medicine"
-                busy={hc.busy}
-                primaryClassName="healthcare-primary-button"
-                onHide={() => setOverriding(undefined)}
-                onSubmit={(severity, accept) => hc.overrideTreatment(overriding?.id ?? '', severity, accept)}
+                show={showAddPatientModal}
+                onHide={() => setShowAddPatientModal(false)}
+                onSubmit={async (name: string, age: number) => {
+                    if (!activeWardId) return false;
+                    return addPatient(activeWardId, { name, age, diagnosis: '' });
+                }}
             />
         </div>
     );

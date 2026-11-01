@@ -28,6 +28,8 @@ export interface HospitalController {
     completeTreatment: (itemId: string, severity: number) => Promise<boolean>;
     approveWard: (wardId: string) => Promise<boolean>;
     overrideTreatment: (itemId: string, severity: number, accept: boolean) => Promise<boolean>;
+    strategy: string;
+    changeStrategy: (name: string) => Promise<boolean>;
 }
 
 export function useHospital(instanceId: string): HospitalController {
@@ -51,5 +53,7 @@ export function useHospital(instanceId: string): HospitalController {
         approveWard: (wardId) => run(() => approveContainer('healthcare', instanceId, wardId)),
         overrideTreatment: (itemId, severity, accept) =>
             run(() => overrideItem('healthcare', instanceId, itemId, severity, accept)),
+        strategy: resource.strategy,
+        changeStrategy: resource.changeStrategy,
     };
 }
