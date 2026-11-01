@@ -2,16 +2,17 @@
 #define TIVIDY_REJECTITEMCOMMAND_H
 
 #include "WorkCommand.h"
-#include "../member1_core/include/Item.h"
+#include "Item.h"
 #include <string>
 
-class RejectItemCommand : public WorkCommand {
+class RejectItemCommand : public WorkCommand
+{
 private:
-    Item* item;
+    Item *item;
     std::string reason;
 
 public:
-    RejectItemCommand(Item* item, const std::string& reason);
+    RejectItemCommand(Item *item, const std::string &reason);
 
     void execute() override;
     std::string description() const override;

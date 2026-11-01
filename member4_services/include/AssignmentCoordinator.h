@@ -9,12 +9,12 @@
 #include "ActionHistory.h"
 #include "EventBus.h"
 
-#include "../member1_core/include/Item.h"
+#include "Item.h"
 
-#include "../member1_core/include/WorkRegistry.h"
-#include "../member1_core/include/ParticipantRegistry.h"
-#include "../member3_routing/include/AssignmentEngine.h"
-#include "../member3_routing/include/AssignmentStrategy.h"
+#include "WorkRegistry.h"
+#include "ParticipantRegistry.h"
+#include "AssignmentEngine.h"
+#include "AssignmentStrategy.h"
 
 class Item;
 class Colleague;
