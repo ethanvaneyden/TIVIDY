@@ -1,10 +1,15 @@
 import { Button, Col, Row } from 'react-bootstrap';
-import type { Submission } from '../../types/types';
+import type { Submission, WorkflowPhase } from '../../types/types';
 import '../../styles/SubmissionRow.css';
 
 interface SubmissionRowProps {
     submission: Submission;
+    phase: WorkflowPhase;
+    busy: boolean;
     onView: () => void;
+    onStart: () => void;
+    onComplete: () => void;
+    onResolve: () => void;
 }
 
 const stateLabels: Record<Submission['state'], string> = {
@@ -15,12 +20,15 @@ const stateLabels: Record<Submission['state'], string> = {
     rejected: 'Rejected',
 };
 
-function SubmissionRow({ submission, onView }: SubmissionRowProps) {
+function SubmissionRow({ submission, phase, busy, onView, onStart, onComplete, onResolve }: SubmissionRowProps) {
     const { name, state, assignee, reviewer, mark } = submission;
+    const canStart = phase === 'Active' && state === 'assigned';
+    const canComplete = phase === 'Active' && state === 'inprogress';
+    const canResolve = phase === 'Review' && state === 'rejected';
 
     return (
         <Row className={`submission-row submission-state-${state} align-items-center g-0`}>
-            <Col xs={12} md={5} className="submission-person">
+            <Col xs={12} md={4} className="submission-person">
                 <span className="submission-avatar" aria-hidden="true">{getInitials(name)}</span>
                 <span className="submission-person-copy">
                     <strong>{name}</strong>
@@ -38,10 +46,27 @@ function SubmissionRow({ submission, onView }: SubmissionRowProps) {
                 <span className="submission-reviewer-label">Reviewer</span>
                 <span>{reviewer || '—'}</span>
             </Col>
-            <Col xs={12} md={2} className="submission-action">
-                <Button type="button" variant="outline-secondary" size="sm" onClick={onView}>
-                    Details
-                </Button>
+            <Col xs={12} md={3} className="submission-action">
+                <div className="row-actions">
+                    {canStart && (
+                        <Button type="button" variant="primary" size="sm" onClick={onStart} disabled={busy}>
+                            Start
+                        </Button>
+                    )}
+                    {canComplete && (
+                        <Button type="button" variant="success" size="sm" onClick={onComplete} disabled={busy}>
+                            Complete
+                        </Button>
+                    )}
+                    {canResolve && (
+                        <Button type="button" variant="warning" size="sm" onClick={onResolve} disabled={busy}>
+                            Resolve
+                        </Button>
+                    )}
+                    <Button type="button" variant="outline-secondary" size="sm" onClick={onView}>
+                        Details
+                    </Button>
+                </div>
             </Col>
         </Row>
     );
