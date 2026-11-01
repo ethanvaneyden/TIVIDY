@@ -54,7 +54,7 @@ class AssignmentMarkingBuilder : public WorkflowBuilder
         virtual ~AssignmentMarkingBuilder();
 
         /** @brief Set the registry that will own every node built from now on. */
-        void setRegistry(WorkRegistry& workRegistry);
+        void setRegistry(WorkRegistry& workRegistry) override;
 
         /**
          * @brief Start a new module.
@@ -118,4 +118,3 @@ class AssignmentMarkingBuilder : public WorkflowBuilder
 };
 
 }
-

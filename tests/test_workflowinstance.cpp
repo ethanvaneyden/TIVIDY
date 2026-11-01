@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "Container.h"
 #include "AssignmentStrategy.h"
@@ -220,4 +222,56 @@ TEST(WorkflowInstanceTest, ReplacesCoordinatorStrategyAtRuntime)
     EXPECT_EQ(coordinatorView->openWard(*instance.getContainer("W1")), 2);
     EXPECT_EQ(instance.getItem("TRT-A")->getAssignee(), doctors.back());
     EXPECT_EQ(instance.getItem("TRT-B")->getAssignee(), doctors.back());
+
+    instance.startItem("TRT-A");
+    instance.completeItem("TRT-A", 2);
+    const std::vector<std::string> history = instance.getHistory();
+    EXPECT_NE(std::find(history.begin(), history.end(), "Started item TRT-A"), history.end());
+    EXPECT_NE(std::find(history.begin(), history.end(), "Recorded result: 2"), history.end());
+}
+
+TEST(WorkflowInstanceTest, HospitalCoordinatorWiresEventBusAndActionHistory)
+{
+    ParticipantRegistry participants;
+    hospital::HospitalSeed::seedParticipants(participants);
+    std::unique_ptr<WorkRegistry> registry(new WorkRegistry());
+    std::unique_ptr<hospital::HospitalAdmissionBuilder> builder(
+        new hospital::HospitalAdmissionBuilder(*registry));
+    hospital::HospitalAdmissionDirector(*builder).buildEmptyWard();
+    Root* root = builder->getRoot();
+
+    std::unique_ptr<hospital::HospitalAdmissionCoordinator> coordinator(
+        new hospital::HospitalAdmissionCoordinator(participants));
+    hospital::HospitalAdmissionCoordinator* coordinatorView = coordinator.get();
+    WorkflowInstance instance(
+        "hospital-events",
+        "healthcare",
+        std::move(registry),
+        root,
+        std::move(coordinator),
+        std::move(builder),
+        &participants);
+
+    instance.addItem("W1", "TRT-EVENT", "Patient Event", "P-EVENT");
+    Container* ward = instance.getContainer("W1");
+    ASSERT_NE(ward, nullptr);
+    ASSERT_EQ(coordinatorView->openWard(*ward), 1);
+
+    Item* treatment = instance.getItem("TRT-EVENT");
+    ASSERT_NE(treatment, nullptr);
+    treatment->start();
+    treatment->complete(2);
+
+    std::vector<Participant*> chiefs =
+        participants.getByRole(hospital::HospitalRoles::chiefOfMedicine());
+    ASSERT_FALSE(chiefs.empty());
+    coordinatorView->onContainerApprovalRequested(ward, chiefs.front());
+
+    const std::vector<std::string> history = instance.getHistory();
+    EXPECT_TRUE(std::any_of(history.begin(), history.end(), [](const std::string& entry) {
+        return entry.find("Billing information generated") != std::string::npos;
+    }));
+    EXPECT_TRUE(std::any_of(history.begin(), history.end(), [](const std::string& entry) {
+        return entry.find("moved to Publish") != std::string::npos;
+    }));
 }

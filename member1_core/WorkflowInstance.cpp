@@ -16,6 +16,10 @@
 #include "WorkflowBuilder.h"
 #include "AssignmentStrategy.h"
 #include "ParticipantRegistry.h"
+#include "StartItemCommand.h"
+#include "RecordResultCommand.h"
+#include "RejectItemCommand.h"
+#include "OverrideItemCommand.h"
 #include <memory>
 #include <stdexcept>
 #include <utility>
@@ -186,7 +190,7 @@ void WorkflowInstance::startItem(const std::string& itemId) {
     if (!item) throw std::runtime_error("Item not found: " + itemId);
 
     // State machine handles validity (throws if not Assigned) and notifies Mediator
-    item->start();
+    coordinator->executeCommand(std::unique_ptr<WorkCommand>(new StartItemCommand(item)));
 }
 
 void WorkflowInstance::completeItem(const std::string& itemId, int value) {
@@ -195,7 +199,8 @@ void WorkflowInstance::completeItem(const std::string& itemId, int value) {
     if (!item) throw std::runtime_error("Item not found: " + itemId);
 
     // State machine handles validity and notifies Mediator
-    item->complete(value);
+    coordinator->executeCommand(
+        std::unique_ptr<WorkCommand>(new RecordResultCommand(item, value)));
 }
 
 void WorkflowInstance::rejectItem(const std::string& itemId, const std::string& reason) {
@@ -203,7 +208,8 @@ void WorkflowInstance::rejectItem(const std::string& itemId, const std::string& 
     Item* item = dynamic_cast<Item*>(c);
     if (!item) throw std::runtime_error("Item not found: " + itemId);
 
-    item->reject(reason);
+    coordinator->executeCommand(
+        std::unique_ptr<WorkCommand>(new RejectItemCommand(item, reason)));
 }
 
 void WorkflowInstance::overrideItem(
@@ -217,7 +223,8 @@ void WorkflowInstance::overrideItem(
     if (!item) throw std::runtime_error("Item not found: " + itemId);
 
     // The Operator (Lecturer/Chief) overrides a Rejected item
-    item->resolveReview(operatorParticipant, newValue, reason);
+    coordinator->executeCommand(std::unique_ptr<WorkCommand>(
+        new OverrideItemCommand(item, operatorParticipant, newValue, reason)));
 }
 
 void WorkflowInstance::approveContainer(const std::string& containerId, Participant* operatorParticipant) {

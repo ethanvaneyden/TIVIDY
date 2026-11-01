@@ -7,7 +7,15 @@
 #include "ParticipantRegistry.h"
 #include "Submission.h"
 #include "AssignmentEngine.h"
+#include "ApproveContainerCommand.h"
+#include "AdvancePhaseCommand.h"
+#include "AssignItemCommand.h"
+#include "EducationObserver.h"
+#include "OverrideItemCommand.h"
+#include "RejectItemCommand.h"
 #include "RoundRobinStrategy.h"
+#include "SystemLogCommand.h"
+#include "WorkflowEvent.h"
 
 #include <utility>
 
@@ -38,6 +46,7 @@ namespace education
         }
         engine.reset(new AssignmentEngine(std::move(strategy)));
         participants = &registry;
+        eventBus.subscribe(std::unique_ptr<Observer>(new EducationObserver(&history)));
     }
 
     AssignmentMarkingCoordinator::~AssignmentMarkingCoordinator() {}
@@ -53,9 +62,20 @@ namespace education
         return engine->strategyName();
     }
 
+    void AssignmentMarkingCoordinator::executeCommand(
+        std::unique_ptr<WorkCommand> command)
+    {
+        history.execute(std::move(command));
+    }
+
     void AssignmentMarkingCoordinator::log(const std::string &line)
     {
-        history.push_back(line);
+        history.execute(std::unique_ptr<WorkCommand>(new SystemLogCommand(line)));
+
+        WorkflowEvent event;
+        event.type = "education.workflow.action";
+        event.payload = line;
+        eventBus.publish(event);
     }
 
     void AssignmentMarkingCoordinator::assignMarkers(const Container &assignment)
@@ -75,7 +95,8 @@ namespace education
             Participant *marker = engine->assign(*submission, markers);
             if (marker != nullptr)
             {
-                submission->assign(marker);
+                executeCommand(std::unique_ptr<WorkCommand>(
+                    new AssignItemCommand(submission, marker)));
             }
             else if (submission->getMediator() == nullptr)
             {
@@ -90,7 +111,9 @@ namespace education
             assignment->getPhaseName() == REVIEW_PHASE &&
             assignment->isReadyToPublish())
         {
-            assignment->advancePhase();
+            executeCommand(
+                std::unique_ptr<WorkCommand>(new ApproveContainerCommand(assignment)));
+            onPhaseAdvanced(assignment);
         }
     }
 
@@ -125,7 +148,8 @@ namespace education
             assignment->getPhaseName() == ACTIVE_PHASE &&
             assignment->isCompleted())
         {
-            assignment->advancePhase();
+            executeCommand(std::unique_ptr<WorkCommand>(new AdvancePhaseCommand(assignment)));
+            onPhaseAdvanced(assignment);
         }
     }
 
@@ -157,6 +181,15 @@ namespace education
             return;
         }
         log("Assignment " + container->getId() + " moved to " + container->getPhaseName());
+
+        if (container->getPhaseName() == "Publish")
+        {
+            WorkflowEvent event;
+            event.type = "ResultsPublished";
+            event.recipientId = container->getId();
+            event.payload = "Results published for " + container->getId();
+            eventBus.publish(event);
+        }
 
         if (container->getPhaseName() == ACTIVE_PHASE)
         {
@@ -216,7 +249,7 @@ namespace education
 
     std::vector<std::string> AssignmentMarkingCoordinator::getHistoryAsStrings() const
     {
-        return history;
+        return history.getHistoryAsStrings();
     }
 
     // Education operations
@@ -228,8 +261,8 @@ namespace education
             throw InvalidTransition("An assignment can only be opened from the Intake phase");
         }
 
-        assignment.advancePhase();
-        assignMarkers(assignment);
+        executeCommand(std::unique_ptr<WorkCommand>(new AdvancePhaseCommand(&assignment)));
+        onPhaseAdvanced(&assignment);
 
         int assigned = 0;
         const std::vector<Component *> children = assignment.getChildren();
@@ -297,8 +330,9 @@ namespace education
                 }
                 else
                 {
-                    submission->reject("Mark " + std::to_string(mark) +
-                                       " cannot be auto-approved");
+                    executeCommand(std::unique_ptr<WorkCommand>(new RejectItemCommand(
+                        submission, "Mark " + std::to_string(mark) +
+                                        " cannot be auto-approved")));
                     result.rejectedIds.push_back(id);
                     onApprovalResolved(submission, false);
                 }
@@ -330,7 +364,8 @@ namespace education
             return false;
         }
 
-        item.resolveReview(lecturer, finalMark, "Lecturer override");
+        executeCommand(std::unique_ptr<WorkCommand>(new OverrideItemCommand(
+            &item, lecturer, finalMark, "Lecturer override")));
         item.setMark(finalMark);
 
         publishIfReady(dynamic_cast<Container *>(item.getParent()));

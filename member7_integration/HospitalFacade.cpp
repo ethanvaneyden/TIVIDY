@@ -18,6 +18,7 @@
 #include "HospitalAdmissionCoordinator.h"      
 #include "HospitalPolicies.h"         
 #include "HospitalSeed.h"             
+#include "HospitalWorkflowFactory.h"
 
 #include "WorkflowMediator.h"
 #include "AssignmentStrategy.h"
@@ -103,13 +104,14 @@ std::string HospitalFacade::start(const std::string& name)
     }
 
     /* 3. Create the hospital mediator.*/
-    std::unique_ptr<AssignmentStrategy> strategy(new WorkloadStrategy());
+    HospitalWorkflowFactory factory;
+    std::unique_ptr<AssignmentStrategy> strategy = factory.createStrategy();
     std::unique_ptr<WorkflowMediator> coordinator(
         new hospital::HospitalAdmissionCoordinator(*participants, std::move(strategy)));
 
     /* 4. Create a runtime builder (for addContainer/addItem during execution).*/
-    std::unique_ptr<WorkflowBuilder> runtimeBuilder(
-        new hospital::HospitalAdmissionBuilder(*registry));
+    std::unique_ptr<WorkflowBuilder> runtimeBuilder = factory.createBuilder();
+    runtimeBuilder->setRegistry(*registry);
 
     /* 5. Assemble the instance.*/
     std::unique_ptr<WorkflowInstance> instance(new WorkflowInstance(
