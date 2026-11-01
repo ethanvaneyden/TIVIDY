@@ -8,7 +8,6 @@
 
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include "AssignmentMarkingBuilder.h"
 #include "AssignmentMarkingCoordinator.h"
 #include "AssignmentMarkingDirector.h"
@@ -27,6 +26,7 @@
 #include "WorkflowBuilder.h"
 #include "WorkflowDirector.h"
 
+#include <algorithm>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -131,6 +131,7 @@ namespace
                 calls.push_back("item:" + itemId);
             }
             virtual Root* getRoot() const { return nullptr; }
+            virtual void setRegistry(WorkRegistry&) {}
     };
 
     std::vector<std::string> childIds(Component* parent)
@@ -679,6 +680,81 @@ TEST_F(AssignmentFlowTest, HistoryRecordsTheWholeFlow)
     EXPECT_TRUE(sawBatch);
 }
 
+namespace
+{
+    bool historyHas(const std::vector<std::string>& history, const std::string& text)
+    {
+        for (unsigned i = 0; i < history.size(); ++i)
+        {
+            if (history[i].find(text) != std::string::npos) return true;
+        }
+        return false;
+    }
+}
+
+TEST_F(AssignmentFlowTest, PublishingTriggersTheEducationObserver)
+{
+    markAll();
+    approveBatch();
+    coordinator->resolveRejected(*subG, true, 0, lecturer);
+
+    EXPECT_EQ("Publish", assignment->getPhaseName());
+    EXPECT_TRUE(historyHas(coordinator->getHistoryAsStrings(), "Marks released for all students"));
+}
+
+TEST_F(AssignmentFlowTest, ObserverStaysQuietBeforePublish)
+{
+    markAll();
+    approveBatch();
+
+    EXPECT_FALSE(historyHas(coordinator->getHistoryAsStrings(), "Marks released for all students"));
+}
+
+TEST_F(AssignmentFlowTest, ObserverFiresExactlyOnce)
+{
+    markAll();
+    approveBatch();
+    coordinator->resolveRejected(*subG, true, 0, lecturer);
+
+    int count = 0;
+    const std::vector<std::string> history = coordinator->getHistoryAsStrings();
+    for (unsigned i = 0; i < history.size(); ++i)
+    {
+        if (history[i].find("Marks released") != std::string::npos) ++count;
+    }
+    EXPECT_EQ(1, count);
+}
+
+TEST_F(AssignmentFlowTest, ANotificationFromTheEngineDoesNotRepeatThePublishEvent)
+{
+    markAll();
+    approveBatch();
+    coordinator->resolveRejected(*subG, true, 0, lecturer);
+
+    coordinator->onPhaseAdvanced(assignment); // same phase again
+
+    int count = 0;
+    const std::vector<std::string> history = coordinator->getHistoryAsStrings();
+    for (unsigned i = 0; i < history.size(); ++i)
+    {
+        if (history[i].find("Marks released") != std::string::npos) ++count;
+    }
+    EXPECT_EQ(1, count);
+}
+
+TEST_F(AssignmentFlowTest, HistoryRecordsTheCommandsThatRan)
+{
+    markAll();
+    approveBatch();
+    coordinator->resolveRejected(*subG, false, 52, lecturer);
+
+    const std::vector<std::string> history = coordinator->getHistoryAsStrings();
+    EXPECT_TRUE(historyHas(history, "Assigned SUB-A to"));
+    EXPECT_TRUE(historyHas(history, "Advanced container to the next phase"));
+    EXPECT_TRUE(historyHas(history, "Item rejected. Reason: Mark 35"));
+    EXPECT_TRUE(historyHas(history, "Reason: Lecturer override"));
+}
+
 // No TAs available
 
 TEST(AssignmentMarkingCoordinatorNoMarkersTest, SubmissionsStayAvailableAndTheFailureIsLogged)
@@ -770,6 +846,55 @@ TEST_F(EducationInstanceTest, AddItemWorksForAnAssignmentThatIsNotTheLastBuilt)
               instance->getItem("SUB-NEW")->getParent()->getId());
 }
 
+TEST_F(EducationInstanceTest, AddItemToAnUnknownParentChangesNothing)
+{
+    const size_t before = instance->getItems().size();
+
+    EXPECT_THROW(instance->addItem("NOPE", "SUB-NEW", "Student New", "u2001"),
+                 std::runtime_error);
+
+    EXPECT_EQ(before, instance->getItems().size());
+    EXPECT_EQ(nullptr, instance->getItem("SUB-NEW"));
+}
+
+TEST_F(EducationInstanceTest, AddContainerAttachesAnAssignmentToTheModule)
+{
+    Container* added = instance->addContainer("A2", "Assignment 2");
+
+    ASSERT_NE(nullptr, added);
+    EXPECT_EQ(instance->getRoot(), added->getParent());
+    EXPECT_EQ("Intake", added->getPhaseName());
+}
+
+TEST_F(EducationInstanceTest, DuplicateItemIdIsRefusedAndTheFirstStaysPut)
+{
+    instance->addItem(AssignmentMarkingDirector::assignmentId(), "SUB-NEW", "Student New", "u2001");
+    const size_t before = instance->getItems().size();
+
+    EXPECT_ANY_THROW(instance->addItem(AssignmentMarkingDirector::assignmentId(),
+                                       "SUB-NEW", "Student Again", "u2002"));
+
+    EXPECT_EQ(before, instance->getItems().size());
+}
+
+// ---- strategy can be changed at runtime ------------------------------------
+
+TEST(AssignmentMarkingCoordinatorStrategyTest, StrategyCanBeChangedAndNullIsRefused)
+{
+    ParticipantRegistry participants;
+    AssignmentMarkingCoordinator coordinator(participants);
+    EXPECT_EQ("RoundRobin", coordinator.getAssignmentStrategyName());
+
+    coordinator.setAssignmentStrategy(std::unique_ptr<AssignmentStrategy>(new WorkloadStrategy()));
+    EXPECT_EQ("Workload", coordinator.getAssignmentStrategyName());
+
+    EXPECT_THROW(coordinator.setAssignmentStrategy(std::unique_ptr<AssignmentStrategy>()),
+                 std::invalid_argument);
+    EXPECT_EQ("Workload", coordinator.getAssignmentStrategyName());
+}
+
+// ---- publication through the event bus ----------------------------------------
+
 TEST(AssignmentMarkingEventIntegrationTest, PublicationIsAuditedAndObserved)
 {
     ParticipantRegistry participants;
@@ -804,35 +929,4 @@ TEST(AssignmentMarkingEventIntegrationTest, PublicationIsAuditedAndObserved)
     EXPECT_TRUE(std::any_of(history.begin(), history.end(), [](const std::string& entry) {
         return entry.find("moved to Publish") != std::string::npos;
     }));
-}
-
-TEST_F(EducationInstanceTest, AddItemToAnUnknownParentChangesNothing)
-{
-    const size_t before = instance->getItems().size();
-
-    EXPECT_THROW(instance->addItem("NOPE", "SUB-NEW", "Student New", "u2001"),
-                 std::runtime_error);
-
-    EXPECT_EQ(before, instance->getItems().size());
-    EXPECT_EQ(nullptr, instance->getItem("SUB-NEW"));
-}
-
-TEST_F(EducationInstanceTest, AddContainerAttachesAnAssignmentToTheModule)
-{
-    Container* added = instance->addContainer("A2", "Assignment 2");
-
-    ASSERT_NE(nullptr, added);
-    EXPECT_EQ(instance->getRoot(), added->getParent());
-    EXPECT_EQ("Intake", added->getPhaseName());
-}
-
-TEST_F(EducationInstanceTest, DuplicateItemIdIsRefusedAndTheFirstStaysPut)
-{
-    instance->addItem(AssignmentMarkingDirector::assignmentId(), "SUB-NEW", "Student New", "u2001");
-    const size_t before = instance->getItems().size();
-
-    EXPECT_ANY_THROW(instance->addItem(AssignmentMarkingDirector::assignmentId(),
-                                       "SUB-NEW", "Student Again", "u2002"));
-
-    EXPECT_EQ(before, instance->getItems().size());
 }
