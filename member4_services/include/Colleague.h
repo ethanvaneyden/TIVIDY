@@ -5,13 +5,15 @@
 
 class WorkflowMediator;
 
-class Colleague {
+class Colleague
+{
 protected:
-    WorkflowMediator* mediator = nullptr;
+    WorkflowMediator *mediator = nullptr;
+
 public:
     virtual ~Colleague() = default;
-    void setMediator(WorkflowMediator* mediator);
-    virtual void notify(const std::string& event) = 0;
+    void setMediator(WorkflowMediator *mediator);
+    virtual void notify(const std::string &event) = 0;
 };
 
 #endif
