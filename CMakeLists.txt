@@ -124,6 +124,8 @@ add_executable(tividy_tests
     tests/test_assignment.cpp
     tests/test_commands.cpp
     tests/test_education.cpp
+    tests/test_education_chain.cpp
+    tests/test_education_flow.cpp
     tests/test_events.cpp
     tests/test_history.cpp
     tests/test_hospital.cpp
