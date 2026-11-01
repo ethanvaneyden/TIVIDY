@@ -2,10 +2,12 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 class Item;
 class Container;
 class Participant;
+class AssignmentStrategy;
 
 class WorkflowMediator
 {
@@ -68,4 +70,10 @@ public:
     // Utility
     virtual std::vector<std::string>
     getHistoryAsStrings() const = 0;
+
+    virtual void setAssignmentStrategy(
+        std::unique_ptr<AssignmentStrategy> strategy
+    ) = 0;
+
+    virtual std::string getAssignmentStrategyName() const = 0;
 };

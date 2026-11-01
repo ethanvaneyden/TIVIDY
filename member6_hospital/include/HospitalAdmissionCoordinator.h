@@ -80,6 +80,9 @@ class HospitalAdmissionCoordinator : public WorkflowMediator
 
         // Utility
         virtual std::vector<std::string> getHistoryAsStrings() const;
+        virtual void setAssignmentStrategy(
+            std::unique_ptr<AssignmentStrategy> strategy) override;
+        virtual std::string getAssignmentStrategyName() const override;
 
         // Hospital operations
 

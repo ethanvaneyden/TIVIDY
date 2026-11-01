@@ -93,7 +93,8 @@ public:
 
     void setAssignmentStrategy(
         std::unique_ptr<AssignmentStrategy> strategy
-    );
+    ) override;
+    std::string getAssignmentStrategyName() const override;
 
     std::vector<std::string> getHistoryAsStrings() const override;
 

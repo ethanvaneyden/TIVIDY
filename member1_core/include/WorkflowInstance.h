@@ -13,12 +13,14 @@ class AssignmentStrategy;
 class WorkflowBuilder;
 class ParticipantRegistry;
 class Participant;
+class AssignmentStrategy;
 
 /**
  * @brief Represents a single, independent running workflow instance.
  *
- * Owns the WorkRegistry (the tree), the Coordinator (Mediator),
- * the Strategy, and the Builder. Guarantees instance isolation.
+ * Owns the WorkRegistry (the tree), the Coordinator (Mediator), and the
+ * Builder. The coordinator's assignment engine owns the active strategy.
+ * Guarantees instance isolation.
  */
 class WorkflowInstance {
 private:
@@ -28,7 +30,6 @@ private:
     // --- Owned Components ---
     std::unique_ptr<WorkRegistry> registry;
     std::unique_ptr<WorkflowMediator> coordinator;
-    std::unique_ptr<AssignmentStrategy> strategy;
     std::unique_ptr<WorkflowBuilder> builder;
 
     // --- Non-Owning References ---
@@ -43,7 +44,6 @@ public:
      * @param registry Registry owning the complete component tree.
      * @param root Non-owning pointer to the root held by registry.
      * @param coordinator Owned typed workflow mediator.
-     * @param strategy Owned assignment strategy.
      * @param builder Owned scenario-specific builder.
      * @param participants Non-owning pointer to the facade-owned participant registry.
      * @throws std::invalid_argument If required dependencies are null or root is not registered.
@@ -54,7 +54,6 @@ public:
         std::unique_ptr<WorkRegistry> registry,
         Root* root,
         std::unique_ptr<WorkflowMediator> coordinator,
-        std::unique_ptr<AssignmentStrategy> strategy,
         std::unique_ptr<WorkflowBuilder> builder,
         ParticipantRegistry* participants
     );
@@ -213,4 +212,17 @@ public:
      * @throws InvalidTransition If the rejection request is invalid.
      */
     void rejectContainer(const std::string& containerId, const std::string& reason);
+
+    /**
+     * @brief Replaces the assignment strategy used by this instance's coordinator.
+     * @param strategy New strategy; ownership transfers to the coordinator.
+     * @throws std::invalid_argument If the strategy is null.
+     */
+    void setAssignmentStrategy(std::unique_ptr<AssignmentStrategy> strategy);
+
+    /**
+     * @brief Gets the name of the assignment strategy currently in use.
+     * @return Strategy name reported by the active strategy.
+     */
+    std::string getAssignmentStrategyName() const;
 };

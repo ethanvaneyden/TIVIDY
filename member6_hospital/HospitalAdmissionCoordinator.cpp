@@ -46,6 +46,17 @@ HospitalAdmissionCoordinator::HospitalAdmissionCoordinator(
 
 HospitalAdmissionCoordinator::~HospitalAdmissionCoordinator() {}
 
+void HospitalAdmissionCoordinator::setAssignmentStrategy(
+    std::unique_ptr<AssignmentStrategy> strategy)
+{
+    engine->setStrategy(std::move(strategy));
+}
+
+std::string HospitalAdmissionCoordinator::getAssignmentStrategyName() const
+{
+    return engine->strategyName();
+}
+
 void HospitalAdmissionCoordinator::log(const std::string& line)
 {
     history.push_back(line);
