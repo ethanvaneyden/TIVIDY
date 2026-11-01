@@ -369,4 +369,15 @@ namespace education
         return container.isReadyToPublish();
     }
 
+    void AssignmentMarkingCoordinator::setAssignmentStrategy(std::unique_ptr<AssignmentStrategy> strategy)
+    {
+        engine->setStrategy(std::move(strategy)); // throws on null
+        log("TA assignment strategy set to " + engine->strategyName());
+    }
+
+    std::string AssignmentMarkingCoordinator::getAssignmentStrategyName() const
+    {
+        return engine->strategyName();
+    }
+
 }

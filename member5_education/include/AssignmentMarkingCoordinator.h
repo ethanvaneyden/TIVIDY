@@ -98,6 +98,15 @@ class AssignmentMarkingCoordinator : public WorkflowMediator
         // Utility
         virtual std::vector<std::string> getHistoryAsStrings() const;
 
+        /**
+         * @brief Change how TAs are picked from now on.
+         * @throws std::invalid_argument If strategy is null.
+         */
+        virtual void setAssignmentStrategy(std::unique_ptr<AssignmentStrategy> strategy);
+
+        /** @return the name of the strategy used to pick TAs. */
+        virtual std::string getAssignmentStrategyName() const;
+
         // Education operations
 
         /**
