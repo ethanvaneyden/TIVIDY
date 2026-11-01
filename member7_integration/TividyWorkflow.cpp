@@ -137,3 +137,20 @@ CommandResult TividyWorkflow::admitPatient(const std::string& instanceId,
     // admitPatient is semantically the same as submit for the hospital facade.
     return facade->submit(instanceId, containerName);
 }
+
+CommandResult TividyWorkflow::setStrategy(const std::string& instanceId,
+                                          const std::string& strategyName)
+{
+    ScenarioFacade* facade = findFacade(instanceId);
+    if (facade == nullptr)
+    {
+        return CommandResult::NotFound;
+    }
+    return facade->setStrategy(instanceId, strategyName);
+}
+
+std::string TividyWorkflow::getStrategyName(const std::string& instanceId) const
+{
+    ScenarioFacade* facade = findFacade(instanceId);
+    return facade != nullptr ? facade->getStrategyName(instanceId) : "";
+}

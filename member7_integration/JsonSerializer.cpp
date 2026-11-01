@@ -146,3 +146,19 @@ int JsonSerializer::getInt(
         return fallback;
     return static_cast<int>(number);
 }
+
+std::string JsonSerializer::serializeItemList(const std::vector<const Item*>& items)
+{
+    Json array = Json::array();
+    for(const Item* item : items)
+    {
+        if(item == nullptr) continue;
+        Json entry = serializeItemValue(item);
+        // Add owning container id so the frontend can group results.
+        const Component* parent = item->getParent();
+        entry["containerId"] = parent != nullptr ? parent->getId() : "";
+        entry["containerName"] = parent != nullptr ? parent->getName() : "";
+        array.push_back(std::move(entry));
+    }
+    return array.dump();
+}

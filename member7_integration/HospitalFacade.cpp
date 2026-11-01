@@ -22,6 +22,8 @@
 #include "WorkflowMediator.h"
 #include "AssignmentStrategy.h"
 #include "WorkloadStrategy.h"
+#include "RoundRobinStrategy.h"
+#include "RandomStrategy.h"
 #include "WorkflowBuilder.h"
 
 #include <functional>
@@ -278,4 +280,41 @@ WorkflowInstance* HospitalFacade::findInstance(const std::string& instanceId) co
 Participant* HospitalFacade::operatorParticipant() const
 {
     return firstWithRole(participants, "Chief");
+}
+
+CommandResult HospitalFacade::setStrategy(const std::string& instanceId,
+                                           const std::string& strategyName)
+{
+    WorkflowInstance* instance = findInstance(instanceId);
+    if (instance == nullptr)
+    {
+        return CommandResult::NotFound;
+    }
+
+    std::unique_ptr<AssignmentStrategy> newStrategy;
+    if (strategyName == "Workload")
+    {
+        newStrategy = std::unique_ptr<AssignmentStrategy>(new WorkloadStrategy());
+    }
+    else if (strategyName == "RoundRobin")
+    {
+        newStrategy = std::unique_ptr<AssignmentStrategy>(new RoundRobinStrategy());
+    }
+    else if (strategyName == "Random")
+    {
+        newStrategy = std::unique_ptr<AssignmentStrategy>(new RandomStrategy());
+    }
+    else
+    {
+        return CommandResult::NotFound;
+    }
+
+    instance->setStrategy(std::move(newStrategy));
+    return CommandResult::Success;
+}
+
+std::string HospitalFacade::getStrategyName(const std::string& instanceId) const
+{
+    WorkflowInstance* instance = findInstance(instanceId);
+    return instance != nullptr ? instance->getStrategyName() : "";
 }
