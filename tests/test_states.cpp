@@ -10,56 +10,57 @@
 
 namespace
 {
-class ItemLifecycleTest : public ::testing::Test
-{
-protected:
-    // Destroy the container before the item, and the item before its worker.
-    Participant worker{"worker-1", "Alex", "Worker"};
-    Participant other{"worker-2", "Blair", "Worker"};
-    Item item{"item-1", "work", "Record a result"};
-    Container container{"container-1", "batch", "Work batch"};
-
-    void SetUp() override
+    class ItemLifecycleTest : public ::testing::Test
     {
-        container.add(&item);
-        container.advancePhase();
-    }
+    protected:
+        // Destroy the container before the item, and the item before its worker.
+        Participant worker{"worker-1", "Alex", "Worker"};
+        Participant other{"worker-2", "Blair", "Worker"};
+        Item item{"item-1", "work", "Record a result"};
+        Container container{"container-1", "batch", "Work batch"};
 
-    // A rejected action must preserve all public lifecycle data, not just throw.
-    template <typename Exception, typename Operation>
-    void expectRejected(Operation operation)
-    {
-        const std::string state = item.getStateName();
-        const std::string phase = container.getPhaseName();
-        Component* parent = item.getParent();
-        Participant* assignee = item.getAssignee();
-        Participant* reviewer = item.getReviewer();
-        const std::string reviewMethod = item.getReviewMethod();
-        const std::string reason = item.getRejectionReason();
-        const bool hasResult = item.hasResult();
-        const int result = hasResult ? item.getResult() : 0;
-        const bool completed = item.isCompleted();
-        const bool reviewed = item.isReviewed();
-        const int workerTasks = worker.getPendingTasks();
-        const int otherTasks = other.getPendingTasks();
+        void SetUp() override
+        {
+            container.add(&item);
+            container.advancePhase();
+        }
 
-        EXPECT_THROW(operation(), Exception);
+        // A rejected action must preserve all public lifecycle data, not just throw.
+        template <typename Exception, typename Operation>
+        void expectRejected(Operation operation)
+        {
+            const std::string state = item.getStateName();
+            const std::string phase = container.getPhaseName();
+            Component *parent = item.getParent();
+            Participant *assignee = item.getAssignee();
+            Participant *reviewer = item.getReviewer();
+            const std::string reviewMethod = item.getReviewMethod();
+            const std::string reason = item.getRejectionReason();
+            const bool hasResult = item.hasResult();
+            const int result = hasResult ? item.getResult() : 0;
+            const bool completed = item.isCompleted();
+            const bool reviewed = item.isReviewed();
+            const int workerTasks = worker.getPendingTasks();
+            const int otherTasks = other.getPendingTasks();
 
-        EXPECT_EQ(item.getStateName(), state);
-        EXPECT_EQ(container.getPhaseName(), phase);
-        EXPECT_EQ(item.getParent(), parent);
-        EXPECT_EQ(item.getAssignee(), assignee);
-        EXPECT_EQ(item.getReviewer(), reviewer);
-        EXPECT_EQ(item.getReviewMethod(), reviewMethod);
-        EXPECT_EQ(item.getRejectionReason(), reason);
-        EXPECT_EQ(item.hasResult(), hasResult);
-        if (hasResult && item.hasResult()) EXPECT_EQ(item.getResult(), result);
-        EXPECT_EQ(item.isCompleted(), completed);
-        EXPECT_EQ(item.isReviewed(), reviewed);
-        EXPECT_EQ(worker.getPendingTasks(), workerTasks);
-        EXPECT_EQ(other.getPendingTasks(), otherTasks);
-    }
-};
+            EXPECT_THROW(operation(), Exception);
+
+            EXPECT_EQ(item.getStateName(), state);
+            EXPECT_EQ(container.getPhaseName(), phase);
+            EXPECT_EQ(item.getParent(), parent);
+            EXPECT_EQ(item.getAssignee(), assignee);
+            EXPECT_EQ(item.getReviewer(), reviewer);
+            EXPECT_EQ(item.getReviewMethod(), reviewMethod);
+            EXPECT_EQ(item.getRejectionReason(), reason);
+            EXPECT_EQ(item.hasResult(), hasResult);
+            if (hasResult && item.hasResult())
+                EXPECT_EQ(item.getResult(), result);
+            EXPECT_EQ(item.isCompleted(), completed);
+            EXPECT_EQ(item.isReviewed(), reviewed);
+            EXPECT_EQ(worker.getPendingTasks(), workerTasks);
+            EXPECT_EQ(other.getPendingTasks(), otherTasks);
+        }
+    };
 }
 
 TEST_F(ItemLifecycleTest, NewItemIsAvailableWithoutExecutionOrReviewData)
@@ -122,17 +123,22 @@ TEST_F(ItemLifecycleTest, CompletingWorkRecordsResultWithoutApprovingIt)
 
 TEST_F(ItemLifecycleTest, AvailableItemRejectsStartingOrCompletingWork)
 {
-    expectRejected<std::logic_error>([&] { item.start(); });
-    expectRejected<InvalidTransition>([&] { item.complete(99); });
+    expectRejected<std::logic_error>([&]
+                                     { item.start(); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.complete(99); });
 }
 
 TEST_F(ItemLifecycleTest, AssignedItemRejectsCompletionAndReassignment)
 {
     item.assign(&worker);
 
-    expectRejected<InvalidTransition>([&] { item.complete(99); });
-    expectRejected<InvalidTransition>([&] { item.assign(&other); });
-    expectRejected<InvalidTransition>([&] { item.assign(&worker); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.complete(99); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.assign(&other); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.assign(&worker); });
 }
 
 TEST_F(ItemLifecycleTest, InProgressItemRejectsRestartAndReassignment)
@@ -140,9 +146,12 @@ TEST_F(ItemLifecycleTest, InProgressItemRejectsRestartAndReassignment)
     item.assign(&worker);
     item.start();
 
-    expectRejected<InvalidTransition>([&] { item.start(); });
-    expectRejected<InvalidTransition>([&] { item.assign(&other); });
-    expectRejected<InvalidTransition>([&] { item.assign(&worker); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.start(); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.assign(&other); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.assign(&worker); });
 }
 
 TEST_F(ItemLifecycleTest, CompletedItemRejectsWorkerChanges)
@@ -151,9 +160,12 @@ TEST_F(ItemLifecycleTest, CompletedItemRejectsWorkerChanges)
     item.start();
     item.complete(72);
 
-    expectRejected<InvalidTransition>([&] { item.complete(99); });
-    expectRejected<InvalidTransition>([&] { item.start(); });
-    expectRejected<InvalidTransition>([&] { item.assign(&other); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.complete(99); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.start(); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.assign(&other); });
 }
 
 TEST_F(ItemLifecycleTest, RejectedItemRejectsWorkerActionsAndRepeatedRejection)
@@ -164,21 +176,28 @@ TEST_F(ItemLifecycleTest, RejectedItemRejectsWorkerActionsAndRepeatedRejection)
     container.advancePhase();
     item.reject("Personal review required");
 
-    expectRejected<InvalidTransition>([&] { item.assign(&other); });
-    expectRejected<InvalidTransition>([&] { item.start(); });
-    expectRejected<InvalidTransition>([&] { item.complete(99); });
-    expectRejected<InvalidTransition>([&] { item.reject("Replacement reason"); });
-    expectRejected<InvalidTransition>([&] { item.recordReview(&other, "Batch"); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.assign(&other); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.start(); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.complete(99); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.reject("Replacement reason"); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.recordReview(&other, "Batch"); });
 }
 
 TEST_F(ItemLifecycleTest, NullAssigneeDoesNotChangeAvailableItem)
 {
-    expectRejected<std::invalid_argument>([&] { item.assign(nullptr); });
+    expectRejected<std::invalid_argument>([&]
+                                          { item.assign(nullptr); });
 }
 
 TEST_F(ItemLifecycleTest, MissingResultCannotBeRead)
 {
-    expectRejected<std::logic_error>([&] { item.getResult(); });
+    expectRejected<std::logic_error>([&]
+                                     { item.getResult(); });
 }
 
 TEST_F(ItemLifecycleTest, EmptyRejectionReasonDoesNotChangeCompletedResult)
@@ -188,7 +207,8 @@ TEST_F(ItemLifecycleTest, EmptyRejectionReasonDoesNotChangeCompletedResult)
     item.complete(72);
     container.advancePhase();
 
-    expectRejected<std::invalid_argument>([&] { item.reject(""); });
+    expectRejected<std::invalid_argument>([&]
+                                          { item.reject(""); });
 }
 
 TEST_F(ItemLifecycleTest, NullReviewerDoesNotApproveCompletedItem)
@@ -198,7 +218,8 @@ TEST_F(ItemLifecycleTest, NullReviewerDoesNotApproveCompletedItem)
     item.complete(72);
     container.advancePhase();
 
-    expectRejected<std::invalid_argument>([&] { item.recordReview(nullptr, "Batch"); });
+    expectRejected<std::invalid_argument>([&]
+                                          { item.recordReview(nullptr, "Batch"); });
 }
 
 TEST_F(ItemLifecycleTest, EmptyReviewMethodDoesNotReplaceExistingReview)
@@ -209,7 +230,8 @@ TEST_F(ItemLifecycleTest, EmptyReviewMethodDoesNotReplaceExistingReview)
     container.advancePhase();
     item.recordReview(&other, "Batch");
 
-    expectRejected<std::invalid_argument>([&] { item.recordReview(&worker, ""); });
+    expectRejected<std::invalid_argument>([&]
+                                          { item.recordReview(&worker, ""); });
 }
 
 TEST_F(ItemLifecycleTest, NullReviewerCannotResolveRejectedResult)
@@ -220,7 +242,8 @@ TEST_F(ItemLifecycleTest, NullReviewerCannotResolveRejectedResult)
     container.advancePhase();
     item.reject("Personal review required");
 
-    expectRejected<std::invalid_argument>([&] { item.resolveReview(nullptr, 99); });
+    expectRejected<std::invalid_argument>([&]
+                                          { item.resolveReview(nullptr, 99); });
 }
 
 TEST_F(ItemLifecycleTest, PersonalResolutionRequiresRejectedState)
@@ -231,7 +254,8 @@ TEST_F(ItemLifecycleTest, PersonalResolutionRequiresRejectedState)
     container.advancePhase();
     item.recordReview(&other, "Batch");
 
-    expectRejected<InvalidTransition>([&] { item.resolveReview(&worker, 99); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.resolveReview(&worker, 99); });
 }
 
 TEST_F(ItemLifecycleTest, ReviewActionsCannotRunDuringActive)
@@ -240,8 +264,10 @@ TEST_F(ItemLifecycleTest, ReviewActionsCannotRunDuringActive)
     item.start();
     item.complete(72);
 
-    expectRejected<InvalidTransition>([&] { item.reject("Personal review required"); });
-    expectRejected<InvalidTransition>([&] { item.recordReview(&other, "Batch"); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.reject("Personal review required"); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.recordReview(&other, "Batch"); });
 }
 
 TEST_F(ItemLifecycleTest, PublishedItemRejectsReviewChanges)
@@ -253,25 +279,28 @@ TEST_F(ItemLifecycleTest, PublishedItemRejectsReviewChanges)
     item.recordReview(&other, "Batch");
     container.advancePhase();
 
-    expectRejected<InvalidTransition>([&] { item.reject("Replacement reason"); });
-    expectRejected<InvalidTransition>([&] { item.recordReview(&worker, "Personal"); });
-    expectRejected<InvalidTransition>([&] { item.resolveReview(&worker, 99); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.reject("Replacement reason"); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.recordReview(&worker, "Personal"); });
+    expectRejected<InvalidTransition>([&]
+                                      { item.resolveReview(&worker, 99); });
 }
 
 namespace
 {
-class ItemReviewTest : public ItemLifecycleTest
-{
-protected:
-    void SetUp() override
+    class ItemReviewTest : public ItemLifecycleTest
     {
-        ItemLifecycleTest::SetUp();
-        item.assign(&worker);
-        item.start();
-        item.complete(72);
-        container.advancePhase();
-    }
-};
+    protected:
+        void SetUp() override
+        {
+            ItemLifecycleTest::SetUp();
+            item.assign(&worker);
+            item.start();
+            item.complete(72);
+            container.advancePhase();
+        }
+    };
 }
 
 TEST_F(ItemReviewTest, BatchReviewApprovesWithoutChangingCompletedWork)
@@ -403,77 +432,111 @@ TEST_F(ItemReviewTest, ReplacingABatchReviewRecordsTheLatestReviewer)
 #include <functional>
 #include <vector>
 
-namespace {
-class RecordingLifecycleMediator : public WorkflowMediator {
-public:
-    std::vector<std::string> events;
-    std::function<void(const std::string&, Item*)> inspect;
-    Participant* participant = nullptr;
-    int value = 0;
-    std::string reason;
-    void record(const std::string& event, Item* item) {
-        events.push_back(event);
-        if (inspect) inspect(event, item);
-    }
-    void onItemAssigned(Item* i, Participant* p) override { participant = p; record("assigned", i); }
-    void onItemStarted(Item* i) override { record("started", i); }
-    void onItemCompleted(Item* i, int v) override { value = v; record("completed", i); }
-    void onItemRejected(Item* i, const std::string& r) override { reason = r; record("rejected", i); }
-    void onItemOverridden(Item* i, Participant* p, int v, const std::string& r) override {
-        participant = p; value = v; reason = r; record("overridden", i);
-    }
-    void onPhaseAdvanced(Container*) override { events.push_back("phase"); }
-    void onItemAdded(Item*) override { events.push_back("added"); }
-    void onAssignmentFailed(Item*, const std::string&) override { events.push_back("assignment-failed"); }
-    void onContainerApprovalRequested(Container*, Participant*) override { events.push_back("approval-requested"); }
-    void onContainerRejected(Container*, const std::string&) override { events.push_back("container-rejected"); }
-    void onApprovalResolved(Item*, bool) override { events.push_back("approval-resolved"); }
-    std::vector<std::string> getHistoryAsStrings() const override { return events; }
-};
+namespace
+{
+    class RecordingLifecycleMediator : public WorkflowMediator
+    {
+    public:
+        std::vector<std::string> events;
+        std::function<void(const std::string &, Item *)> inspect;
+        Participant *participant = nullptr;
+        int value = 0;
+        std::string reason;
+        void record(const std::string &event, Item *item)
+        {
+            events.push_back(event);
+            if (inspect)
+                inspect(event, item);
+        }
+        void onItemAssigned(Item *i, Participant *p) override
+        {
+            participant = p;
+            record("assigned", i);
+        }
+        void onItemStarted(Item *i) override { record("started", i); }
+        void onItemCompleted(Item *i, int v) override
+        {
+            value = v;
+            record("completed", i);
+        }
+        void onItemRejected(Item *i, const std::string &r) override
+        {
+            reason = r;
+            record("rejected", i);
+        }
+        void onItemOverridden(Item *i, Participant *p, int v, const std::string &r) override
+        {
+            participant = p;
+            value = v;
+            reason = r;
+            record("overridden", i);
+        }
+        void onPhaseAdvanced(Container *) override { events.push_back("phase"); }
+        void onItemAdded(Item *) override { events.push_back("added"); }
+        void onAssignmentFailed(Item *, const std::string &) override { events.push_back("assignment-failed"); }
+        void onContainerApprovalRequested(Container *, Participant *) override { events.push_back("approval-requested"); }
+        void onContainerRejected(Container *, const std::string &) override { events.push_back("container-rejected"); }
+        void onApprovalResolved(Item *, bool) override { events.push_back("approval-resolved"); }
+        std::vector<std::string> getHistoryAsStrings() const override { return events; }
+    };
 
-class LifecycleNotificationTest : public ::testing::Test {
-protected:
-    RecordingLifecycleMediator mediator;
-    Participant worker{"worker", "Worker", "Worker"};
-    Participant reviewer{"reviewer", "Reviewer", "Reviewer"};
-    Item item{"item", "work", "Item"};
-    Container container{"container", "batch", "Batch"};
-    void SetUp() override {
-        container.add(&item);
-        container.advancePhase();
-        item.setMediator(&mediator);
-    }
-    void enterReview() {
-        item.assign(&worker);
-        item.start();
-        item.complete(60);
-        container.advancePhase();
-    }
-};
+    class LifecycleNotificationTest : public ::testing::Test
+    {
+    protected:
+        RecordingLifecycleMediator mediator;
+        Participant worker{"worker", "Worker", "Worker"};
+        Participant reviewer{"reviewer", "Reviewer", "Reviewer"};
+        Item item{"item", "work", "Item"};
+        Container container{"container", "batch", "Batch"};
+        void SetUp() override
+        {
+            container.add(&item);
+            container.advancePhase();
+            item.setMediator(&mediator);
+        }
+        void enterReview()
+        {
+            item.assign(&worker);
+            item.start();
+            item.complete(60);
+            container.advancePhase();
+        }
+    };
 }
 
-TEST_F(LifecycleNotificationTest, ReportsExactArgumentsInOrderAfterStateAndDataChange) {
-    mediator.inspect = [&](const std::string& event, Item* actual) {
+TEST_F(LifecycleNotificationTest, ReportsExactArgumentsInOrderAfterStateAndDataChange)
+{
+    mediator.inspect = [&](const std::string &event, Item *actual)
+    {
         EXPECT_EQ(actual, &item);
-        if (event == "assigned") {
+        if (event == "assigned")
+        {
             EXPECT_EQ(item.getStateName(), "Assigned");
             EXPECT_EQ(item.getAssignee(), &worker);
             EXPECT_EQ(mediator.participant, &worker);
             EXPECT_EQ(worker.getPendingTasks(), 1);
-        } else if (event == "started") {
+        }
+        else if (event == "started")
+        {
             EXPECT_EQ(item.getStateName(), "InProgress");
-        } else if (event == "completed") {
+        }
+        else if (event == "completed")
+        {
             EXPECT_EQ(item.getStateName(), "Completed");
             EXPECT_EQ(item.getResult(), 60);
             EXPECT_EQ(mediator.value, 60);
             EXPECT_EQ(worker.getPendingTasks(), 0);
-        } else if (event == "rejected") {
+        }
+        else if (event == "rejected")
+        {
             EXPECT_EQ(item.getStateName(), "Rejected");
             EXPECT_EQ(mediator.reason, "Check result");
             EXPECT_EQ(item.getRejectionReason(), "Check result");
             EXPECT_EQ(item.getReviewer(), nullptr);
             EXPECT_TRUE(item.getReviewMethod().empty());
-        } else if (event == "overridden") {
+        }
+        else if (event == "overridden")
+        {
             EXPECT_EQ(item.getStateName(), "Completed");
             EXPECT_EQ(item.getReviewer(), &reviewer);
             EXPECT_EQ(item.getReviewMethod(), "Personal");
@@ -488,10 +551,11 @@ TEST_F(LifecycleNotificationTest, ReportsExactArgumentsInOrderAfterStateAndDataC
     item.reject("Check result");
     item.resolveReview(&reviewer, 82, "Corrected by operator");
     EXPECT_EQ(mediator.events, (std::vector<std::string>{
-        "assigned", "started", "completed", "rejected", "overridden"}));
+                                   "assigned", "started", "completed", "rejected", "overridden"}));
 }
 
-TEST_F(LifecycleNotificationTest, InvalidActionsDoNotSendSuccessCallbacks) {
+TEST_F(LifecycleNotificationTest, InvalidActionsDoNotSendSuccessCallbacks)
+{
     EXPECT_THROW(item.assign(nullptr), std::invalid_argument);
     EXPECT_THROW(item.complete(5), InvalidTransition);
     EXPECT_TRUE(mediator.events.empty());
@@ -510,7 +574,8 @@ TEST_F(LifecycleNotificationTest, InvalidActionsDoNotSendSuccessCallbacks) {
     EXPECT_TRUE(mediator.events.empty());
 }
 
-TEST_F(LifecycleNotificationTest, DetachedMediatorReceivesNoFurtherNotifications) {
+TEST_F(LifecycleNotificationTest, DetachedMediatorReceivesNoFurtherNotifications)
+{
     item.assign(&worker);
     item.setMediator(nullptr);
     item.start();
@@ -522,8 +587,10 @@ TEST_F(LifecycleNotificationTest, DetachedMediatorReceivesNoFurtherNotifications
     EXPECT_TRUE(item.isReviewed());
 }
 
-TEST_F(LifecycleNotificationTest, CallbackExceptionsPropagateAfterTransitionWithoutRollbackOrDuplicateEvents) {
-    mediator.inspect = [](const std::string&, Item*) { throw std::runtime_error("callback failure"); };
+TEST_F(LifecycleNotificationTest, CallbackExceptionsPropagateAfterTransitionWithoutRollbackOrDuplicateEvents)
+{
+    mediator.inspect = [](const std::string &, Item *)
+    { throw std::runtime_error("callback failure"); };
     EXPECT_THROW(item.assign(&worker), std::runtime_error);
     EXPECT_EQ(item.getStateName(), "Assigned");
     EXPECT_EQ(worker.getPendingTasks(), 1);
@@ -543,5 +610,5 @@ TEST_F(LifecycleNotificationTest, CallbackExceptionsPropagateAfterTransitionWith
     EXPECT_EQ(item.getResult(), 82);
     EXPECT_EQ(item.getReviewer(), &reviewer);
     EXPECT_EQ(mediator.events, (std::vector<std::string>{
-        "assigned", "started", "completed", "rejected", "overridden"}));
+                                   "assigned", "started", "completed", "rejected", "overridden"}));
 }
