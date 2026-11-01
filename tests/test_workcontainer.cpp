@@ -31,6 +31,29 @@ TEST(RootTest, TracksContainersAndEnforcesSingleParent)
     EXPECT_TRUE(root.getChildren().empty());
 }
 
+TEST(RootTest, RejectsNonContainerChildren)
+{
+    Root root("root", "workflow", "Workflow");
+    Item item("item", "work", "Item");
+
+    EXPECT_THROW(root.add(&item), std::invalid_argument);
+    EXPECT_TRUE(root.getChildren().empty());
+    EXPECT_EQ(item.getParent(), nullptr);
+}
+
+TEST(RootTest, AggregatesContainersWithoutOwningThem)
+{
+    Container container("container", "group", "Container");
+    {
+        Root root("root", "workflow", "Workflow");
+        root.add(&container);
+        EXPECT_EQ(container.getParent(), &root);
+    }
+
+    EXPECT_EQ(container.getParent(), nullptr);
+    EXPECT_EQ(container.getName(), "Container");
+}
+
 TEST(RootTest, RejectsRemovingContainerOutsideIntake)
 {
     Root root("root", "workflow", "Workflow");
@@ -43,6 +66,29 @@ TEST(RootTest, RejectsRemovingContainerOutsideIntake)
     EXPECT_THROW(root.remove("container"), InvalidTransition);
     ASSERT_EQ(root.getChildren().size(), 1u);
     EXPECT_EQ(container.getParent(), &root);
+}
+
+TEST(ContainerTest, RejectsNonItemChildren)
+{
+    Container container("container", "group", "Container");
+    Container nested("nested", "group", "Nested");
+
+    EXPECT_THROW(container.add(&nested), std::invalid_argument);
+    EXPECT_TRUE(container.getChildren().empty());
+    EXPECT_EQ(nested.getParent(), nullptr);
+}
+
+TEST(ContainerTest, AggregatesItemsWithoutOwningThem)
+{
+    Item item("item", "work", "Item");
+    {
+        Container container("container", "group", "Container");
+        container.add(&item);
+        EXPECT_EQ(item.getParent(), &container);
+    }
+
+    EXPECT_EQ(item.getParent(), nullptr);
+    EXPECT_EQ(item.getName(), "Item");
 }
 
 TEST(RootTest, CreatesDepthFirstIteratorForWorkflowTree)
@@ -95,6 +141,36 @@ TEST(WorkRegistryTest, RemovesRegisteredTreeAndDetachesDescendants)
     EXPECT_EQ(registry.size(), 0u);
     EXPECT_FALSE(registry.contains("container"));
     EXPECT_FALSE(registry.contains("item"));
+}
+
+TEST(WorkRegistryTest, OwnsAndDestroysRegisteredComponents)
+{
+    class TrackedItem : public Item
+    {
+    public:
+        explicit TrackedItem(bool& destroyed)
+            : Item("item", "work", "Item"), destroyed(destroyed)
+        {
+        }
+
+        ~TrackedItem() override
+        {
+            destroyed = true;
+        }
+
+    private:
+        bool& destroyed;
+    };
+
+    WorkRegistry registry;
+    bool destroyed = false;
+    Component* item = registry.add(std::unique_ptr<Component>(new TrackedItem(destroyed)));
+
+    EXPECT_EQ(registry.get("item"), item);
+    EXPECT_FALSE(destroyed);
+    registry.remove("item");
+    EXPECT_TRUE(destroyed);
+    EXPECT_EQ(registry.get("item"), nullptr);
 }
 
 TEST(WorkRegistryTest, RejectsRemovalOutsideIntakeWithoutChangingTree)

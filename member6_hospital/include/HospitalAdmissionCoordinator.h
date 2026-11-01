@@ -43,6 +43,7 @@ class HospitalAdmissionCoordinator : public WorkflowMediator
     private:
         HospitalApprovalChain chain;
         std::unique_ptr<AssignmentEngine> engine;
+        ParticipantRegistry* participants;
         std::vector<std::string> history;
         BatchResult lastBatch;
 

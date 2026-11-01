@@ -25,6 +25,9 @@ class HospitalAdmissionBuilder : public WorkflowBuilder
         WorkRegistry* registry;
         Root* root;
         Container* currentContainer;
+        bool runtimeMode;
+
+        void adoptRootFromRegistry();
 
     public:
         /**

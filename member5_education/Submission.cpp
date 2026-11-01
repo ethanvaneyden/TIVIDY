@@ -5,8 +5,10 @@ namespace education
 
 const int Submission::NO_MARK;
 
-Submission::Submission(const std::string& id, const std::string& studentName)
-    : Item(id, "submission", studentName), mark(NO_MARK)
+Submission::Submission(const std::string& id,
+                       const std::string& studentName,
+                       const std::string& studentNumber)
+    : Item(id, "submission", studentName), studentId(studentNumber), mark(NO_MARK)
 {
 }
 
@@ -15,6 +17,11 @@ Submission::~Submission() {}
 const std::string& Submission::getStudentName() const
 {
     return getName();
+}
+
+const std::string& Submission::getStudentId() const
+{
+    return studentId;
 }
 
 bool Submission::hasMark() const

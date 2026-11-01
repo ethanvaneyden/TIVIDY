@@ -20,6 +20,22 @@
 #include <stdexcept>
 #include <utility>
 
+namespace
+{
+void validateRegisteredComponents(const Component* component, const WorkRegistry& registry)
+{
+    if (registry.get(component->getId()) != component)
+        throw std::invalid_argument("Every workflow component must be owned by the WorkRegistry");
+
+    const std::vector<Component*> children = component->getChildren();
+    for (std::vector<Component*>::const_iterator child = children.begin();
+         child != children.end(); ++child)
+    {
+        validateRegisteredComponents(*child, registry);
+    }
+}
+}
+
 WorkflowInstance::WorkflowInstance(
     std::string instanceId,
     std::string definitionType,
@@ -44,8 +60,7 @@ WorkflowInstance::WorkflowInstance(
     if (!this->strategy) throw std::invalid_argument("Assignment strategy cannot be null");
     if (!this->builder) throw std::invalid_argument("Workflow builder cannot be null");
     if (!this->participants) throw std::invalid_argument("Participant registry cannot be null");
-    if (this->registry->get(this->root->getId()) != this->root)
-        throw std::invalid_argument("Root must be owned by the WorkRegistry");
+    validateRegisteredComponents(this->root, *this->registry);
 
     this->root->setMediator(this->coordinator.get());
 }

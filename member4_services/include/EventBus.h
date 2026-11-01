@@ -8,9 +8,9 @@ using namespace std;
 
 class EventBus {
 private:
-    vector<Observer*> subscribers;
+    vector<unique_ptr<Observer>> subscribers;
 public:
-    void subscribe(Observer* observer);
+    void subscribe(unique_ptr<Observer> observer);
     void publish(const WorkflowEvent& event);
     size_t observerCount() const;
 };

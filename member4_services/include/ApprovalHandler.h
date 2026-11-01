@@ -1,6 +1,11 @@
 /**
  * @file ApprovalHandler.h
- * @brief STUB - replaced by Member 4's full implementation.
+ * @brief STUB - to be replaced if needed (Basic Approval).
+ *
+ * Contract assumed here:
+ *   - handle() returns true if some handler approved the item,
+ *     false if the request fell off the end of the chain.
+ *   - setNext() links handlers and returns the handler just linked.
  */
 
 #pragma once
@@ -34,3 +39,4 @@ class ApprovalHandler
             return next != nullptr ? next->handle(item, value) : false;
         }
 };
+
