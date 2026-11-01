@@ -14,15 +14,15 @@ demonstrated with two scenarios:
 
 ## Team
 
-| Member | Folder | Area |
-|---|---|---|
-| _Ethan Van Eyden_ (u25260244) | `member1_core/` | Core workflow model (Composite, Instances, API) |
-| _Jayden Dean_ (u24647897) | `member2_execution/` | Item and container lifecycle (State) |
-| _Stefan van Staden_ (u25031784) | `member3_routing/` | Assignment & traversal (Strategy, Iterator) |
-| _Christian Nunes_ (u25138309) | `member4_services/` | Commands, events, history (Command, Abstract Mediator, Observer, Chain of Responsibility) |
-| _Kyle Pillay_ (u23545756) | `member5_education/` | Education scenario (Concrete Mediator, Concrete Leaf/Composite, Concrete Chain) |
-| _Rochaan_ (uXXXXXXXX) | `member6_hospital/` | Hospital scenario (Concrete Mediator, Concrete Leaf/Composite, Concrete Chain) |
-| _Lesego Tebeile_ (u25143230) | `member7_integration/` | CI/CD, Scenario Setup factory, Builder, Facade
+| Member                          | Folder                 | Area                                                                                      |
+| ------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------- |
+| _Ethan Van Eyden_ (u25260244)   | `member1_core/`        | Core workflow model (Composite, Instances, API)                                           |
+| _Jayden Dean_ (u24647897)       | `member2_execution/`   | Item and container lifecycle (State)                                                      |
+| _Stefan van Staden_ (u25031784) | `member3_routing/`     | Assignment & traversal (Strategy, Iterator)                                               |
+| _Christian Nunes_ (u25138309)   | `member4_services/`    | Commands, events, history (Command, Abstract Mediator, Observer, Chain of Responsibility) |
+| _Kyle Pillay_ (u23545756)       | `member5_education/`   | Education scenario (Concrete Mediator, Concrete Leaf/Composite, Concrete Chain)           |
+| _Rochaan_ (u25045785)           | `member6_hospital/`    | Hospital scenario (Concrete Mediator, Concrete Leaf/Composite, Concrete Chain)            |
+| _Lesego Tebeile_ (u25143230)    | `member7_integration/` | CI/CD, Scenario Setup factory, Builder, Facade                                            |
 
 ---
 
@@ -39,6 +39,7 @@ MinGW-w64 or MSVC, but hasn't been verified.
 ---
 
 ## Repository layout
+
 ```
 tividy/
 ├── CMakeLists.txt                              # build configuration
@@ -57,7 +58,6 @@ tividy/
 ├── tests/                                      # all test files, using GoogleTest
 └── docs/                                       # UML exports, design docs, research
 ```
-
 
 **All member folders are on the compiler's include path**, so `#include "WorkItem.h"`
 works from any folder. **Header names must be globally unique** — use
@@ -86,22 +86,26 @@ ctest --test-dir build --output-on-failure
 ## Run a subset
 
 ### One suite
+
 ```
 ctest --test-dir build -R WorkItemTest --output-on-failure
 ```
 
 ### One test directly (richer output)
+
 ```
 ./build/tividy_tests --gtest_filter='WorkItemTest.*'
 ```
 
 ## Run the app (currently a stub)
+
 ```
 ./build/tividy
 ```
 
 ## CI (GitHub Actions)
-Every push and pull request to main or dev runs 
+
+Every push and pull request to main or dev runs
 .github/workflows/ci.yml:
 
 Check out the repo.
@@ -110,7 +114,7 @@ Install cmake, g++, build-essential.
 
 Configure with CMake.
 
-Build the tests 
+Build the tests
 (cmake --build build --target tividy_tests --parallel - temporary; will switch to full build once the app builds).
 
 Run ctest --test-dir build --output-on-failure.
@@ -120,17 +124,20 @@ A green PR = safe to merge. A red PR = do not merge. Fix on your branch and push
 ## Audit before pushing
 
 ### (a) Every .cpp on disk must be in CMakeLists.txt - empty output = OK
+
 ```
 comm -23 <(ls member*_*/*.cpp app/*.cpp 2>/dev/null | sort) \
          <(grep -oE 'member[0-9]+_[a-z]+/[A-Za-z_]+\.cpp|app/[A-Za-z_]+\.cpp' CMakeLists.txt | sort -u)
 ```
 
 ### (b) No file listed twice - empty output = OK
+
 ```
 grep -oE 'member[0-9]+_[a-z]+/[A-Za-z_]+\.cpp' CMakeLists.txt | sort | uniq -d
 ```
 
 ### (c) Every test file on disk must be in CMakeLists.txt - empty output = OK
+
 ```
 comm -23 <(ls tests/test_*.cpp | sort) \
          <(grep -oE 'tests/test_[a-z_]+\.cpp' CMakeLists.txt | sort -u)

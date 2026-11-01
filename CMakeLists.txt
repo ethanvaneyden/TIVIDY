@@ -70,7 +70,7 @@ add_library(tividy_core
     member6_hospital/HospitalSeed.cpp
 
     # --- Member 7: integration, factories ---
-    member7_integration/WorkflowDirector.cpp
+    #member7_integration/WorkflowDirector.cpp
     member7_integration/EducationWorkflowFactory.cpp
     member7_integration/HospitalWorkflowFactory.cpp
     member7_integration/TividyWorkflow.cpp
@@ -112,7 +112,7 @@ add_executable(tividy_tests
     tests/test_events.cpp
     tests/test_history.cpp
     tests/test_hospital.cpp
-    # tests/test_integration.cpp
+    tests/test_integration.cpp
     tests/test_iterators.cpp
     tests/test_json_serializer.cpp
     tests/test_participants.cpp
