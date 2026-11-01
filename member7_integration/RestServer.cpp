@@ -134,7 +134,7 @@ bool RestServer::run(const std::string& host, int port)
             auto id = req.path_params.at("instanceId");
             auto container = JsonSerializer::getString(req.body, "containerName", "submission");
             std::lock_guard<std::mutex> lock(engineMutex);
-            auto result = facade->submitEducation(id, container);
+            auto result = facade->submit(id, container);
             res.status = toHttpStatus(result);
             res.set_content(resultJson(result), "application/json");
         });

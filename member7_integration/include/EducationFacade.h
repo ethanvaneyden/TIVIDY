@@ -10,6 +10,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <functional>
 
 class ParticipantRegistry;
 class Participant;
