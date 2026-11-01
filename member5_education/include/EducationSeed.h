@@ -2,9 +2,6 @@
  * @file EducationSeed.h
  * @brief Demo data for the Education scenario: participants and sample
  *        submissions.
- *
- * Member 7's EducationWorkflowFactory can call seedParticipants() when it
- * sets up an education instance. Nothing here is used by the generic engine.
  */
 
 #pragma once
@@ -42,14 +39,9 @@ class EducationSeed
          */
         static void seedParticipants(ParticipantRegistry& registry);
 
-        /**
-         * @brief Eight submissions whose marks cover every approval band.
-         *
-         * Includes marks in each band, the boundary values, and two marks
-         * below 40 so the Rejected path can be demonstrated.
-         */
+        /** @brief Eight submissions whose marks cover every approval band. */
         static std::vector<DemoSubmission> demoSubmissions();
 };
 
-} // namespace education
+}
 

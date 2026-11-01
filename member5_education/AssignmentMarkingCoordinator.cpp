@@ -62,8 +62,6 @@ namespace education
                 continue;
             }
 
-            // The engine only chooses; the item does the assigning and keeps
-            // the marker's pending count.
             Participant *marker = assignmentEngine->assign(*submission, markers);
             if (marker != nullptr)
             {
@@ -71,7 +69,6 @@ namespace education
             }
             else if (submission->getMediator() == nullptr)
             {
-                // The engine already reports this when the item has a mediator.
                 onAssignmentFailed(submission, "No marker is available");
             }
         }
@@ -83,7 +80,7 @@ namespace education
             assignment->getPhaseName() == REVIEW_PHASE &&
             assignment->isReadyToPublish())
         {
-            assignment->tryPublish();
+            assignment->advancePhase();
         }
     }
 
@@ -221,8 +218,8 @@ namespace education
             throw InvalidTransition("An assignment can only be opened from the Intake phase");
         }
 
-        assignment.advancePhase(); // tells the mediator when the container is wired to one
-        assignMarkers(assignment); // does nothing for items already assigned
+        assignment.advancePhase();
+        assignMarkers(assignment);
 
         int assigned = 0;
         const std::vector<Component *> children = assignment.getChildren();
@@ -276,8 +273,7 @@ namespace education
             }
             else
             {
-                // The mark normally arrives through onItemCompleted(); if the
-                // item was completed without that event, take it from the result.
+                // Fall back to the item's result if onItemCompleted() was missed.
                 if (!submission->hasMark() && submission->hasResult())
                 {
                     submission->setMark(submission->getResult());

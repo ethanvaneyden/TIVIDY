@@ -2,16 +2,9 @@
  * @file EducationApprovalChain.h
  * @brief Concrete Chain of Responsibility for marks.
  *
- * Pattern roles:
- *   Handler          : ApprovalHandler (Member 4)
- *   ConcreteHandlers : TAApprovalHandler, ModeratorApprovalHandler,
- *                      LecturerApprovalHandler
- *
- * Each handler owns one mark band (see EducationPolicies). A handler that
- * recognises the mark picks an approver from its role, records them as the
- * item's reviewer ("Batch") and stops the chain. Otherwise it passes the
- * request on. A mark that no handler accepts falls off the end of the chain;
- * the caller (EducationMediator) then marks the item Rejected.
+ * Each handler owns one mark band (see EducationPolicies). A mark that no
+ * handler accepts falls off the end of the chain and the coordinator
+ * rejects the item.
  */
 
 #pragma once
@@ -46,7 +39,7 @@ class EducationBandHandler : public ApprovalHandler
          *
          * The approver is never the item's assignee. If the mark is in the
          * band but no eligible approver exists, the request is passed on and
-         * ends up Rejected.
+         * ends up unapproved.
          */
         virtual bool handle(Item& item, int value);
 };
@@ -75,9 +68,6 @@ class LecturerApprovalHandler : public EducationBandHandler
 /**
  * @class EducationApprovalChain
  * @brief Owns the three handlers and links them: Moderator -> TA -> Lecturer.
- *
- * The order does not matter because the bands do not overlap, but it is fixed
- * so behaviour is deterministic and easy to explain.
  */
 class EducationApprovalChain
 {
@@ -102,5 +92,5 @@ class EducationApprovalChain
         bool approve(Item& item, int value);
 };
 
-} // namespace education
+}
 

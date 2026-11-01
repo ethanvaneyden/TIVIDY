@@ -2,12 +2,8 @@
  * @file Submission.h
  * @brief Concrete Leaf for the Education scenario: one student's submission.
  *
- * Extends the shared Item only to hold the student number and a mark. Item's lifecycle (states,
- * assignee, reviewer, phase rules) is inherited unchanged, and nothing from
- * Item is overridden.
- *
- * The mark is recorded by AssignmentMarkingCoordinator when the item reports
- * that it was completed (or overridden by the lecturer).
+ * Extends the shared Item only to hold the student number and the mark.
+ * The mark is recorded by AssignmentMarkingCoordinator.
  */
 
 #pragma once
@@ -52,5 +48,5 @@ class Submission : public Item
         void setMark(int value);
 };
 
-} // namespace education
+}
 

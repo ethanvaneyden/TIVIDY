@@ -7,17 +7,18 @@
 
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 namespace education
 {
 
 AssignmentMarkingBuilder::AssignmentMarkingBuilder()
-    : registry(nullptr), root(nullptr), currentContainer(nullptr)
+    : registry(nullptr), root(nullptr), currentContainer(nullptr), runtimeMode(false)
 {
 }
 
 AssignmentMarkingBuilder::AssignmentMarkingBuilder(WorkRegistry& workRegistry)
-    : registry(&workRegistry), root(nullptr), currentContainer(nullptr)
+    : registry(&workRegistry), root(nullptr), currentContainer(nullptr), runtimeMode(false)
 {
 }
 
@@ -28,6 +29,26 @@ void AssignmentMarkingBuilder::setRegistry(WorkRegistry& workRegistry)
     registry = &workRegistry;
     root = nullptr;
     currentContainer = nullptr;
+    runtimeMode = false;
+}
+
+void AssignmentMarkingBuilder::adoptRootFromRegistry()
+{
+    if (registry == nullptr || root != nullptr)
+    {
+        return;
+    }
+    std::vector<std::string> ids = registry->getAllIds();
+    for (std::vector<std::string>::const_iterator id = ids.begin(); id != ids.end(); ++id)
+    {
+        Root* found = dynamic_cast<Root*>(registry->get(*id));
+        if (found != nullptr)
+        {
+            root = found;
+            runtimeMode = true;
+            return;
+        }
+    }
 }
 
 void AssignmentMarkingBuilder::buildRoot(const std::string& rootName)
@@ -41,11 +62,13 @@ void AssignmentMarkingBuilder::buildRoot(const std::string& rootName)
     registry->add(std::move(node)); // throws on a duplicate id
     root = raw;
     currentContainer = nullptr;
+    runtimeMode = false;
 }
 
 void AssignmentMarkingBuilder::buildContainer(const std::string& containerId,
                                               const std::string& name)
 {
+    adoptRootFromRegistry();
     if (root == nullptr)
     {
         throw std::logic_error("buildContainer called before buildRoot");
@@ -60,7 +83,7 @@ void AssignmentMarkingBuilder::buildContainer(const std::string& containerId,
     }
     catch (...)
     {
-        registry->remove(containerId); // do not leave an orphan in the registry
+        registry->remove(containerId);
         throw;
     }
     currentContainer = raw;
@@ -68,6 +91,7 @@ void AssignmentMarkingBuilder::buildContainer(const std::string& containerId,
 
 Container* AssignmentMarkingBuilder::findAssignment(const std::string& containerId) const
 {
+    const_cast<AssignmentMarkingBuilder*>(this)->adoptRootFromRegistry();
     if (registry == nullptr || root == nullptr)
     {
         throw std::logic_error("buildRoot must be called before choosing an assignment");
@@ -95,13 +119,24 @@ void AssignmentMarkingBuilder::attachSubmission(Container* target,
     }
     catch (...)
     {
-        registry->remove(itemId); // do not leave an orphan in the registry
+        registry->remove(itemId);
         throw;
     }
 }
 
 void AssignmentMarkingBuilder::buildItem(const std::string& itemId, const std::string& name)
 {
+    adoptRootFromRegistry();
+    if (runtimeMode)
+    {
+        // Runtime use: register only, WorkflowInstance::addItem attaches it.
+        if (registry == nullptr)
+        {
+            throw std::logic_error("buildItem called before setRegistry");
+        }
+        registry->add(std::unique_ptr<Component>(new Submission(itemId, name, itemId)));
+        return;
+    }
     buildSubmission(itemId, name, itemId);
 }
 

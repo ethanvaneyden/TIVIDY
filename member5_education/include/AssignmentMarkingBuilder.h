@@ -2,15 +2,8 @@
  * @file AssignmentMarkingBuilder.h
  * @brief Concrete Builder for the Education scenario.
  *
- * Builds the Root -> Container -> Item tree for one assignment:
- *   module (Root) -> assignment (Container) -> student submissions (Submission).
- * Every node is created with a unique_ptr and handed to the WorkRegistry,
- * which owns it and frees it. The tree only holds plain pointers.
- *
- * The generic buildItem() adds to the "current" assignment (the last one
- * built or selected). To add a submission to a specific assignment, as
- * WorkflowInstance::addItem(parentContainerId, ...) does, use
- * buildSubmission(parentContainerId, ...) or selectContainer().
+ * The registry owns the components built here; accessors return non-owning
+ * pointers into that registry.
  */
 
 #pragma once
@@ -33,6 +26,10 @@ class AssignmentMarkingBuilder : public WorkflowBuilder
         WorkRegistry* registry;
         Root* root;
         Container* currentContainer;
+        bool runtimeMode; /* Root came from the registry, not from buildRoot(). */
+
+        /** @brief Use the registry's Root when buildRoot() was never called here. */
+        void adoptRootFromRegistry();
 
         /** @brief The assignment with this id, or throws std::invalid_argument. */
         Container* findAssignment(const std::string& containerId) const;
@@ -74,23 +71,18 @@ class AssignmentMarkingBuilder : public WorkflowBuilder
                                     const std::string& name) override;
 
         /**
-         * @brief Add a student submission under the current assignment.
+         * @brief Add a submission under the current assignment.
+         *
          * @throws std::logic_error if there is no current assignment.
          * @throws std::invalid_argument if the id is already registered.
          */
         virtual void buildItem(const std::string& itemId, const std::string& name) override;
 
         /**
-         * @brief Add a student submission with the student number to the current assignment.
-         *
-         * buildItem() uses the item id as the student number, because the
-         * generic interface carries no student id.
-         *
+         * @brief Add a submission with full student data under the current assignment.
          * @param itemId    Unique submission id.
          * @param name      Student name.
          * @param studentId Student number.
-         * @throws std::logic_error if there is no current assignment.
-         * @throws std::invalid_argument if the id is already registered.
          * @throws InvalidTransition if the assignment is no longer in Intake.
          */
         void buildSubmission(const std::string& itemId,
@@ -98,19 +90,13 @@ class AssignmentMarkingBuilder : public WorkflowBuilder
                              const std::string& studentId);
 
         /**
-         * @brief Add a student submission to a named assignment.
-         *
-         * The assignment becomes the current one, so later buildItem() calls
-         * continue there. This is the call behind
-         * WorkflowInstance::addItem(parentContainerId, itemId, name, subjectId).
-         *
-         * @param parentContainerId Id of an assignment already built by this builder.
+         * @brief Add a submission under a named assignment and make it current.
+         * @param parentContainerId Id of an assignment of this module.
          * @param itemId            Unique submission id.
          * @param name              Student name.
          * @param studentId         Student number.
-         * @throws std::logic_error if buildRoot() has not been called.
-         * @throws std::invalid_argument if parentContainerId is not an assignment
-         *         of this module, or the item id is already registered.
+         * @throws std::invalid_argument if the parent is not an assignment of
+         *         this module, or the id is already registered.
          * @throws InvalidTransition if the assignment is no longer in Intake.
          */
         void buildSubmission(const std::string& parentContainerId,
@@ -120,9 +106,6 @@ class AssignmentMarkingBuilder : public WorkflowBuilder
 
         /**
          * @brief Make an existing assignment the current one.
-         *
-         * @param containerId Id of an assignment already built by this builder.
-         * @throws std::logic_error if buildRoot() has not been called.
          * @throws std::invalid_argument if the id is not an assignment of this module.
          */
         void selectContainer(const std::string& containerId);
@@ -134,5 +117,5 @@ class AssignmentMarkingBuilder : public WorkflowBuilder
         Container* getCurrentContainer() const;
 };
 
-} // namespace education
+}
 

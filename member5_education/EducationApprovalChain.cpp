@@ -18,8 +18,6 @@ EducationBandHandler::~EducationBandHandler() {}
 
 bool EducationBandHandler::handle(Item& item, int value)
 {
-    // Notes: adapt this signature if the real ApprovalHandler takes
-    // an ApprovalRequest instead of (Item&, int).
     if (EducationPolicies::approverRoleFor(value) == role)
     {
         Participant* approver =
