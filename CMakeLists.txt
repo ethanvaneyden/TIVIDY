@@ -49,7 +49,21 @@ add_library(tividy_core
      member3_routing/StateFilterIterator.cpp
 
     # --- Member 4: commands, events, history ---
-    member4_services/WorkflowMediator.cpp
+    # member4_services/WorkCommand.cpp # # uncomment this line & more
+    member4_services/AssignmentCoordinator.cpp
+    member4_services/ActionHistory.cpp
+    #Observer Pattern
+    member4_services/EventBus.cpp
+    member4_services/EducationObserver.cpp
+    member4_services/HealthcareObserver.cpp
+    #Command Pattern
+    member4_services/RejectItemCommand.cpp
+    member4_services/RecordResultCommand.cpp
+    member4_services/OverrideItemCommand.cpp
+    member4_services/AssignItemCommand.cpp
+    member4_services/ApproveContainerCommand.cpp
+    member4_services/AdvancePhaseCommand.cpp
+    member4_services/SystemLogCommand.cpp
 
     # --- Member 5: education scenario ---
     member5_education/AssignmentMarkingBuilder.cpp
@@ -70,14 +84,14 @@ add_library(tividy_core
     member6_hospital/HospitalSeed.cpp
 
     # --- Member 7: integration, factories ---
-    #member7_integration/WorkflowDirector.cpp
-    member7_integration/EducationWorkflowFactory.cpp
-    member7_integration/HospitalWorkflowFactory.cpp
-    member7_integration/TividyWorkflow.cpp
-    member7_integration/JsonSerializer.cpp
-    member7_integration/RestServer.cpp
-    member7_integration/EducationFacade.cpp
-    member7_integration/HospitalFacade.cpp    
+   # member7_integration/WorkflowDirector.cpp
+    #member7_integration/EducationWorkflowFactory.cpp
+   # member7_integration/HospitalWorkflowFactory.cpp
+   # member7_integration/TividyWorkflow.cpp
+   # member7_integration/JsonSerializer.cpp
+   # member7_integration/RestServer.cpp
+   # member7_integration/EducationFacade.cpp
+   # member7_integration/HospitalFacade.cpp    
 )
 
 # Every member folder is on the include path, so `#include "Header.h"`
