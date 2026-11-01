@@ -1,23 +1,52 @@
 import { useState, type SubmitEvent } from 'react';
 import { Button, Form, Modal } from 'react-bootstrap';
-import type { NewSubmission } from '../../api/workflow';
+
+// interface AddSubmissionModalProps {
+//     show: boolean;
+//     onHide: () => void;
+// }
 
 interface AddSubmissionModalProps {
     show: boolean;
-    busy: boolean;
-    assignmentName?: string;
     onHide: () => void;
-    onSubmit: (submission: NewSubmission) => Promise<boolean>;
+    onSubmit: (studentName: string) => Promise<boolean>;
 }
 
-function AddSubmissionModal({ show, busy, assignmentName, onHide, onSubmit }: AddSubmissionModalProps) {
+// function AddSubmissionModal({ show, onHide }: AddSubmissionModalProps) {
+//     const [studentName, setStudentName] = useState('');
+
+//     function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
+//         event.preventDefault();
+//     }
+
+//     return (
+//         <Modal show={show} onHide={onHide} centered>
+//             <Form onSubmit={handleSubmit}>
+//                 <Modal.Header closeButton><Modal.Title>Add submission</Modal.Title></Modal.Header>
+//                 <Modal.Body>
+//                     <Form.Label htmlFor="student-name">Student name</Form.Label>
+//                     <Form.Control id="student-name" value={studentName} onChange={(event) => setStudentName(event.target.value)} maxLength={80} required />
+//                     <p className="action-placeholder-note">This form is not connected yet. Nothing will be added.</p>
+//                 </Modal.Body>
+//                 <Modal.Footer>
+//                     <Button variant="outline-secondary" onClick={onHide}>Cancel</Button>
+//                     <Button type="submit" className="workflow-primary-button">Add submission</Button>
+//                 </Modal.Footer>
+//             </Form>
+//         </Modal>
+//     );
+// }
+
+function AddSubmissionModal({ show, onHide, onSubmit }: AddSubmissionModalProps) {
     const [studentName, setStudentName] = useState('');
-    const trimmed = studentName.trim();
+    const [busy, setBusy] = useState(false);
 
     async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
-        if (!trimmed) return;
-        if (await onSubmit({ studentName: trimmed })) {
+        setBusy(true);
+        const ok = await onSubmit(studentName.trim());
+        setBusy(false);
+        if (ok) {
             setStudentName('');
             onHide();
         }
@@ -26,17 +55,27 @@ function AddSubmissionModal({ show, busy, assignmentName, onHide, onSubmit }: Ad
     return (
         <Modal show={show} onHide={onHide} centered>
             <Form onSubmit={handleSubmit}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Add submission{assignmentName ? ` to ${assignmentName}` : ''}</Modal.Title>
-                </Modal.Header>
+                <Modal.Header closeButton><Modal.Title>Add submission</Modal.Title></Modal.Header>
                 <Modal.Body>
                     <Form.Label htmlFor="student-name">Student name</Form.Label>
-                    <Form.Control id="student-name" value={studentName} onChange={(event) => setStudentName(event.target.value)} maxLength={80} required autoFocus />
+                    <Form.Control
+                        id="student-name"
+                        value={studentName}
+                        onChange={(event) => setStudentName(event.target.value)}
+                        maxLength={80}
+                        required
+                    />
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="outline-secondary" onClick={onHide} disabled={busy}>Cancel</Button>
-                    <Button type="submit" className="workflow-primary-button" disabled={busy || !trimmed}>
-                        {busy ? 'Adding...' : 'Add submission'}
+                    <Button variant="outline-secondary" onClick={onHide} disabled={busy}>
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        className="workflow-primary-button"
+                        disabled={busy || !studentName.trim()}
+                    >
+                        {busy ? 'Adding…' : 'Add submission'}
                     </Button>
                 </Modal.Footer>
             </Form>

@@ -66,4 +66,10 @@ class JsonSerializer
                           const std::string& field,
                           int fallback);
 
+        /**
+         * @brief Serialize a flat list of items, each with its owning container.
+         * @param items Items to serialize in order.
+         * @return JSON array string.
+        */
+        static std::string serializeItemList(const std::vector<const Item*>& items);
 };

@@ -28,6 +28,8 @@ export interface EducationController {
     completeSubmission: (itemId: string, mark: number) => Promise<boolean>;
     approveAssignment: (assignmentId: string) => Promise<boolean>;
     overrideSubmission: (itemId: string, mark: number, accept: boolean) => Promise<boolean>;
+    strategy: string;
+    changeStrategy: (name: string) => Promise<boolean>;
 }
 
 export function useEducation(instanceId: string): EducationController {
@@ -52,5 +54,7 @@ export function useEducation(instanceId: string): EducationController {
         approveAssignment: (assignmentId) => run(() => approveContainer('education', instanceId, assignmentId)),
         overrideSubmission: (itemId, mark, accept) =>
             run(() => overrideItem('education', instanceId, itemId, mark, accept)),
+        strategy: resource.strategy,
+        changeStrategy: resource.changeStrategy,
     };
 }

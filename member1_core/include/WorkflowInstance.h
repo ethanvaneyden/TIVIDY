@@ -213,4 +213,17 @@ public:
      * @throws InvalidTransition If the rejection request is invalid.
      */
     void rejectContainer(const std::string& containerId, const std::string& reason);
+
+    /**
+     * @brief Replaces the assignment strategy at runtime.
+     * @param strategy The new strategy; ownership transfers to this instance.
+     * @throws std::invalid_argument If strategy is null.
+     */
+    void setStrategy(std::unique_ptr<AssignmentStrategy> strategy);
+
+    /**
+     * @brief Returns the display name of the active strategy.
+     * @return e.g. "Workload", "RoundRobin", "Random", or "None".
+     */
+    std::string getStrategyName() const;
 };

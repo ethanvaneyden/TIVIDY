@@ -1,0 +1,313 @@
+.workflow-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+    margin-top: 2rem;
+}
+
+.workflow-instance-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+}
+
+.workflow-instance-kicker {
+    margin: 0 0 0.35rem;
+    color: #929bb0;
+    font-size: 0.66rem;
+    font-weight: 750;
+    letter-spacing: 0.13em;
+}
+
+.workflow-instance-heading h2 {
+    margin: 0;
+    color: #202b40;
+    font-size: clamp(1.45rem, 3vw, 1.9rem);
+    font-weight: 750;
+    letter-spacing: -0.05em;
+}
+
+.workflow-instance-heading p:last-child {
+    margin: 0.5rem 0 0;
+    color: #7c879c;
+    font-size: 0.9rem;
+}
+
+.healthcare-content .healthcare-primary-button {
+    border-color: #2878df;
+    background: #2878df;
+}
+
+.healthcare-content .healthcare-primary-button:hover {
+    border-color: #1d67c6;
+    background: #1d67c6;
+}
+
+.treatment-list {
+    padding: 0 1.5rem;
+}
+
+.treatment-row {
+    display: grid;
+    grid-template-columns: minmax(170px, 1.15fr) minmax(160px, 1.2fr) minmax(120px, 0.8fr) auto auto;
+    align-items: center;
+    gap: 1rem;
+    min-height: 92px;
+    border-bottom: 1px solid #edf0f5;
+    transition: background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.treatment-row:last-child {
+    border-bottom: 0;
+}
+
+.treatment-state-rejected {
+    background: linear-gradient(90deg, #fff9f8, #fff);
+}
+
+.treatment-row:hover {
+    background: #f2f8ff;
+    box-shadow: inset 3px 0 #2878df;
+}
+
+.treatment-state-rejected:hover {
+    background: #fff6f4;
+    box-shadow: inset 3px 0 #bb5141;
+}
+
+.treatment-patient {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.7rem;
+}
+
+.treatment-avatar {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 13px;
+    background: #eaf3ff;
+    color: #2878df;
+    font-size: 0.72rem;
+    font-weight: 750;
+}
+
+.treatment-state-rejected .treatment-avatar {
+    background: #fff0ed;
+    color: #bb5141;
+}
+
+.treatment-patient h4 {
+    overflow: hidden;
+    margin: 0;
+    color: #29344a;
+    font-size: 0.83rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.treatment-patient p {
+    margin: 0.25rem 0 0;
+    color: #8791a5;
+    font-size: 0.7rem;
+}
+
+.treatment-diagnosis,
+.treatment-assignee {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.22rem;
+}
+
+.treatment-label {
+    color: #9aa3b5;
+    font-size: 0.58rem;
+    font-weight: 750;
+    letter-spacing: 0.09em;
+}
+
+.treatment-diagnosis strong,
+.treatment-assignee strong {
+    overflow: hidden;
+    color: #455168;
+    font-size: 0.73rem;
+    font-weight: 650;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.treatment-diagnosis > span:last-child:not(.treatment-label) {
+    color: #8791a5;
+    font-size: 0.66rem;
+}
+
+.treatment-reviewer {
+    color: #21814e;
+    font-size: 0.65rem;
+    font-weight: 600;
+}
+
+.treatment-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.treatment-status > span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.treatment-status-available { background: #f1f3f7; color: #67738a; }
+.treatment-status-assigned { background: #eaf3ff; color: #2878df; }
+.treatment-status-inprogress { background: #fff4dc; color: #a76b08; }
+.treatment-status-completed { background: #e8f7ef; color: #21814e; }
+.treatment-status-rejected { background: #fff0ed; color: #bb5141; }
+
+.treatment-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.treatment-actions .btn {
+    border-radius: 8px;
+    font-size: 0.67rem;
+    font-weight: 650;
+    white-space: nowrap;
+}
+
+.workflow-empty-state {
+    padding: 2.5rem 1rem;
+    text-align: center;
+}
+
+.workflow-empty-state > span {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 0.8rem;
+    place-items: center;
+    border-radius: 14px;
+    background: #eaf3ff;
+    color: #2878df;
+    font-size: 1.4rem;
+}
+
+.workflow-empty-state h4 {
+    color: #354158;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.workflow-empty-state p {
+    margin: 0;
+    color: #8791a5;
+    font-size: 0.8rem;
+}
+
+.action-placeholder-note {
+    margin: 1rem 0 0;
+    color: #8791a5;
+    font-size: 0.78rem;
+}
+
+.submission-detail-id {
+    color: #818ca0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.submission-detail h3 {
+    margin: 0.45rem 0;
+    color: #202b40;
+    font-size: 1.4rem;
+    font-weight: 750;
+    letter-spacing: -0.04em;
+}
+
+.submission-detail dl {
+    display: grid;
+    gap: 0;
+    margin: 1.2rem 0 0;
+    border-top: 1px solid #edf0f5;
+}
+
+.submission-detail dl > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid #edf0f5;
+    font-size: 0.82rem;
+}
+
+.submission-detail dt {
+    color: #818ca0;
+    font-weight: 500;
+}
+
+.submission-detail dd {
+    margin: 0;
+    color: #354158;
+    font-weight: 650;
+    text-align: right;
+}
+
+@media (max-width: 991px) {
+    .treatment-row {
+        grid-template-columns: minmax(160px, 1fr) minmax(140px, 1fr) auto;
+        gap: 0.65rem;
+        padding: 1rem 0;
+    }
+
+    .treatment-assignee {
+        display: none;
+    }
+}
+
+@media (max-width: 575px) {
+    .workflow-instance-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admissions-panel-header,
+    .treatment-list {
+        padding-right: 1rem;
+        padding-left: 1rem;
+    }
+
+    .treatment-row {
+        grid-template-columns: 1fr auto;
+    }
+
+    .treatment-diagnosis {
+        grid-column: 1;
+        padding-left: 3.2rem;
+    }
+
+    .treatment-status {
+        grid-column: 2;
+        grid-row: 2;
+    }
+
+    .treatment-actions {
+        grid-column: 2;
+        grid-row: 1;
+    }
+}

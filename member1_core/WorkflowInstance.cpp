@@ -240,3 +240,17 @@ void WorkflowInstance::rejectContainer(const std::string& containerId, const std
     // Delegate to Mediator to handle the rejection and rework logic
     coordinator->onContainerRejected(container, reason);
 }
+
+void WorkflowInstance::setStrategy(std::unique_ptr<AssignmentStrategy> newStrategy)
+{
+    if (newStrategy == nullptr)
+    {
+        throw std::invalid_argument("WorkflowInstance::setStrategy: null strategy");
+    }
+    strategy = std::move(newStrategy);
+}
+
+std::string WorkflowInstance::getStrategyName() const
+{
+    return strategy != nullptr ? strategy->name() : "None";
+}

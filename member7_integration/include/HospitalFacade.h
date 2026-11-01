@@ -51,4 +51,9 @@ class HospitalFacade : public ScenarioFacade
                                     const std::string& itemId,
                                     int value,
                                     bool accept) override;
+
+        CommandResult setStrategy(const std::string& instanceId,
+                                        const std::string& strategyName) override;
+
+        virtual std::string getStrategyName(const std::string& instanceId) const override;
 };
