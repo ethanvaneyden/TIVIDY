@@ -1,3 +1,8 @@
+/** @file ItemState.cpp
+* @brief Implements the lifecycle transitions declared in ItemState.h.
+* @author Member 2
+* @date October 2026
+*/
 #include "ItemState.h"
 #include "InvalidTransition.h"
 

@@ -1,3 +1,8 @@
+/** @file CompletedState.cpp
+* @brief Implements the lifecycle transitions declared in CompletedState.h.
+* @author Member 2
+* @date October 2026
+*/
 #include "CompletedState.h"
 #include "RejectedState.h"
 #include <memory>

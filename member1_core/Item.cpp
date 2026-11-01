@@ -108,6 +108,8 @@ void Item::reject(const std::string& reason) {
     if (!next) throw std::logic_error("Item state returned no next state");
     setState(std::move(next));
     setRejectionReason(reason);
+    // A rejected result no longer carries its previous approval.
+    setReviewer(nullptr, "");
     if (mediator) mediator->onItemRejected(this, reason);
 }
 
