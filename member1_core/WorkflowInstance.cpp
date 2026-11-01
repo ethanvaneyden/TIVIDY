@@ -247,7 +247,17 @@ void WorkflowInstance::setAssignmentStrategy(
     coordinator->setAssignmentStrategy(std::move(strategy));
 }
 
+void WorkflowInstance::setStrategy(std::unique_ptr<AssignmentStrategy> strategy)
+{
+    setAssignmentStrategy(std::move(strategy));
+}
+
 std::string WorkflowInstance::getAssignmentStrategyName() const
 {
     return coordinator->getAssignmentStrategyName();
+}
+
+std::string WorkflowInstance::getStrategyName() const
+{
+    return getAssignmentStrategyName();
 }

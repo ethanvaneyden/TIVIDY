@@ -95,4 +95,18 @@ class ScenarioFacade
                                             const std::string& itemId,
                                             int value,
                                             bool accept) = 0;
+                                        
+        /**
+         * @brief Replaces the assignment strategy on a running instance.
+         * @param instanceId The instance to modify.
+         * @param strategyName One of "Workload", "RoundRobin", "Random".
+         * @return Success if applied, NotFound if instance or strategy name is unknown.
+        */
+        virtual CommandResult setStrategy(const std::string& instanceId,
+                                        const std::string& strategyName) = 0;
+
+        /**
+         * @brief Reports the active strategy name.
+        */
+        virtual std::string getStrategyName(const std::string& instanceId) const = 0;
 };

@@ -8,7 +8,10 @@
 #include "JsonSerializer.h"
 #include "Container.h"
 #include "Root.h"
+#include "StateFilterIterator.h" 
+#include "Item.h"
 
+#include <cctype>
 #include "httplib.h"
 
 namespace
@@ -107,19 +110,64 @@ bool RestServer::run(const std::string &host, int port)
                 res.set_content(out, "application/json");
             });
 
+    // svr.Get("/api/education/:instanceId/state",
+    //         [this](const httplib::Request &req, httplib::Response &res)
+    //         {
+    //             auto id = req.path_params.at("instanceId");
+    //             std::lock_guard<std::mutex> lock(engineMutex);
+    //             Root *tree = facade->getTree(id);
+    //             if (tree == nullptr)
+    //             {
+    //                 res.status = 404;
+    //                 res.set_content(JsonSerializer::serializeError("NotFound", "instance"),
+    //                                 "application/json");
+    //                 return;
+    //             }
+    //             res.status = 200;
+    //             res.set_content(JsonSerializer::serializeTree(tree), "application/json");
+    //         });
+
     svr.Get("/api/education/:instanceId/state",
-            [this](const httplib::Request &req, httplib::Response &res)
+            [this](const httplib::Request& req, httplib::Response& res)
             {
                 auto id = req.path_params.at("instanceId");
                 std::lock_guard<std::mutex> lock(engineMutex);
-                Root *tree = facade->getTree(id);
+                Root* tree = facade->getTree(id);
                 if (tree == nullptr)
                 {
                     res.status = 404;
-                    res.set_content(JsonSerializer::serializeError("NotFound", "instance"),
-                                    "application/json");
+                    res.set_content(
+                        JsonSerializer::serializeError("NotFound", "instance"),
+                        "application/json");
                     return;
                 }
+
+                // Filtered view: ?state=Completed etc. Uses StateFilterIterator.
+                const auto stateFilter = req.get_param_value("state");
+                if (!stateFilter.empty())
+                {
+                    // Case-insensitive normalization: the iterator compares exact names.
+                    std::string normalized = stateFilter;
+                    normalized[0] = static_cast<char>(
+                        std::toupper(static_cast<unsigned char>(normalized[0])));
+
+                    std::vector<const Item*> matched;
+                    StateFilterIterator it(tree, normalized);
+                    for (it.first(); !it.isDone(); it.next())
+                    {
+                        const Item* item = dynamic_cast<const Item*>(it.current());
+                        if (item != nullptr)
+                        {
+                            matched.push_back(item);
+                        }
+                    }
+
+                    res.status = 200;
+                    res.set_content(JsonSerializer::serializeItemList(matched), "application/json");
+                    return;
+                }
+
+                // Unfiltered: returns the whole
                 res.status = 200;
                 res.set_content(JsonSerializer::serializeTree(tree), "application/json");
             });
@@ -221,19 +269,64 @@ bool RestServer::run(const std::string &host, int port)
                 res.set_content(out, "application/json");
             });
 
+    // svr.Get("/api/healthcare/:instanceId/state",
+    //         [this](const httplib::Request &req, httplib::Response &res)
+    //         {
+    //             auto id = req.path_params.at("instanceId");
+    //             std::lock_guard<std::mutex> lock(engineMutex);
+    //             Root *tree = facade->getTree(id);
+    //             if (tree == nullptr)
+    //             {
+    //                 res.status = 404;
+    //                 res.set_content(JsonSerializer::serializeError("NotFound", "instance"),
+    //                                 "application/json");
+    //                 return;
+    //             }
+    //             res.status = 200;
+    //             res.set_content(JsonSerializer::serializeTree(tree), "application/json");
+    //         });
+
     svr.Get("/api/healthcare/:instanceId/state",
-            [this](const httplib::Request &req, httplib::Response &res)
+            [this](const httplib::Request& req, httplib::Response& res)
             {
                 auto id = req.path_params.at("instanceId");
                 std::lock_guard<std::mutex> lock(engineMutex);
-                Root *tree = facade->getTree(id);
+                Root* tree = facade->getTree(id);
                 if (tree == nullptr)
                 {
                     res.status = 404;
-                    res.set_content(JsonSerializer::serializeError("NotFound", "instance"),
-                                    "application/json");
+                    res.set_content(
+                        JsonSerializer::serializeError("NotFound", "instance"),
+                        "application/json");
                     return;
                 }
+
+                // Filtered view: ?state=Completed etc. Uses StateFilterIterator.
+                const auto stateFilter = req.get_param_value("state");
+                if (!stateFilter.empty())
+                {
+                    // Case-insensitive normalization: the iterator compares exact names.
+                    std::string normalized = stateFilter;
+                    normalized[0] = static_cast<char>(
+                        std::toupper(static_cast<unsigned char>(normalized[0])));
+
+                    std::vector<const Item*> matched;
+                    StateFilterIterator it(tree, normalized);
+                    for (it.first(); !it.isDone(); it.next())
+                    {
+                        const Item* item = dynamic_cast<const Item*>(it.current());
+                        if (item != nullptr)
+                        {
+                            matched.push_back(item);
+                        }
+                    }
+
+                    res.status = 200;
+                    res.set_content(JsonSerializer::serializeItemList(matched), "application/json");
+                    return;
+                }
+
+                // Unfiltered: returns the whole tree as before.
                 res.status = 200;
                 res.set_content(JsonSerializer::serializeTree(tree), "application/json");
             });
@@ -304,7 +397,58 @@ bool RestServer::run(const std::string &host, int port)
                  auto result = facade->overrideItem(instanceId, itemId, value, accept);
                  res.status = toHttpStatus(result);
                  res.set_content(resultJson(result), "application/json");
-             });
+            });
+
+    // Get current strategy
+    svr.Get(R"(/api/(education|healthcare)/:instanceId/strategy)",
+            [this](const httplib::Request& req, httplib::Response& res)
+            {
+                auto id = req.path_params.at("instanceId");
+                std::lock_guard<std::mutex> lock(engineMutex);
+                auto name = facade->getStrategyName(id);
+                if (name.empty())
+                {
+                    res.status = 404;
+                    res.set_content(
+                        JsonSerializer::serializeError("NotFound", "instance"),
+                        "application/json");
+                    return;
+                }
+                res.status = 200;
+                res.set_content("{\"strategy\":\"" + name + "\"}", "application/json");
+            });
+
+    // Set strategy
+    svr.Put(R"(/api/(education|healthcare)/:instanceId/strategy)",
+            [this](const httplib::Request& req, httplib::Response& res)
+            {
+                auto id = req.path_params.at("instanceId");
+                auto name = JsonSerializer::getString(req.body, "strategy", "");
+                if (name.empty())
+                {
+                    res.status = 400;
+                    res.set_content(
+                        JsonSerializer::serializeError("InvalidArgument", "strategy is required"),
+                        "application/json");
+                    return;
+                }
+                std::lock_guard<std::mutex> lock(engineMutex);
+                auto result = facade->setStrategy(id, name);
+                res.status = toHttpStatus(result);
+                res.set_content(resultJson(result), "application/json");
+            });
+
+    //CORS handler
+    svr.set_pre_routing_handler([](const httplib::Request& req, httplib::Response& res) {
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+        res.set_header("Access-Control-Allow-Headers", "Content-Type");
+        if (req.method == "OPTIONS") {
+            res.status = 200;
+            return httplib::Server::HandlerResponse::Handled;
+        }
+        return httplib::Server::HandlerResponse::Unhandled;
+    });
 
     return svr.listen(host, port);
 }

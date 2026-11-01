@@ -129,4 +129,7 @@ class TividyWorkflow
         */
         CommandResult admitPatient(const std::string& instanceId,
                                     const std::string& containerName);
+
+        CommandResult setStrategy(const std::string& instanceId, const std::string& strategyName);
+        std::string getStrategyName(const std::string& instanceId) const;
 };

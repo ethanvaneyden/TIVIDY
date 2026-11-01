@@ -21,6 +21,8 @@
 #include "EducationPolicies.h"
 
 #include "WorkloadStrategy.h"
+#include "RoundRobinStrategy.h"
+#include "RandomStrategy.h"
 
 #include <stdexcept>
 
@@ -283,4 +285,41 @@ WorkflowInstance* EducationFacade::findInstance(const std::string& instanceId) c
 Participant* EducationFacade::operatorParticipant() const
 {
     return firstWithRole(participants, "Lecturer");
+}
+
+CommandResult EducationFacade::setStrategy(const std::string& instanceId,
+                                           const std::string& strategyName)
+{
+    WorkflowInstance* instance = findInstance(instanceId);
+    if (instance == nullptr)
+    {
+        return CommandResult::NotFound;
+    }
+
+    std::unique_ptr<AssignmentStrategy> newStrategy;
+    if (strategyName == "Workload")
+    {
+        newStrategy = std::unique_ptr<AssignmentStrategy>(new WorkloadStrategy());
+    }
+    else if (strategyName == "RoundRobin")
+    {
+        newStrategy = std::unique_ptr<AssignmentStrategy>(new RoundRobinStrategy());
+    }
+    else if (strategyName == "Random")
+    {
+        newStrategy = std::unique_ptr<AssignmentStrategy>(new RandomStrategy());
+    }
+    else
+    {
+        return CommandResult::NotFound;
+    }
+
+    instance->setStrategy(std::move(newStrategy));
+    return CommandResult::Success;
+}
+
+std::string EducationFacade::getStrategyName(const std::string& instanceId) const
+{
+    WorkflowInstance* instance = findInstance(instanceId);
+    return instance != nullptr ? instance->getStrategyName() : "";
 }

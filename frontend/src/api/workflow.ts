@@ -1,5 +1,5 @@
 import type { ScenarioId } from '../types/types';
-import { del, get, post } from './client';
+import { del, get, post, put } from './client';
 
 export interface ApiItem {
     id: string;
@@ -157,4 +157,48 @@ export function addItem(
         `${containerBase(scenario, instanceId, containerId)}/${ITEM_COLLECTION[scenario]}`,
         payload,
     );
+}
+
+// -- Filtered state query (uses StateFilterIterator on the backend) --
+export interface FilteredItem {
+    id: string;
+    type: string;
+    name: string;
+    state: string;
+    assignee: string | null;
+    reviewer: string | null;
+    result?: number;
+    diagnosis?: string;
+    age?: number;
+    bed?: string;
+    discharged?: boolean;
+    containerId: string;
+    containerName: string;
+}
+
+export function getFilteredItems(
+    scenario: ScenarioId,
+    instanceId: string,
+    state: string,
+): Promise<FilteredItem[]> {
+    return get<FilteredItem[]>(
+        `${instanceBase(scenario, instanceId)}/state?state=${encodeURIComponent(state)}`,
+    );
+}
+
+// -- Strategy selection --
+
+export function getStrategy(
+    scenario: ScenarioId,
+    instanceId: string,
+): Promise<{ strategy: string }> {
+    return get<{ strategy: string }>(`${instanceBase(scenario, instanceId)}/strategy`);
+}
+
+export function setStrategy(
+    scenario: ScenarioId,
+    instanceId: string,
+    strategy: string,
+): Promise<ActionResult> {
+    return put<ActionResult>(`${instanceBase(scenario, instanceId)}/strategy`, { strategy });
 }

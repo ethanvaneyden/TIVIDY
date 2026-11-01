@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { messageOf } from '../api/client';
-import { getHistory, getState, type ApiRoot } from '../api/workflow';
+import { getHistory, getState, getStrategy, setStrategy, type ApiRoot } from '../api/workflow';
 import type { ScenarioId } from '../types/types';
 
 export interface WorkflowResource<T> {
@@ -13,6 +13,8 @@ export interface WorkflowResource<T> {
     clearActionError: () => void;
     refresh: () => Promise<void>;
     run: (action: () => Promise<unknown>) => Promise<boolean>;
+    strategy: string;
+    changeStrategy: (name: string) => Promise<boolean>;
 }
 
 export function useWorkflowResource<T>(
@@ -26,6 +28,31 @@ export function useWorkflowResource<T>(
     const [busy, setBusy] = useState(false);
     const [loadError, setLoadError] = useState<string>();
     const [actionError, setActionError] = useState<string>();
+    const [strategy, setStrategyName] = useState<string>('');
+
+    useEffect(() => {
+        getStrategy(scenario, instanceId)
+            .then((res) => setStrategyName(res.strategy))
+            .catch(() => { /* strategy is optional; don't break the page */ });
+    }, [scenario, instanceId]);
+
+    const changeStrategy = useCallback(async (name: string): Promise<boolean> => {
+        setBusy(true);
+        try {
+            const res = await setStrategy(scenario, instanceId, name);
+            if (res.result === 'Success') {
+                setStrategyName(name);
+                return true;
+            }
+            setActionError(res.result);
+            return false;
+        } catch (error) {
+            setActionError(messageOf(error));
+            return false;
+        } finally {
+            setBusy(false);
+        }
+    }, [scenario, instanceId]);
 
     const fetchSnapshot = useCallback(async () => {
         const [root, entries] = await Promise.all([
@@ -94,5 +121,17 @@ export function useWorkflowResource<T>(
 
     const clearActionError = useCallback(() => setActionError(undefined), []);
 
-    return { data, history, loading, busy, loadError, actionError, clearActionError, refresh, run };
+    return {
+        data,
+        history,
+        loading,
+        busy,
+        loadError,
+        actionError,
+        clearActionError,
+        refresh,
+        run,
+        strategy,
+        changeStrategy,
+    };
 }

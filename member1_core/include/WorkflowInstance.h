@@ -13,7 +13,6 @@ class AssignmentStrategy;
 class WorkflowBuilder;
 class ParticipantRegistry;
 class Participant;
-class AssignmentStrategy;
 
 /**
  * @brief Represents a single, independent running workflow instance.
@@ -214,15 +213,17 @@ public:
     void rejectContainer(const std::string& containerId, const std::string& reason);
 
     /**
-     * @brief Replaces the assignment strategy used by this instance's coordinator.
+     * @brief Replaces the assignment strategy used by this instance.
      * @param strategy New strategy; ownership transfers to the coordinator.
      * @throws std::invalid_argument If the strategy is null.
      */
     void setAssignmentStrategy(std::unique_ptr<AssignmentStrategy> strategy);
+    void setStrategy(std::unique_ptr<AssignmentStrategy> strategy);
 
     /**
      * @brief Gets the name of the assignment strategy currently in use.
      * @return Strategy name reported by the active strategy.
      */
     std::string getAssignmentStrategyName() const;
+    std::string getStrategyName() const;
 };
