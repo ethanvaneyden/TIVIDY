@@ -39,7 +39,7 @@ using education::EducationRoles;
 using education::EducationSeed;
 using education::Submission;
 
-// Builder and director
+// ---- builder and director ---------------------------------------------------
 
 TEST(AssignmentMarkingBuilderTest, BuildsModuleAssignmentAndSubmissions)
 {
@@ -110,7 +110,7 @@ TEST(AssignmentMarkingBuilderTest, DuplicateItemIdIsRefusedAndLeavesNoOrphan)
 }
 
 
-// Adding to a named assignment (parent id)
+// ---- adding to a named assignment (parent id) ---------------------------------
 
 namespace
 {
@@ -268,7 +268,7 @@ TEST(AssignmentMarkingBuilderParentTest, OpenedAssignmentRefusesNewSubmissionsAn
     EXPECT_EQ(1u, registry.get("A1")->getChildren().size());
 }
 
-// Director extends WorkflowDirector
+// ---- director extends WorkflowDirector ----------------------------------------
 
 TEST(AssignmentMarkingDirectorTest, IsAWorkflowDirector)
 {
@@ -426,7 +426,7 @@ TEST(AssignmentMarkingDirectorTest, DemoWorkflowHasOneSubmissionPerDemoRow)
     EXPECT_EQ(rows.front().studentId, first->getStudentId());
 }
 
-// Full flow
+// ---- full flow ----------------------------------------------------------------
 
 class AssignmentFlowTest : public ::testing::Test
 {
@@ -678,7 +678,82 @@ TEST_F(AssignmentFlowTest, HistoryRecordsTheWholeFlow)
     EXPECT_TRUE(sawBatch);
 }
 
-// No TAs available
+namespace
+{
+    bool historyHas(const std::vector<std::string>& history, const std::string& text)
+    {
+        for (unsigned i = 0; i < history.size(); ++i)
+        {
+            if (history[i].find(text) != std::string::npos) return true;
+        }
+        return false;
+    }
+}
+
+TEST_F(AssignmentFlowTest, PublishingTriggersTheEducationObserver)
+{
+    markAll();
+    approveBatch();
+    coordinator->resolveRejected(*subG, true, 0, lecturer);
+
+    EXPECT_EQ("Publish", assignment->getPhaseName());
+    EXPECT_TRUE(historyHas(coordinator->getHistoryAsStrings(), "Marks released for all students"));
+}
+
+TEST_F(AssignmentFlowTest, ObserverStaysQuietBeforePublish)
+{
+    markAll();
+    approveBatch();
+
+    EXPECT_FALSE(historyHas(coordinator->getHistoryAsStrings(), "Marks released for all students"));
+}
+
+TEST_F(AssignmentFlowTest, ObserverFiresExactlyOnce)
+{
+    markAll();
+    approveBatch();
+    coordinator->resolveRejected(*subG, true, 0, lecturer);
+
+    int count = 0;
+    const std::vector<std::string> history = coordinator->getHistoryAsStrings();
+    for (unsigned i = 0; i < history.size(); ++i)
+    {
+        if (history[i].find("Marks released") != std::string::npos) ++count;
+    }
+    EXPECT_EQ(1, count);
+}
+
+TEST_F(AssignmentFlowTest, ANotificationFromTheEngineDoesNotRepeatThePublishEvent)
+{
+    markAll();
+    approveBatch();
+    coordinator->resolveRejected(*subG, true, 0, lecturer);
+
+    coordinator->onPhaseAdvanced(assignment); // same phase again
+
+    int count = 0;
+    const std::vector<std::string> history = coordinator->getHistoryAsStrings();
+    for (unsigned i = 0; i < history.size(); ++i)
+    {
+        if (history[i].find("Marks released") != std::string::npos) ++count;
+    }
+    EXPECT_EQ(1, count);
+}
+
+TEST_F(AssignmentFlowTest, HistoryRecordsTheCommandsThatRan)
+{
+    markAll();
+    approveBatch();
+    coordinator->resolveRejected(*subG, false, 52, lecturer);
+
+    const std::vector<std::string> history = coordinator->getHistoryAsStrings();
+    EXPECT_TRUE(historyHas(history, "Assigned SUB-A to"));
+    EXPECT_TRUE(historyHas(history, "Advanced container to the next phase"));
+    EXPECT_TRUE(historyHas(history, "Item rejected. Reason: Mark 35"));
+    EXPECT_TRUE(historyHas(history, "Reason: Lecturer override"));
+}
+
+// ---- no TAs available ---------------------------------------------------------
 
 TEST(AssignmentMarkingCoordinatorNoMarkersTest, SubmissionsStayAvailableAndTheFailureIsLogged)
 {
@@ -706,7 +781,7 @@ TEST(AssignmentMarkingCoordinatorNoMarkersTest, SubmissionsStayAvailableAndTheFa
 }
 
 
-// Used the way WorkflowInstance and the facade use it
+// ---- used the way WorkflowInstance and the facade use it ------------------------
 
 namespace
 {
