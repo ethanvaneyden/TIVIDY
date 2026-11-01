@@ -31,6 +31,16 @@ TEST(RootTest, TracksContainersAndEnforcesSingleParent)
     EXPECT_TRUE(root.getChildren().empty());
 }
 
+TEST(RootTest, RejectsNonContainerChildren)
+{
+    Root root("root", "workflow", "Workflow");
+    Item item("item", "work", "Item");
+
+    EXPECT_THROW(root.add(&item), std::invalid_argument);
+    EXPECT_TRUE(root.getChildren().empty());
+    EXPECT_EQ(item.getParent(), nullptr);
+}
+
 TEST(RootTest, RejectsRemovingContainerOutsideIntake)
 {
     Root root("root", "workflow", "Workflow");
@@ -43,6 +53,16 @@ TEST(RootTest, RejectsRemovingContainerOutsideIntake)
     EXPECT_THROW(root.remove("container"), InvalidTransition);
     ASSERT_EQ(root.getChildren().size(), 1u);
     EXPECT_EQ(container.getParent(), &root);
+}
+
+TEST(ContainerTest, RejectsNonItemChildren)
+{
+    Container container("container", "group", "Container");
+    Container nested("nested", "group", "Nested");
+
+    EXPECT_THROW(container.add(&nested), std::invalid_argument);
+    EXPECT_TRUE(container.getChildren().empty());
+    EXPECT_EQ(nested.getParent(), nullptr);
 }
 
 TEST(RootTest, CreatesDepthFirstIteratorForWorkflowTree)

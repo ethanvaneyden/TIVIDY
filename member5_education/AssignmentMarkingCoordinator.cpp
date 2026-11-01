@@ -37,7 +37,6 @@ namespace education
             strategy.reset(new RoundRobinStrategy());
         }
         engine.reset(new AssignmentEngine(std::move(strategy)));
-        assignmentEngine = engine.get();
         participants = &registry;
     }
 
@@ -62,7 +61,7 @@ namespace education
                 continue;
             }
 
-            Participant *marker = assignmentEngine->assign(*submission, markers);
+            Participant *marker = engine->assign(*submission, markers);
             if (marker != nullptr)
             {
                 submission->assign(marker);

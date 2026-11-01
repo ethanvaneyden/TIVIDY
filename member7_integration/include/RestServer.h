@@ -30,7 +30,7 @@ class RestServer
 
     public:
         RestServer();
-        ~RestServer() = default;
+        ~RestServer();
 
         RestServer(const RestServer&) = delete;
         RestServer& operator=(const RestServer&) = delete;

@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <gtest/gtest.h>
 #include <memory>
 #include <vector>
 
@@ -53,6 +52,22 @@ TEST_F(StrategyTest, WorkloadPicksFewestPending)
     b.incrementPendingTasks();
     WorkloadStrategy w;
     EXPECT_EQ(w.assign(pool), &c); 
+}
+
+TEST_F(StrategyTest, WorkloadSelectionDoesNotChangePendingTaskCounts)
+{
+    a.incrementPendingTasks();
+    b.incrementPendingTasks();
+    b.incrementPendingTasks();
+    const std::vector<int> before{
+        a.getPendingTasks(), b.getPendingTasks(), c.getPendingTasks()};
+
+    WorkloadStrategy workload;
+    EXPECT_EQ(workload.assign(pool), &c);
+
+    EXPECT_EQ(a.getPendingTasks(), before[0]);
+    EXPECT_EQ(b.getPendingTasks(), before[1]);
+    EXPECT_EQ(c.getPendingTasks(), before[2]);
 }
 
 TEST_F(StrategyTest, WorkloadTieGoesToFirst)

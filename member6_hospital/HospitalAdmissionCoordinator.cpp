@@ -41,7 +41,6 @@ HospitalAdmissionCoordinator::HospitalAdmissionCoordinator(
         strategy.reset(new WorkloadStrategy());
     }
     engine.reset(new AssignmentEngine(std::move(strategy)));
-    assignmentEngine = engine.get();
     participants = &registry;
 }
 

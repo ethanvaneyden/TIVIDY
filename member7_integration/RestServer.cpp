@@ -60,6 +60,8 @@ RestServer::RestServer()
 {
 }
 
+RestServer::~RestServer() = default;
+
 bool RestServer::run(const std::string &host, int port)
 {
     httplib::Server svr;
