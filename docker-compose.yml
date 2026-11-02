@@ -1,8 +1,12 @@
+# TIVIDY - run everything:   docker compose up --build
+#   UI       http://localhost:3000   (nginx; forwards /api to the backend)
+#   API      http://localhost:8080   (optional direct access, e.g. curl /health)
 services:
   backend:
     build:
       context: .
       dockerfile: Dockerfile
+    image: tividy-backend
     container_name: tividy-backend
     ports:
       - "8080:8080"
@@ -20,6 +24,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""        # same-origin: nginx proxies /api to `backend`
+    image: tividy-frontend
     container_name: tividy-frontend
     ports:
       - "3000:80"
