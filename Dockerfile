@@ -17,8 +17,9 @@ COPY member5_education ./member5_education
 COPY member6_hospital ./member6_hospital
 COPY member7_integration ./member7_integration
 
-# Tests are skipped here: no GoogleTest download, much faster build.
-# (They run in CI: `cmake -S . -B build && ctest --test-dir build`.)
+RUN mkdir -p tests \
+ && for f in $(grep -oE 'tests/[A-Za-z0-9_]+\.cpp' CMakeLists.txt | sort -u); do : > "$f"; done
+
 RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTIVIDY_BUILD_TESTS=OFF \
  && cmake --build build --target tividy --parallel "$(nproc)"
 
