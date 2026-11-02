@@ -153,7 +153,7 @@ TEST_F(EducationFacadeTest, InvalidMarkIsRefused)
 {
     facade->startItem(id, "SUB-A");
 
-    EXPECT_EQ(CommandResult::InvalidTransition, facade->completeItem(id, "SUB-A", 101));
+    EXPECT_EQ(CommandResult::Rejected, facade->completeItem(id, "SUB-A", 101));
 }
 
 TEST_F(EducationFacadeTest, UnknownInstanceIsNotFound)

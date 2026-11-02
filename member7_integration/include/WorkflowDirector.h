@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <utility>
 
 class Root;
 class WorkflowBuilder;
@@ -23,7 +24,7 @@ class WorkflowDirector
 {
     public:
         WorkflowDirector() = default;
-        ~WorkflowDirector() = default;
+        virtual ~WorkflowDirector() = default;
 
         /**
          * @brief Build a small demo tree. Useful for tests and the smoke path.

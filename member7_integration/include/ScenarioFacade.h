@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -19,10 +20,8 @@
 /**
  * @brief Result of a command executed through the facade.
  *
- * Placed here (rather than in a WorkCommand.h file that may not exist yet)
- * so the whole REST + facade chain has a stable contract. Once Member 4
- * lands WorkCommand.h, this enum can be moved there without changing any
- * caller — the values match.
+ * This is the stable contract between the facade chain and the REST layer.
+ * Each value maps to one HTTP status in RestServer.
 */
 enum class CommandResult
 {
@@ -70,12 +69,49 @@ class ScenarioFacade
         virtual std::vector<std::string> getHistory(const std::string& instanceId) const = 0;
 
         /**
-         * @brief Add a container (submission / patient) to an instance.
-         * @param instanceId Target instance.
-         * @param containerName Display name.
+         * @brief Legacy convenience used by the first UI prototype.
+         *
+         * Education: adds a submission (named containerName) to the first
+         * assignment. Healthcare: adds a ward named containerName. New code
+         * should use addContainer() / addItem(), which behave the same in
+         * every scenario.
         */
         virtual CommandResult submit(const std::string& instanceId,
                                     const std::string& containerName) = 0;
+
+        /**
+         * @brief Add a container (assignment / ward) to an instance.
+         * @param instanceId Target instance.
+         * @param name Display name of the new container.
+        */
+        virtual CommandResult addContainer(const std::string& instanceId,
+                                           const std::string& name) = 0;
+
+        /**
+         * @brief Add a work item (submission / patient) to a container in Intake.
+         * @param attributes Scenario data such as "age" or "diagnosis".
+        */
+        virtual CommandResult addItem(const std::string& instanceId,
+                                      const std::string& containerId,
+                                      const std::string& name,
+                                      const std::map<std::string, std::string>& attributes) = 0;
+
+        /**
+         * @brief Open a container: Intake -> Active, workers assigned by the strategy.
+        */
+        virtual CommandResult openContainer(const std::string& instanceId,
+                                            const std::string& containerId) = 0;
+
+        /** @brief Remove an instance and everything it owns. */
+        virtual CommandResult removeInstance(const std::string& instanceId) = 0;
+
+        /**
+         * @brief Human readable explanation of the last non-success result.
+         *
+         * Empty after a successful call. Used by the REST layer so the UI can
+         * show *why* an action was refused.
+        */
+        virtual std::string lastMessage() const = 0;
 
         /** @brief Start an item.*/
         virtual CommandResult startItem(const std::string& instanceId,
