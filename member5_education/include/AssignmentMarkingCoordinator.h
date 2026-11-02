@@ -12,6 +12,7 @@
 #include "WorkflowMediator.h"
 #include "AssignmentStrategy.h"
 #include "EducationApprovalChain.h"
+#include "ActionHistory.h"
 
 #include <memory>
 #include <string>
@@ -46,7 +47,7 @@ class AssignmentMarkingCoordinator : public WorkflowMediator
         std::unique_ptr<AssignmentEngine> engine;
         std::unique_ptr<EventBus> eventBus;
         ParticipantRegistry* participants;
-        std::vector<std::string> history;
+        ActionHistory actions; ///< Command invoker: the workflow's audit trail.
         BatchResult lastBatch;
 
         void log(const std::string& line);
@@ -86,6 +87,12 @@ class AssignmentMarkingCoordinator : public WorkflowMediator
 
         // Utility
         virtual std::vector<std::string> getHistoryAsStrings() const;
+
+        // Optional Mediator capabilities
+        int onContainerOpenRequested(Container* container) override;
+        bool setAssignmentStrategy(std::unique_ptr<AssignmentStrategy>& strategy) override;
+        std::string assignmentStrategyName() const override;
+        ActionHistory* getActionHistory() override;
 
         // Education operations
 

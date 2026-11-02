@@ -14,6 +14,16 @@ Submission::Submission(const std::string& id,
 
 Submission::~Submission() {}
 
+std::map<std::string, std::string> Submission::getAttributes() const
+{
+    std::map<std::string, std::string> all = Item::getAttributes();
+    if (!studentId.empty())
+    {
+        all["studentId"] = studentId;
+    }
+    return all;
+}
+
 const std::string& Submission::getStudentName() const
 {
     return getName();

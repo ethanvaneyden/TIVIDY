@@ -8,6 +8,7 @@
 class Iterator;
 class Container;
 class Root;
+class ComponentVisitor;
 
 /**
  * @brief Abstract base for all nodes in the workflow tree.
@@ -73,6 +74,15 @@ public:
      * @return Caller-owned iterator pointer.
      */
     virtual Iterator* createIterator(const std::string& state) = 0;
+
+    /**
+     * @brief Visitor entry point (GoF Visitor - Element::accept).
+     *
+     * Each concrete component calls the matching visit method, so reports and
+     * serializers can be added without touching the composite classes.
+     * @param visitor Visitor to dispatch to.
+     */
+    virtual void accept(ComponentVisitor& visitor) const = 0;
 
     /**
      * @brief Checks whether this component is complete.

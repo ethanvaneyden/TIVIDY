@@ -5,6 +5,7 @@
 #include "Submission.h"
 #include "WorkRegistry.h"
 
+#include <map>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -138,6 +139,60 @@ void AssignmentMarkingBuilder::buildItem(const std::string& itemId, const std::s
         return;
     }
     buildSubmission(itemId, name, itemId);
+}
+
+void AssignmentMarkingBuilder::buildItem(const std::string& itemId,
+                                         const std::string& name,
+                                         const std::map<std::string, std::string>& attributes)
+{
+    adoptRootFromRegistry();
+
+    std::string studentId = itemId;
+    std::map<std::string, std::string>::const_iterator found = attributes.find("studentId");
+    if (found == attributes.end())
+    {
+        found = attributes.find("subjectId");
+    }
+    if (found != attributes.end() && !found->second.empty())
+    {
+        studentId = found->second;
+    }
+
+    std::unique_ptr<Submission> node(new Submission(itemId, name, studentId));
+    Submission* raw = node.get();
+    for (std::map<std::string, std::string>::const_iterator a = attributes.begin();
+         a != attributes.end(); ++a)
+    {
+        if (a->first != "studentId" && a->first != "subjectId")
+        {
+            raw->setAttribute(a->first, a->second);
+        }
+    }
+
+    if (runtimeMode)
+    {
+        // Runtime use: register only, WorkflowInstance::addItem attaches it.
+        if (registry == nullptr)
+        {
+            throw std::logic_error("buildItem called before setRegistry");
+        }
+        registry->add(std::move(node));
+        return;
+    }
+    if (currentContainer == nullptr)
+    {
+        throw std::logic_error("buildItem called before buildContainer");
+    }
+    registry->add(std::move(node));
+    try
+    {
+        currentContainer->add(raw);
+    }
+    catch (...)
+    {
+        registry->remove(itemId);
+        throw;
+    }
 }
 
 void AssignmentMarkingBuilder::buildSubmission(const std::string& itemId,

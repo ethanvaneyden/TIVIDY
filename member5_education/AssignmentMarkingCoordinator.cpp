@@ -11,6 +11,7 @@
 
 #include "EventBus.h"
 #include "EducationObserver.h"
+#include "InvalidTransition.h"
 #include "WorkflowEvent.h"
 
 #include <utility>
@@ -27,9 +28,6 @@ namespace education
         const char *const REVIEW_PHASE = "Review";
         const char *const PUBLISH_PHASE = "Publish";
 
-        const char *const RELEASE_MESSAGE =
-            "[System] Marks released for all students. Emails sent and LMS synced.";
-
         std::string describe(const Item *item)
         {
             return item == nullptr ? std::string("<no item>") : item->getId();
@@ -40,6 +38,10 @@ namespace education
         ParticipantRegistry &registry, std::unique_ptr<AssignmentStrategy> strategy)
         : chain(registry), eventBus(new EventBus())
     {
+        // Observer: the education observer reacts to "ResultsPublished"
+        // and writes the release notice into the audit trail.
+        eventBus->subscribe(std::unique_ptr<Observer>(new EducationObserver(&actions)));
+
         if (!strategy)
         {
             strategy.reset(new RoundRobinStrategy());
@@ -52,7 +54,7 @@ namespace education
 
     void AssignmentMarkingCoordinator::log(const std::string &line)
     {
-        history.push_back(line);
+        actions.log(line);
     }
 
     void AssignmentMarkingCoordinator::assignMarkers(const Container &assignment)
@@ -99,7 +101,6 @@ namespace education
         assignment->advancePhase();
         onPhaseAdvanced(assignment);
 
-        log(RELEASE_MESSAGE);
         eventBus->publish(WorkflowEvent{"ResultsPublished", "", assignment->getId()});
     }
 
@@ -221,7 +222,42 @@ namespace education
 
     std::vector<std::string> AssignmentMarkingCoordinator::getHistoryAsStrings() const
     {
-        return history;
+        return actions.getHistoryAsStrings();
+    }
+
+    int AssignmentMarkingCoordinator::onContainerOpenRequested(Container *container)
+    {
+        if (container == nullptr)
+        {
+            throw InvalidTransition("No assignment to open");
+        }
+        return openAssignment(*container);
+    }
+
+    bool AssignmentMarkingCoordinator::setAssignmentStrategy(
+        std::unique_ptr<AssignmentStrategy> &strategy)
+    {
+        if (!strategy)
+        {
+            return false;
+        }
+        const std::string before = engine->strategyName();
+        engine->setStrategy(std::move(strategy));
+        if (before != engine->strategyName())
+        {
+            log("Marker assignment strategy changed from " + before + " to " + engine->strategyName());
+        }
+        return true;
+    }
+
+    std::string AssignmentMarkingCoordinator::assignmentStrategyName() const
+    {
+        return engine->strategyName();
+    }
+
+    ActionHistory *AssignmentMarkingCoordinator::getActionHistory()
+    {
+        return &actions;
     }
 
     int AssignmentMarkingCoordinator::openAssignment(Container &assignment)

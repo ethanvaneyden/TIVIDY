@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "WorkflowBuilder.h"
 #include "WorkflowDirector.h"
 
 #include <string>
@@ -17,18 +18,17 @@
 namespace education
 {
 
-class AssignmentMarkingBuilder;
 
 class AssignmentMarkingDirector : public WorkflowDirector
 {
     private:
-        AssignmentMarkingBuilder& builder;
+        WorkflowBuilder& builder;
 
         /** @brief Module, one assignment and the demo submissions. */
         void buildDemo(WorkflowBuilder& target, const std::string& rootName);
 
     public:
-        explicit AssignmentMarkingDirector(AssignmentMarkingBuilder& workflowBuilder);
+        explicit AssignmentMarkingDirector(WorkflowBuilder& workflowBuilder);
         virtual ~AssignmentMarkingDirector();
 
         /** @brief A module with one assignment and no submissions yet. */
