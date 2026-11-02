@@ -1,0 +1,36 @@
+PROJECT_NAME           = "TIVIDY"
+PROJECT_BRIEF          = "C++ workflow management system"
+OUTPUT_DIRECTORY       = doxygen
+
+INPUT                  = app \
+                         member1_core \
+                         member2_execution \
+                         member3_routing \
+                         member4_services \
+                         member5_education \
+                         member6_hospital \
+                         member7_integration \
+                         tests
+RECURSIVE              = YES
+FILE_PATTERNS           = *.h *.hpp *.cpp
+EXCLUDE_PATTERNS        = */json.h */httplib.h
+
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_LATEX         = NO
+
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+OPTIMIZE_OUTPUT_FOR_C  = NO
+
+HAVE_DOT               = NO
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+INCLUDE_GRAPH           = NO
+CALL_GRAPH              = NO
+CALLER_GRAPH            = NO
+
+WARN_IF_UNDOCUMENTED   = NO
+WARN_AS_ERROR          = NO
+QUIET                  = YES

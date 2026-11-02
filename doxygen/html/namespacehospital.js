@@ -1,0 +1,36 @@
+var namespacehospital =
+[
+    [ "events", "namespacehospital_1_1events.html", [
+      [ "APPROVAL_RESOLVED", "namespacehospital_1_1events.html#ac50934d04c7c541adc96a28ccda00047", null ],
+      [ "ASSIGNMENT_FAILED", "namespacehospital_1_1events.html#a21fc2389275868e9c0747ca56285efe8", null ],
+      [ "BATCH_IGNORED", "namespacehospital_1_1events.html#a7f34c3781d92d3149ec7aad005905c0c", null ],
+      [ "BATCH_PROCESSED", "namespacehospital_1_1events.html#a88878e61e4f70c0f86784cb3208afd9a", null ],
+      [ "TREATMENT_ADDED", "namespacehospital_1_1events.html#a8419e9d99bff4ae8211651c4405c849e", null ],
+      [ "TREATMENT_ASSIGNED", "namespacehospital_1_1events.html#a11e1d8f5c398b56da83e685a5d09f654", null ],
+      [ "TREATMENT_COMPLETED", "namespacehospital_1_1events.html#ad7141c40424869016a0be6386ad06fb7", null ],
+      [ "TREATMENT_REJECTED", "namespacehospital_1_1events.html#a36926fbeb969483b3fccd94c588662ce", null ],
+      [ "TREATMENT_SETTLED", "namespacehospital_1_1events.html#a2816b522e0f4ce1508b65753aab829a8", null ],
+      [ "TREATMENT_STARTED", "namespacehospital_1_1events.html#ac78028e8b2d48cfa5a8e0c03928f17b2", null ],
+      [ "WARD_PHASE_ADVANCED", "namespacehospital_1_1events.html#aabd640c22f0fc58364881ba9461bb324", null ],
+      [ "WARD_PUBLISHED", "namespacehospital_1_1events.html#aab903b337faba76db7ece98c9cd671c3", null ],
+      [ "WARD_REJECTED", "namespacehospital_1_1events.html#a187176c3b5bde827196194d49b21ac61", null ]
+    ] ],
+    [ "AdmittingDoctorHandler", "classhospital_1_1AdmittingDoctorHandler.html", "classhospital_1_1AdmittingDoctorHandler" ],
+    [ "ChiefOfMedicineHandler", "classhospital_1_1ChiefOfMedicineHandler.html", "classhospital_1_1ChiefOfMedicineHandler" ],
+    [ "DemoPatient", "structhospital_1_1DemoPatient.html", "structhospital_1_1DemoPatient" ],
+    [ "HospitalAdmissionBuilder", "classhospital_1_1HospitalAdmissionBuilder.html", "classhospital_1_1HospitalAdmissionBuilder" ],
+    [ "HospitalAdmissionCoordinator", "classhospital_1_1HospitalAdmissionCoordinator.html", "classhospital_1_1HospitalAdmissionCoordinator" ],
+    [ "HospitalAdmissionDirector", "classhospital_1_1HospitalAdmissionDirector.html", "classhospital_1_1HospitalAdmissionDirector" ],
+    [ "HospitalApprovalChain", "classhospital_1_1HospitalApprovalChain.html", "classhospital_1_1HospitalApprovalChain" ],
+    [ "HospitalAuditCommand", "classhospital_1_1HospitalAuditCommand.html", "classhospital_1_1HospitalAuditCommand" ],
+    [ "HospitalPolicies", "classhospital_1_1HospitalPolicies.html", "classhospital_1_1HospitalPolicies" ],
+    [ "HospitalRoles", "classhospital_1_1HospitalRoles.html", "classhospital_1_1HospitalRoles" ],
+    [ "HospitalSeed", "classhospital_1_1HospitalSeed.html", "classhospital_1_1HospitalSeed" ],
+    [ "HospitalSeverityHandler", "classhospital_1_1HospitalSeverityHandler.html", "classhospital_1_1HospitalSeverityHandler" ],
+    [ "Treatment", "classhospital_1_1Treatment.html", "classhospital_1_1Treatment" ],
+    [ "TriageNurseHandler", "classhospital_1_1TriageNurseHandler.html", "classhospital_1_1TriageNurseHandler" ],
+    [ "ADMITTING_MAX", "namespacehospital.html#aa30007c40c680521c10ad5b37bcde364", null ],
+    [ "MAX_SEVERITY", "namespacehospital.html#a9bde17990cebda89dea607042efd5b09", null ],
+    [ "MIN_SEVERITY", "namespacehospital.html#ad35c82f8e9d5968776156e69633ec2a5", null ],
+    [ "TRIAGE_MAX", "namespacehospital.html#afa09f9e23205c992a1e6024b4018d735", null ]
+];

@@ -103,6 +103,18 @@ ctest --test-dir build -R WorkItemTest --output-on-failure
 ./build/tividy
 ```
 
+## Generate API documentation
+
+Install [Doxygen](https://www.doxygen.nl/) if it is not already available, then
+run this from the repository root:
+
+```bash
+doxygen Doxyfile
+```
+
+The HTML documentation is generated in `doxygen/html/`; open
+`doxygen/html/index.html` in a browser.
+
 ## CI (GitHub Actions)
 
 Every push and pull request to main or dev runs
