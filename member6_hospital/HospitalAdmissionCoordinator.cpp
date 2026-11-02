@@ -8,6 +8,9 @@
 #include "Treatment.h"
 #include "WorkloadStrategy.h"
 
+#include "EventBus.h"
+#include "WorkflowEvent.h"
+
 #include <utility>
 
 namespace hospital
@@ -20,6 +23,9 @@ namespace
     const char* const INTAKE_PHASE = "Intake";
     const char* const ACTIVE_PHASE = "Active";
     const char* const REVIEW_PHASE = "Review";
+
+    const char* const RELEASE_MESSAGE =
+        "[System] Billing information generated and hospital records updated.";
 
     std::string describe(const Item* item)
     {
@@ -34,7 +40,7 @@ namespace
 
 HospitalAdmissionCoordinator::HospitalAdmissionCoordinator(
     ParticipantRegistry& registry, std::unique_ptr<AssignmentStrategy> strategy)
-    : chain(registry)
+    : chain(registry), eventBus(new EventBus())
 {
     if (!strategy)
     {
@@ -53,16 +59,25 @@ void HospitalAdmissionCoordinator::log(const std::string& line)
 
 void HospitalAdmissionCoordinator::publishIfReady(Container* ward)
 {
-    if (ward != nullptr &&
-        ward->getPhaseName() == REVIEW_PHASE &&
-        ward->isReadyToPublish())
+    if (ward == nullptr)
     {
-        ward->advancePhase();
-        onPhaseAdvanced(ward);
+        return;
     }
-}
+    if (ward->getPhaseName() != REVIEW_PHASE)
+    {
+        return;
+    }
+    if (!ward->isReadyToPublish())
+    {
+        return;
+    }
 
-// Tree events
+    ward->advancePhase();
+    onPhaseAdvanced(ward);
+
+    log(RELEASE_MESSAGE);
+    eventBus->publish(WorkflowEvent{"WardPublished", "", ward->getId()});
+}
 
 void HospitalAdmissionCoordinator::onItemAssigned(Item* item, Participant* assignee)
 {
@@ -127,8 +142,6 @@ void HospitalAdmissionCoordinator::onPhaseAdvanced(Container* container)
     log("Ward " + container->getId() + " moved to " + container->getPhaseName());
 }
 
-// Assignment and batch events
-
 void HospitalAdmissionCoordinator::onItemAdded(Item* item)
 {
     log("Treatment " + describe(item) + " added; doctor is assigned when the ward opens");
@@ -178,8 +191,6 @@ std::vector<std::string> HospitalAdmissionCoordinator::getHistoryAsStrings() con
 {
     return history;
 }
-
-// Hospital operations
 
 int HospitalAdmissionCoordinator::openWard(Container& ward)
 {
@@ -301,6 +312,8 @@ bool HospitalAdmissionCoordinator::resolveRejected(Treatment& item, bool accept,
 
     item.resolveReview(chief, finalSeverity, "Chief of Medicine override");
     item.setSeverity(finalSeverity);
+
+    publishIfReady(dynamic_cast<Container*>(item.getParent()));
     return true;
 }
 

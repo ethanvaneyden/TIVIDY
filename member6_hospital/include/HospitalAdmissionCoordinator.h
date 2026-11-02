@@ -1,10 +1,6 @@
 /**
  * @file HospitalAdmissionCoordinator.h
  * @brief Concrete Mediator for the Hospital scenario.
- *
- * Listens to events from the tree and coordinates the healthcare flow:
- * assignment of doctors, severity recording, phase progression, batch
- * approval through the chain, and the Chief of Medicine's override.
  */
 
 #pragma once
@@ -18,6 +14,7 @@
 #include <vector>
 
 class AssignmentEngine;
+class EventBus;
 class ParticipantRegistry;
 
 namespace hospital
@@ -34,15 +31,16 @@ class HospitalAdmissionCoordinator : public WorkflowMediator
          */
         struct BatchResult
         {
-            std::vector<std::string> approvedIds; /* Approved by the chain. */
-            std::vector<std::string> rejectedIds; /* Chain could not approve. */
-            std::vector<std::string> pendingIds;  /* Not completed (no severity yet). */
-            std::vector<std::string> skippedIds;  /* Already reviewed, or rejected earlier. */
+            std::vector<std::string> approvedIds;
+            std::vector<std::string> rejectedIds;
+            std::vector<std::string> pendingIds;
+            std::vector<std::string> skippedIds;
         };
 
     private:
         HospitalApprovalChain chain;
         std::unique_ptr<AssignmentEngine> engine;
+        std::unique_ptr<EventBus> eventBus;
         ParticipantRegistry* participants;
         std::vector<std::string> history;
         BatchResult lastBatch;

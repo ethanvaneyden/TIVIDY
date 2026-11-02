@@ -9,6 +9,10 @@
 #include "AssignmentEngine.h"
 #include "RoundRobinStrategy.h"
 
+#include "EventBus.h"
+#include "EducationObserver.h"
+#include "WorkflowEvent.h"
+
 #include <utility>
 
 namespace education
@@ -21,6 +25,10 @@ namespace education
         const char *const INTAKE_PHASE = "Intake";
         const char *const ACTIVE_PHASE = "Active";
         const char *const REVIEW_PHASE = "Review";
+        const char *const PUBLISH_PHASE = "Publish";
+
+        const char *const RELEASE_MESSAGE =
+            "[System] Marks released for all students. Emails sent and LMS synced.";
 
         std::string describe(const Item *item)
         {
@@ -30,7 +38,7 @@ namespace education
 
     AssignmentMarkingCoordinator::AssignmentMarkingCoordinator(
         ParticipantRegistry &registry, std::unique_ptr<AssignmentStrategy> strategy)
-        : chain(registry)
+        : chain(registry), eventBus(new EventBus())
     {
         if (!strategy)
         {
@@ -75,15 +83,25 @@ namespace education
 
     void AssignmentMarkingCoordinator::publishIfReady(Container *assignment)
     {
-        if (assignment != nullptr &&
-            assignment->getPhaseName() == REVIEW_PHASE &&
-            assignment->isReadyToPublish())
+        if (assignment == nullptr)
         {
-            assignment->advancePhase();
+            return;
         }
-    }
+        if (assignment->getPhaseName() != REVIEW_PHASE)
+        {
+            return;
+        }
+        if (!assignment->isReadyToPublish())
+        {
+            return;
+        }
 
-    // Tree events
+        assignment->advancePhase();
+        onPhaseAdvanced(assignment);
+
+        log(RELEASE_MESSAGE);
+        eventBus->publish(WorkflowEvent{"ResultsPublished", "", assignment->getId()});
+    }
 
     void AssignmentMarkingCoordinator::onItemAssigned(Item *item, Participant *assignee)
     {
@@ -108,13 +126,13 @@ namespace education
         log("Submission " + submission->getId() + " marked " + std::to_string(value) +
             (EducationPolicies::isValidMark(value) ? "" : " (invalid mark)"));
 
-        // Once every submission is marked, the assignment moves on to Review.
         Container *assignment = dynamic_cast<Container *>(submission->getParent());
         if (assignment != nullptr &&
             assignment->getPhaseName() == ACTIVE_PHASE &&
             assignment->isCompleted())
         {
             assignment->advancePhase();
+            onPhaseAdvanced(assignment);
         }
     }
 
@@ -152,8 +170,6 @@ namespace education
             assignMarkers(*container);
         }
     }
-
-    // Assignment and batch events
 
     void AssignmentMarkingCoordinator::onItemAdded(Item *item)
     {
@@ -208,8 +224,6 @@ namespace education
         return history;
     }
 
-    // Education operations
-
     int AssignmentMarkingCoordinator::openAssignment(Container &assignment)
     {
         if (assignment.getPhaseName() != INTAKE_PHASE)
@@ -218,7 +232,7 @@ namespace education
         }
 
         assignment.advancePhase();
-        assignMarkers(assignment);
+        onPhaseAdvanced(&assignment);
 
         int assigned = 0;
         const std::vector<Component *> children = assignment.getChildren();
@@ -248,7 +262,6 @@ namespace education
         for (std::vector<Component *>::const_iterator c = children.begin();
              c != children.end(); ++c)
         {
-            // getChildren() hands back Component*, so cast down to Submission*.
             Submission *submission = dynamic_cast<Submission *>(*c);
             if (submission == nullptr)
             {
@@ -260,7 +273,7 @@ namespace education
 
             if (submission->getStateName() == REJECTED_STATE)
             {
-                result.skippedIds.push_back(id); // waiting for the lecturer
+                result.skippedIds.push_back(id);
             }
             else if (!submission->isCompleted())
             {
@@ -272,7 +285,6 @@ namespace education
             }
             else
             {
-                // Fall back to the item's result if onItemCompleted() was missed.
                 if (!submission->hasMark() && submission->hasResult())
                 {
                     submission->setMark(submission->getResult());

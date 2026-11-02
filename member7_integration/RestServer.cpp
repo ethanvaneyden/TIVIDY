@@ -69,12 +69,24 @@ bool RestServer::run(const std::string &host, int port)
 {
     httplib::Server svr;
 
-    svr.set_default_headers({{"Access-Control-Allow-Origin", "*"},
-                             {"Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS"},
-                             {"Access-Control-Allow-Headers", "Content-Type"}});
+    // svr.set_default_headers({{"Access-Control-Allow-Origin", "*"},
+    //                          {"Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS"},
+    //                          {"Access-Control-Allow-Headers", "Content-Type"}});
 
-    svr.Options(R"(.*)", [](const httplib::Request &, httplib::Response &res)
-                { res.status = 200; });
+    // svr.Options(R"(.*)", [](const httplib::Request &, httplib::Response &res)
+    //             { res.status = 200; });
+
+    //CORS handler
+    svr.set_pre_routing_handler([](const httplib::Request& req, httplib::Response& res) {
+        res.set_header("Access-Control-Allow-Origin", "*");
+        res.set_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+        res.set_header("Access-Control-Allow-Headers", "Content-Type");
+        if (req.method == "OPTIONS") {
+            res.status = 200;
+            return httplib::Server::HandlerResponse::Handled;
+        }
+        return httplib::Server::HandlerResponse::Unhandled;
+    });
 
     svr.Get("/health", [](const httplib::Request &, httplib::Response &res)
             {
@@ -437,18 +449,6 @@ bool RestServer::run(const std::string &host, int port)
                 res.status = toHttpStatus(result);
                 res.set_content(resultJson(result), "application/json");
             });
-
-    //CORS handler
-    svr.set_pre_routing_handler([](const httplib::Request& req, httplib::Response& res) {
-        res.set_header("Access-Control-Allow-Origin", "*");
-        res.set_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
-        res.set_header("Access-Control-Allow-Headers", "Content-Type");
-        if (req.method == "OPTIONS") {
-            res.status = 200;
-            return httplib::Server::HandlerResponse::Handled;
-        }
-        return httplib::Server::HandlerResponse::Unhandled;
-    });
 
     return svr.listen(host, port);
 }

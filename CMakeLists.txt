@@ -85,11 +85,10 @@ add_library(tividy_core
     # --- Member 7: integration, factories ---
     member7_integration/EducationWorkflowFactory.cpp
     member7_integration/HospitalWorkflowFactory.cpp
-   # member7_integration/WorkflowDirector.cpp
-    #member7_integration/EducationWorkflowFactory.cpp
-   # member7_integration/HospitalWorkflowFactory.cpp
+    member7_integration/EducationWorkflowFactory.cpp
+    member7_integration/HospitalWorkflowFactory.cpp
     member7_integration/TividyWorkflow.cpp
-   # member7_integration/JsonSerializer.cpp
+    member7_integration/JsonSerializer.cpp
     member7_integration/RestServer.cpp
     member7_integration/EducationFacade.cpp
     member7_integration/HospitalFacade.cpp
@@ -123,6 +122,7 @@ enable_testing()
 add_executable(tividy_tests
     tests/test_assignment.cpp
     tests/test_commands.cpp
+    tests/test_education_facade.cpp
     tests/test_education.cpp
     tests/test_events.cpp
     tests/test_history.cpp
