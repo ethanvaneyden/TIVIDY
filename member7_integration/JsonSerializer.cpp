@@ -7,6 +7,8 @@
 #include "Component.h"
 #include "Item.h"
 #include "Participant.h"
+#include "JsonTreeVisitor.h"
+#include "ProgressReportVisitor.h"
 
 #include "json.h"
 #include <limits>
@@ -16,68 +18,40 @@ namespace
 {
     using Json = nlohmann::json;
 
-    Json serializeItemValue(const Item* item)
-    {
-        if(item == nullptr)
-            return nullptr;
-
-        Json value = {
-            {"id", item->getId()},
-            {"type", "Item"},
-            {"name", item->getName()},
-            {"state", item->getStateName()},
-            {"reviewMethod", item->getReviewMethod()}
-        };
-
-        const Participant* assignee = item->getAssignee();
-        value["assignee"] = assignee != nullptr
-            ? Json(assignee->getId())
-            : Json(nullptr);
-
-        const Participant* reviewer = item->getReviewer();
-        value["reviewer"] = reviewer != nullptr
-            ? Json(reviewer->getId())
-            : Json(nullptr);
-
-        return value;
-    }
-
-    Json serializeComponentValue(const Component* component)
-    {
-        if(component == nullptr)
-            return nullptr;
-
-        const Item* item = dynamic_cast<const Item*>(component);
-        if(item != nullptr)
-            return serializeItemValue(item);
-
-        Json children = Json::array();
-        for (const Component* child : component->getChildren())
-            children.push_back(serializeComponentValue(child));
-
-        return Json{
-            {"id", component->getId()},
-            {"type", component->getType()},
-            {"name", component->getName()},
-            {"children", std::move(children)}
-        };
-    }
-
     Json parseObject(const std::string& input)
     {
         Json value = Json::parse(input);
         return value.is_object() ? value : Json::object();
     }
+
+    /// Renders any component through the Visitor; null stays JSON null.
+    std::string render(const Component* component)
+    {
+        if(component == nullptr)
+            return "null";
+
+        JsonTreeVisitor visitor;
+        component->accept(visitor);
+        return visitor.result();
+    }
 }
 
 std::string JsonSerializer::serializeItem(const Item* item)
 {
-    return serializeItemValue(item).dump();
+    return render(item);
 }
 
 std::string JsonSerializer::serializeTree(const Component* root)
 {
-    return serializeComponentValue(root).dump();
+    return render(root);
+}
+
+std::string JsonSerializer::serializeProgress(const Component* root)
+{
+    ProgressReportVisitor report;
+    if(root != nullptr)
+        root->accept(report);
+    return report.toJson();
 }
 
 std::string JsonSerializer::serializeParticipant(const Participant* participant)
@@ -153,7 +127,7 @@ std::string JsonSerializer::serializeItemList(const std::vector<const Item*>& it
     for(const Item* item : items)
     {
         if(item == nullptr) continue;
-        Json entry = serializeItemValue(item);
+        Json entry = Json::parse(render(item));
         // Add owning container id so the frontend can group results.
         const Component* parent = item->getParent();
         entry["containerId"] = parent != nullptr ? parent->getId() : "";

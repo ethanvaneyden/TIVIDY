@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include "Component.h"
+#include "ComponentVisitor.h"
+#include "Container.h"
 #include "DepthFirstIterator.h"
 #include "StateFilterIterator.h"
 
@@ -29,6 +31,7 @@ public:
         return new StateFilterIterator(this, state);
     }
     bool isCompleted() const override { return false; }
+    void accept(ComponentVisitor&) const override {}
 };
 
 TEST(IteratorTest, DepthFirst)

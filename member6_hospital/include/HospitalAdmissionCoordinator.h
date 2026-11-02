@@ -1,10 +1,6 @@
 /**
  * @file HospitalAdmissionCoordinator.h
  * @brief Concrete Mediator for the Hospital scenario.
- *
- * Listens to events from the tree and coordinates the healthcare flow:
- * assignment of doctors, severity recording, phase progression, batch
- * approval through the chain, and the Chief of Medicine's override.
  */
 
 #pragma once
@@ -13,13 +9,11 @@
 #include "AssignmentStrategy.h"
 #include "HospitalApprovalChain.h"
 #include "ActionHistory.h"
-#include "EventBus.h"
 
 #include <memory>
 #include <string>
 #include <vector>
 
-class ActionHistory;
 class AssignmentEngine;
 class EventBus;
 class ParticipantRegistry;
@@ -38,22 +32,21 @@ class HospitalAdmissionCoordinator : public WorkflowMediator
          */
         struct BatchResult
         {
-            std::vector<std::string> approvedIds; /* Approved by the chain. */
-            std::vector<std::string> rejectedIds; /* Chain could not approve. */
-            std::vector<std::string> pendingIds;  /* Not completed (no severity yet). */
-            std::vector<std::string> skippedIds;  /* Already reviewed, or rejected earlier. */
+            std::vector<std::string> approvedIds;
+            std::vector<std::string> rejectedIds;
+            std::vector<std::string> pendingIds;
+            std::vector<std::string> skippedIds;
         };
 
     private:
         HospitalApprovalChain chain;
         std::unique_ptr<AssignmentEngine> engine;
+        std::unique_ptr<EventBus> eventBus;
         ParticipantRegistry* participants;
-        ActionHistory history;
-        EventBus eventBus;
+        ActionHistory actions; ///< Command invoker: the workflow's audit trail.
         BatchResult lastBatch;
 
-        void store(const std::string& line);
-        void record(const char* eventType, const std::string& recipientId, const std::string& line);
+        void log(const std::string& line);
         void publishIfReady(Container* ward);
 
     public:
@@ -85,13 +78,13 @@ class HospitalAdmissionCoordinator : public WorkflowMediator
         virtual void onApprovalResolved(Item* item, bool approved);
 
         // Utility
-
-        /** @return this coordinator's own history, whether or not it is linked. */
         virtual std::vector<std::string> getHistoryAsStrings() const;
-        virtual void setAssignmentStrategy(
-            std::unique_ptr<AssignmentStrategy> strategy) override;
-        virtual std::string getAssignmentStrategyName() const override;
-        virtual void executeCommand(std::unique_ptr<WorkCommand> command) override;
+
+        // Optional Mediator capabilities
+        int onContainerOpenRequested(Container* container) override;
+        bool setAssignmentStrategy(std::unique_ptr<AssignmentStrategy>& strategy) override;
+        std::string assignmentStrategyName() const override;
+        ActionHistory* getActionHistory() override;
 
         // Hospital operations
 

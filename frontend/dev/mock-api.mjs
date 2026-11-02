@@ -132,7 +132,7 @@ function send(res, status, body) {
     res.writeHead(status, {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
     });
     res.end(JSON.stringify(body));
@@ -231,7 +231,7 @@ const server = createServer(async (req, res) => {
     const config = SCENARIOS[parts[1]];
     if (!config) return notFound(res);
     const store = stores[parts[1]];
-    const body = req.method === 'POST' ? await readBody(req) : {};
+    const body = req.method === 'POST' || req.method === 'PUT' ? await readBody(req) : {};
 
     if (parts[2] === 'instances' && req.method === 'GET') return send(res, 200, [...store.keys()]);
     if (parts[2] === 'start' && req.method === 'POST') {
@@ -255,6 +255,25 @@ const server = createServer(async (req, res) => {
     }
     if (rest[0] === 'state' && req.method === 'GET') return send(res, 200, stateOf(instance));
     if (rest[0] === 'history' && req.method === 'GET') return send(res, 200, instance.history);
+    if (rest[0] === 'strategy' && req.method === 'GET') return send(res, 200, { strategy: instance.strategy ?? 'Workload' });
+    if (rest[0] === 'strategy' && req.method === 'PUT') {
+        if (!['Workload', 'RoundRobin', 'Random'].includes(body.strategy)) return notFound(res);
+        instance.strategy = body.strategy;
+        return ok(res);
+    }
+    if (rest[0] === 'progress' && req.method === 'GET') {
+        const items = instance.containers.flatMap((container) => container.items);
+        const done = items.filter((item) => item.state === 'Completed').length;
+        const states = {};
+        for (const item of items) states[item.state] = (states[item.state] ?? 0) + 1;
+        return send(res, 200, {
+            totalItems: items.length,
+            completedItems: done,
+            percentComplete: items.length ? Math.floor((done * 100) / items.length) : 0,
+            states,
+            containers: [],
+        });
+    }
     if (req.method !== 'POST') return notFound(res);
 
     const adder = parts[1] === 'education' ? 'submit' : 'admit';

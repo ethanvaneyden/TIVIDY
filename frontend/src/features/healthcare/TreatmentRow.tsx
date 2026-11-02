@@ -21,7 +21,7 @@ function TreatmentRow({ treatment, onView }: TreatmentRowProps) {
                 <span className="treatment-avatar" aria-hidden="true">{getInitials(treatment.name)}</span>
                 <div>
                     <h4>{treatment.name}</h4>
-                    <p>{treatment.age} years · {treatment.id}</p>
+                    <p>{treatment.age !== undefined ? `${treatment.age} years · ` : ''}{treatment.id}</p>
                 </div>
             </div>
             <div className="treatment-diagnosis">

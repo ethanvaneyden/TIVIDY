@@ -2,7 +2,8 @@
  * @file JsonSerializer.h
  * @brief Minimal JSON serializer for engine objects.
  *
- * Uses nlohmann/json for JSON generation and parsing.
+ * Uses nlohmann/json for JSON generation and parsing. Trees and items are
+ * rendered by Visitors (JsonTreeVisitor, ProgressReportVisitor).
 */
 
 #pragma once
@@ -28,6 +29,11 @@ class JsonSerializer
          * @brief Serialize a component tree.
         */
         static std::string serializeTree(const Component* root);
+
+        /**
+         * @brief Serialize monitoring figures for a tree (ProgressReportVisitor).
+        */
+        static std::string serializeProgress(const Component* root);
 
         /**
          * @brief Serialize a single item.

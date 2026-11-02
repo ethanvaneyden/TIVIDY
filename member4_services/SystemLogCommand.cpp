@@ -1,4 +1,4 @@
-#include "include//SystemLogCommand.h"
+#include "SystemLogCommand.h"
 
 SystemLogCommand::SystemLogCommand(const std::string& message)
     : message(message) {

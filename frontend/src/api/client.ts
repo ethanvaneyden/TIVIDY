@@ -54,7 +54,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
         throw new ApiError(
             response.status,
             code,
-            RESULT_MESSAGES[code] ?? detail ?? `Request failed (${response.status}).`,
+            detail ?? RESULT_MESSAGES[code] ?? `Request failed (${response.status}).`,
         );
     }
 

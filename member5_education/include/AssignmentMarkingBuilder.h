@@ -54,7 +54,7 @@ class AssignmentMarkingBuilder : public WorkflowBuilder
         virtual ~AssignmentMarkingBuilder();
 
         /** @brief Set the registry that will own every node built from now on. */
-        void setRegistry(WorkRegistry& workRegistry) override;
+        virtual void setRegistry(WorkRegistry& workRegistry) override;
 
         /**
          * @brief Start a new module.
@@ -77,6 +77,18 @@ class AssignmentMarkingBuilder : public WorkflowBuilder
          * @throws std::invalid_argument if the id is already registered.
          */
         virtual void buildItem(const std::string& itemId, const std::string& name) override;
+
+        using WorkflowBuilder::buildItem;
+
+        /**
+         * @brief Build a submission from generic attributes.
+         *
+         * "subjectId" (or "studentId") is the student number. Other
+         * attributes are stored on the submission for display.
+         */
+        virtual void buildItem(const std::string& itemId,
+                               const std::string& name,
+                               const std::map<std::string, std::string>& attributes) override;
 
         /**
          * @brief Add a submission with full student data under the current assignment.
@@ -118,3 +130,4 @@ class AssignmentMarkingBuilder : public WorkflowBuilder
 };
 
 }
+

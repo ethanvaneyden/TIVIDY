@@ -1,59 +1,19 @@
 /**
  * @file HospitalFacade.h
- * @brief Concrete ScenarioFacade for the healthcare scenario.
+ * @brief ScenarioFacade for the healthcare industry (hospital admission).
+ *
+ * All behaviour lives in WorkflowScenarioFacade; this class only supplies
+ * the hospital component family (HospitalWorkflowFactory).
 */
 
 #pragma once
 
-#include "ScenarioFacade.h"
+#include "WorkflowScenarioFacade.h"
 
-#include <memory>
-#include <string>
-#include <vector>
-
-class ParticipantRegistry;
-class Participant;
-class WorkflowInstance;
-
-class HospitalFacade : public ScenarioFacade
+class HospitalFacade : public WorkflowScenarioFacade
 {
-    private:
-        ParticipantRegistry* participants;
-        std::vector<std::unique_ptr<WorkflowInstance>> instances;
-
-        WorkflowInstance* findInstance(const std::string& instanceId) const;
-        Participant* operatorParticipant() const;
-
     public:
+        /** @brief Adds the hospital staff to the registry if they are not there yet. */
         explicit HospitalFacade(ParticipantRegistry* participants);
-        virtual ~HospitalFacade() override;
-
-        std::string scenarioName() const override;
-        std::string start(const std::string& name) override;
-        std::vector<std::string> listInstances() const override;
-        Root* getTree(const std::string& instanceId) const override;
-        std::vector<std::string> getHistory(const std::string& instanceId) const override;
-
-        CommandResult submit(const std::string& instanceId,
-                            const std::string& containerName) override;
-
-        CommandResult startItem(const std::string& instanceId,
-                                const std::string& itemId) override;
-
-        CommandResult completeItem(const std::string& instanceId,
-                                    const std::string& itemId,
-                                    int value) override;
-
-        CommandResult approveContainer(const std::string& instanceId,
-                                        const std::string& containerId) override;
-
-        CommandResult overrideItem(const std::string& instanceId,
-                                    const std::string& itemId,
-                                    int value,
-                                    bool accept) override;
-
-        CommandResult setStrategy(const std::string& instanceId,
-                                        const std::string& strategyName) override;
-
-        virtual std::string getStrategyName(const std::string& instanceId) const override;
+        ~HospitalFacade() override;
 };

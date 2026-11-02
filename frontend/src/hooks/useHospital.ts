@@ -9,12 +9,13 @@ import {
     type NewPatient,
 } from '../api/workflow';
 import { mapHospital } from '../api/mapWorkflow';
-import type { HospitalInstanceData } from '../types/types';
+import type { ProgressReport, HospitalInstanceData } from '../types/types';
 import { useWorkflowResource } from './useWorkflowResource';
 
 export interface HospitalController {
     hospital?: HospitalInstanceData;
     history: string[];
+    progress?: ProgressReport;
     loading: boolean;
     busy: boolean;
     loadError?: string;
@@ -39,6 +40,7 @@ export function useHospital(instanceId: string): HospitalController {
     return {
         hospital: resource.data,
         history: resource.history,
+        progress: resource.progress,
         loading: resource.loading,
         busy: resource.busy,
         loadError: resource.loadError,

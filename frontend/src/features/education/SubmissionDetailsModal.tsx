@@ -4,11 +4,6 @@ import CompleteItemModal from '../../components/modals/CompleteItemModal';
 import OverrideItemModal from '../../components/modals/OverrideItemModal';
 import type { Submission } from '../../types/types';
 
-// interface SubmissionDetailsModalProps {
-//     submission?: Submission;
-//     onHide: () => void;
-// }
-
 interface SubmissionDetailsModalProps {
     submission?: Submission;
     onHide: () => void;
@@ -17,33 +12,6 @@ interface SubmissionDetailsModalProps {
     onComplete?: (itemId: string, mark: number) => Promise<boolean>;
     onOverride?: (itemId: string, mark: number, accept: boolean) => Promise<boolean>;
 }
-
-// function SubmissionDetailsModal({ submission, onHide }: SubmissionDetailsModalProps) {
-//     return (
-//         <Modal show={Boolean(submission)} onHide={onHide} centered>
-//             <Modal.Header closeButton>
-//                 <Modal.Title>Submission details</Modal.Title>
-//             </Modal.Header>
-//             <Modal.Body>
-//                 {submission && (
-//                     <div className="submission-detail">
-//                         <span className="submission-detail-id">{submission.id}</span>
-//                         <h3>{submission.name}</h3>
-//                         <dl>
-//                             <div><dt>Status</dt><dd>{formatState(submission.state)}</dd></div>
-//                             <div><dt>Mark</dt><dd>{submission.mark ?? 'Not recorded'}</dd></div>
-//                             <div><dt>Assigned worker</dt><dd>{submission.assignee || 'Not assigned'}</dd></div>
-//                             <div><dt>Reviewer</dt><dd>{submission.reviewer || 'Not reviewed'}</dd></div>
-//                         </dl>
-//                     </div>
-//                 )}
-//             </Modal.Body>
-//             <Modal.Footer>
-//                 <Button variant="secondary" onClick={onHide}>Close</Button>
-//             </Modal.Footer>
-//         </Modal>
-//     );
-// }
 
 function SubmissionDetailsModal({
     submission,
@@ -72,7 +40,8 @@ function SubmissionDetailsModal({
         return onOverride(submission.id, value, accept);
     }
 
-    const canStart = submission?.state === 'available' || submission?.state === 'assigned';
+    const canStart = submission?.state === 'assigned';
+    const waitingForOpen = submission?.state === 'available';
     const canComplete = submission?.state === 'inprogress';
     const canOverride = submission?.state === 'rejected';
 
@@ -93,6 +62,12 @@ function SubmissionDetailsModal({
                                 <div><dt>Assigned worker</dt><dd>{submission.assignee || 'Not assigned'}</dd></div>
                                 <div><dt>Reviewer</dt><dd>{submission.reviewer || 'Not reviewed'}</dd></div>
                             </dl>
+                            {waitingForOpen && (
+                                <p className="detail-hint">No marker yet. Open the assignment to assign markers first.</p>
+                            )}
+                            {submission.state === 'rejected' && submission.rejectionReason && (
+                                <p className="detail-rejection">{submission.rejectionReason}</p>
+                            )}
                         </div>
                     )}
                 </Modal.Body>

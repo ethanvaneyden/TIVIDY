@@ -2,16 +2,18 @@
 
 #include "Root.h"
 
+#include <map>
 #include <string>
-
-class WorkRegistry;
 
 /**
  * @brief Scenario-neutral factory interface for workflow components.
  *
- * Concrete builders create and register education- or healthcare-specific
- * components. The WorkRegistry owns the component tree.
+ * GoF Builder - Builder interface. Concrete builders (education / hospital)
+ * create and register scenario-specific components step by step. The
+ * WorkRegistry owns the component tree.
  */
+class WorkRegistry;
+
 class WorkflowBuilder
 {
 public:
@@ -20,8 +22,13 @@ public:
      */
     virtual ~WorkflowBuilder() = default;
 
-    /** @brief Set the registry that owns components created by this builder. */
-    virtual void setRegistry(WorkRegistry& registry) = 0;
+    /**
+     * @brief Set the registry that will own every node built from now on.
+     *
+     * Lets a factory create a builder without knowing the registry yet.
+     * Builders that need no registry may ignore it.
+     */
+    virtual void setRegistry(WorkRegistry& registry) { (void)registry; }
 
     /** @brief Build and register the workflow root. */
     virtual void buildRoot(const std::string& rootName) = 0;
@@ -41,6 +48,21 @@ public:
      */
     virtual void buildItem(const std::string& itemId,
                            const std::string& name) = 0;
+
+    /**
+     * @brief Build a leaf item that carries scenario data.
+     *
+     * Recognised keys are scenario specific ("subjectId", "diagnosis", "age"
+     * ...). Builders ignore keys they do not understand, so callers stay
+     * generic. The default implementation ignores the attributes.
+     */
+    virtual void buildItem(const std::string& itemId,
+                           const std::string& name,
+                           const std::map<std::string, std::string>& attributes)
+    {
+        (void)attributes;
+        buildItem(itemId, name);
+    }
 
     /** @return the root built so far (owned by the registry), or nullptr. */
     virtual Root* getRoot() const = 0;

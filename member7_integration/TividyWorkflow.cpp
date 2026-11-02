@@ -26,7 +26,12 @@ TividyWorkflow::~TividyWorkflow() = default;
 ScenarioFacade* TividyWorkflow::findFacade(const std::string& instanceId) const
 {
     const auto it = instanceIndex.find(instanceId);
-    return it != instanceIndex.end() ? it->second : nullptr;
+    lastFacade = it != instanceIndex.end() ? it->second : nullptr;
+    if(lastFacade == nullptr)
+    {
+        missingInstance = instanceId;
+    }
+    return lastFacade;
 }
 
 std::string TividyWorkflow::startEducation(const std::string& name)
@@ -79,7 +84,8 @@ CommandResult TividyWorkflow::submit(const std::string& instanceId,
     {
         return CommandResult::NotFound;
     }
-    return facade->submit(instanceId, containerName);
+    const CommandResult result = facade->submit(instanceId, containerName);
+    return result;
 }
 
 CommandResult TividyWorkflow::startItem(const std::string& instanceId,
@@ -90,7 +96,8 @@ CommandResult TividyWorkflow::startItem(const std::string& instanceId,
     {
         return CommandResult::NotFound;
     }
-    return facade->startItem(instanceId, itemId);
+    const CommandResult result = facade->startItem(instanceId, itemId);
+    return result;
 }
 
 CommandResult TividyWorkflow::completeItem(const std::string& instanceId,
@@ -101,7 +108,8 @@ CommandResult TividyWorkflow::completeItem(const std::string& instanceId,
     {
         return CommandResult::NotFound;
     }
-    return facade->completeItem(instanceId, itemId, value);
+    const CommandResult result = facade->completeItem(instanceId, itemId, value);
+    return result;
 }
 
 CommandResult TividyWorkflow::approveContainer(const std::string& instanceId,
@@ -112,7 +120,8 @@ CommandResult TividyWorkflow::approveContainer(const std::string& instanceId,
     {
         return CommandResult::NotFound;
     }
-    return facade->approveContainer(instanceId, containerId);
+    const CommandResult result = facade->approveContainer(instanceId, containerId);
+    return result;
 }
 
 CommandResult TividyWorkflow::overrideItem(const std::string& instanceId,
@@ -123,7 +132,8 @@ CommandResult TividyWorkflow::overrideItem(const std::string& instanceId,
     {
         return CommandResult::NotFound;
     }
-    return facade->overrideItem(instanceId, itemId, value, accept);
+    const CommandResult result = facade->overrideItem(instanceId, itemId, value, accept);
+    return result;
 }
 
 CommandResult TividyWorkflow::admitPatient(const std::string& instanceId,
@@ -146,11 +156,82 @@ CommandResult TividyWorkflow::setStrategy(const std::string& instanceId,
     {
         return CommandResult::NotFound;
     }
-    return facade->setStrategy(instanceId, strategyName);
+    const CommandResult result = facade->setStrategy(instanceId, strategyName);
+    return result;
 }
 
 std::string TividyWorkflow::getStrategyName(const std::string& instanceId) const
 {
     ScenarioFacade* facade = findFacade(instanceId);
     return facade != nullptr ? facade->getStrategyName(instanceId) : "";
+}
+
+CommandResult TividyWorkflow::addContainer(const std::string& instanceId, const std::string& name)
+{
+    ScenarioFacade* facade = findFacade(instanceId);
+    if(facade == nullptr)
+    {
+        return CommandResult::NotFound;
+    }
+    const CommandResult result = facade->addContainer(instanceId, name);
+    return result;
+}
+
+CommandResult TividyWorkflow::addItem(const std::string& instanceId, const std::string& containerId,
+                                      const std::string& name,
+                                      const std::map<std::string, std::string>& attributes)
+{
+    ScenarioFacade* facade = findFacade(instanceId);
+    if(facade == nullptr)
+    {
+        return CommandResult::NotFound;
+    }
+    const CommandResult result = facade->addItem(instanceId, containerId, name, attributes);
+    return result;
+}
+
+CommandResult TividyWorkflow::openContainer(const std::string& instanceId, const std::string& containerId)
+{
+    ScenarioFacade* facade = findFacade(instanceId);
+    if(facade == nullptr)
+    {
+        return CommandResult::NotFound;
+    }
+    const CommandResult result = facade->openContainer(instanceId, containerId);
+    return result;
+}
+
+CommandResult TividyWorkflow::removeInstance(const std::string& instanceId)
+{
+    ScenarioFacade* facade = findFacade(instanceId);
+    if(facade == nullptr)
+    {
+        return CommandResult::NotFound;
+    }
+    const CommandResult result = facade->removeInstance(instanceId);
+    if(result == CommandResult::Success)
+    {
+        instanceIndex.erase(instanceId);
+    }
+    return result;
+}
+
+std::string TividyWorkflow::lastMessage() const
+{
+    if(lastFacade == nullptr)
+    {
+        return missingInstance.empty() ? std::string() : "Instance not found: " + missingInstance;
+    }
+    return lastFacade->lastMessage();
+}
+
+bool TividyWorkflow::hasScenario(const std::string& scenario) const
+{
+    return scenario == "education" || scenario == "healthcare";
+}
+
+bool TividyWorkflow::ownsInstance(const std::string& scenario, const std::string& instanceId) const
+{
+    const ScenarioFacade* facade = findFacade(instanceId);
+    return facade != nullptr && facade->scenarioName() == scenario;
 }

@@ -14,6 +14,7 @@
 
 #include "Item.h"
 
+#include <map>
 #include <string>
 
 namespace hospital
@@ -45,6 +46,9 @@ class Treatment : public Item
         const std::string& getPatientName() const;
         const std::string& getPatientId() const;
         const std::string& getDiagnosis() const;
+
+        /** @brief Stored attributes plus patientId and diagnosis. */
+        std::map<std::string, std::string> getAttributes() const override;
 
         /** @brief Record or update the working diagnosis. */
         void setDiagnosis(const std::string& value);

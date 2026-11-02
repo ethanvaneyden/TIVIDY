@@ -1,18 +1,20 @@
-#pragma once
+#ifndef TIVIDY_STARTITEMCOMMAND_H
+#define TIVIDY_STARTITEMCOMMAND_H
 
 #include "WorkCommand.h"
-
+#include "Item.h"
 #include <string>
 
-class Item;
-
+/** @brief Command: the assignee starts work on an item (Assigned -> InProgress). */
 class StartItemCommand : public WorkCommand
 {
 private:
-    Item* item;
+    Item *item;
 
 public:
-    explicit StartItemCommand(Item* item);
+    explicit StartItemCommand(Item *item);
     void execute() override;
     std::string description() const override;
 };
+
+#endif

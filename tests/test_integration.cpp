@@ -1,13 +1,9 @@
-/**
- * @file test_integration.cpp
- * @brief Integration tests for Member 7's facade and REST layer.
- */
-
 #include <gtest/gtest.h>
 
 #include "TividyWorkflow.h"
 #include "JsonSerializer.h"
 #include "EducationWorkflowFactory.h"
+#include "EducationPolicies.h"
 #include "ParticipantRegistry.h"
 #include "Container.h"
 #include "Root.h"
@@ -17,6 +13,10 @@
 #include "WorkflowInstance.h"
 
 #include <algorithm>
+
+// ---------------------------------------------------------------------------
+// Facade smoke tests
+// ---------------------------------------------------------------------------
 
 TEST(TividyWorkflowTest, StartEducationReturnsNonEmptyId)
 {
@@ -50,6 +50,10 @@ TEST(TividyWorkflowTest, OperationsOnMissingInstanceReturnNotFound)
     EXPECT_EQ(wf.completeItem("does-not-exist", "i1", 10), CommandResult::NotFound);
 }
 
+// ---------------------------------------------------------------------------
+// JSON serializer tests
+// ---------------------------------------------------------------------------
+
 TEST(JsonSerializerTest, GetStringExtractsField)
 {
     std::string body = R"({"name":"Alice","age":30})";
@@ -77,143 +81,182 @@ TEST(JsonSerializerTest, SerializeErrorProducesValidObject)
     EXPECT_EQ(json, "{\"error\":\"NotFound\",\"message\":\"instance\"}");
 }
 
-////=================Waiting for member 6
-///============================================
-///============================================
-///============================================
+// ---------------------------------------------------------------------------
+// End-to-end integration tests
+// ---------------------------------------------------------------------------
 
-// class IntegrationTest : public ::testing::Test
-// {
-//     protected:
-//         TividyWorkflow workflow;
-// };
+namespace
+{
+    /* Walk the container for the item with the given id. */
+    Item* findItem(Root* root, const std::string& itemId)
+    {
+        Container* container = dynamic_cast<Container*>(root->getChildren().front());
+        if (container == nullptr) return nullptr;
+        const std::vector<Component*> children = container->getChildren();
+        for (unsigned i = 0; i < children.size(); ++i)
+        {
+            if (children[i]->getId() == itemId)
+            {
+                return dynamic_cast<Item*>(children[i]);
+            }
+        }
+        return nullptr;
+    }
 
-// TEST_F(IntegrationTest, StartEducationReturnsNonEmptyId)
-// {
-//     std::string id = workflow.startEducation("Test Assignment");
-//     ASSERT_FALSE(id.empty());
-// }
+    /* Complete every item in the container. Container then advances to Review. */
+    bool completeAllItems(TividyWorkflow& workflow,
+                          const std::string& instanceId,
+                          Root* root)
+    {
+        Container* container = dynamic_cast<Container*>(root->getChildren().front());
+        if (container == nullptr) return false;
+        const std::vector<Component*> children = container->getChildren();
+        for (unsigned i = 0; i < children.size(); ++i)
+        {
+            const std::string id = children[i]->getId();
+            if (workflow.startItem(instanceId, id) != CommandResult::Success)
+            {
+                return false;
+            }
+            /* Use a mark in the TA band (50-70) so approval succeeds. */
+            if (workflow.completeItem(instanceId, id, 60) != CommandResult::Success)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+}
 
-// TEST_F(IntegrationTest, StartHealthcareReturnsNonEmptyId)
-// {
-//     // This test will fail until Member 6's code is integrated.
-//     std::string id = workflow.startHealthcare("Test Patient");
-//     ASSERT_FALSE(id.empty());
-// }
+TEST(IntegrationTest, EducationHappyPath_CompleteAndApprove)
+{
+    TividyWorkflow workflow;
+    const std::string instanceId = workflow.startEducation("Happy Path Test");
+    ASSERT_FALSE(instanceId.empty());
 
-// TEST_F(IntegrationTest, EducationHappyPath_CompleteAndApprove)
-// {
-//     // 1. Start an instance.
-//     std::string instanceId = workflow.startEducation("Happy Path Test");
-//     ASSERT_FALSE(instanceId.empty());
+    Root* root = workflow.getTree(instanceId);
+    ASSERT_NE(root, nullptr);
+    ASSERT_FALSE(root->getChildren().empty());
+    Container* container = dynamic_cast<Container*>(root->getChildren()[0]);
+    ASSERT_NE(container, nullptr);
 
-//     // 2. Submit work.
-//     CommandResult result = workflow.submit(instanceId, "Alice Submission");
-//     ASSERT_EQ(result, CommandResult::Success);
+    /* Complete every item so the container advances to Review. */
+    ASSERT_TRUE(completeAllItems(workflow, instanceId, root));
+    EXPECT_EQ(container->getPhaseName(), "Review");
 
-//     // 3. Assume we know the tree structure from the demo director.
-//     // Find the item ID. (This is a bit brittle but okay for an integration test).
-//     Root* root = workflow.getTree(instanceId);
-//     ASSERT_NE(root, nullptr);
-//     ASSERT_FALSE(root->getChildren().empty());
-//     Container* container = dynamic_cast<Container*>(root->getChildren()[0]);
-//     ASSERT_NE(container, nullptr);
-//     ASSERT_FALSE(container->getChildren().empty());
-//     Item* item = dynamic_cast<Item*>(container->getChildren()[0]);
-//     ASSERT_NE(item, nullptr);
-//     std::string itemId = item->getId();
+    /* Approve the container: chain runs per-item, all marks are in the TA
+     * band, so every item should become reviewed. */
+    ASSERT_EQ(CommandResult::Success,
+              workflow.approveContainer(instanceId, container->getId()));
 
-//     // 4. Start the item.
-//     result = workflow.startItem(instanceId, itemId);
-//     ASSERT_EQ(result, CommandResult::Success);
+    /* Every item in the container should be Completed and reviewed. */
+    const std::vector<Component*> children = container->getChildren();
+    for (unsigned i = 0; i < children.size(); ++i)
+    {
+        Item* item = dynamic_cast<Item*>(children[i]);
+        ASSERT_NE(item, nullptr);
+        EXPECT_EQ(item->getStateName(), "Completed");
+        EXPECT_TRUE(item->isReviewed());
+        ASSERT_NE(item->getReviewer(), nullptr);
+    }
+}
 
-//     // 5. Complete the item with a mark in an approving band (e.g., 60 -> TA).
-//     result = workflow.completeItem(instanceId, itemId, 60);
-//     ASSERT_EQ(result, CommandResult::Success);
+TEST(IntegrationTest, EducationRejectedPath_OverrideCompletes)
+{
+    TividyWorkflow workflow;
+    const std::string instanceId = workflow.startEducation("Rejected Path Test");
+    ASSERT_FALSE(instanceId.empty());
 
-//     // 6. Approve the container (batch approval).
-//     std::string containerId = container->getId();
-//     result = workflow.approveContainer(instanceId, containerId);
-//     ASSERT_EQ(result, CommandResult::Success);
+    Root* root = workflow.getTree(instanceId);
+    ASSERT_NE(root, nullptr);
+    Container* container = dynamic_cast<Container*>(root->getChildren()[0]);
+    ASSERT_NE(container, nullptr);
 
-//     // 7. Check the final state of the item.
-//     item = dynamic_cast<Item*>(root->getChildren()[0]->getChildren()[0]);
-//     ASSERT_NE(item, nullptr);
-//     ASSERT_EQ(item->getStateName(), "Completed");
-//     ASSERT_TRUE(item->isReviewed());
-//     ASSERT_NE(item->getReviewer(), nullptr);
-//     ASSERT_EQ(item->getReviewer()->getRole(), education::EducationRoles::ta());
-// }
+    /* Find the first item, start and complete it with a failing mark. */
+    const std::string itemId = container->getChildren().front()->getId();
+    ASSERT_EQ(CommandResult::Success, workflow.startItem(instanceId, itemId));
+    ASSERT_EQ(CommandResult::Success, workflow.completeItem(instanceId, itemId, 30));
 
-// TEST_F(IntegrationTest, EducationRejectedPath_OverrideCompletes)
-// {
-//     // Start an instance and submit an item.
-//     std::string instanceId = workflow.startEducation("Rejected Path Test");
-//     ASSERT_FALSE(instanceId.empty());
-//     workflow.submit(instanceId, "Bob Submission");
+    /* Complete all other items with passing marks so the container
+     * advances to Review. */
+    const std::vector<Component*> children = container->getChildren();
+    for (unsigned i = 1; i < children.size(); ++i)
+    {
+        const std::string id = children[i]->getId();
+        ASSERT_EQ(CommandResult::Success, workflow.startItem(instanceId, id));
+        ASSERT_EQ(CommandResult::Success, workflow.completeItem(instanceId, id, 60));
+    }
+    EXPECT_EQ(container->getPhaseName(), "Review");
 
-//     Root* root = workflow.getTree(instanceId);
-//     Container* container = dynamic_cast<Container*>(root->getChildren()[0]);
-//     Item* item = dynamic_cast<Item*>(container->getChildren()[0]);
-//     ASSERT_NE(item, nullptr);
-//     std::string itemId = item->getId();
+    /* Run the batch approval. The 30-mark item falls off the chain and
+     * becomes Rejected; the 60-mark items are approved. */
+    ASSERT_EQ(CommandResult::Success,
+              workflow.approveContainer(instanceId, container->getId()));
 
-//     // Start and complete the item with a failing mark (e.g., 30).
-//     workflow.startItem(instanceId, itemId);
-//     workflow.completeItem(instanceId, itemId, 30);
+    Item* rejected = findItem(root, itemId);
+    ASSERT_NE(rejected, nullptr);
+    ASSERT_EQ(rejected->getStateName(), "Rejected");
+    EXPECT_FALSE(rejected->isReviewed());
 
-//     // Approve the container. The chain should fail to approve item 30.
-//     std::string containerId = container->getId();
-//     workflow.approveContainer(instanceId, containerId);
+    /* Lecturer overrides the rejection. This resolves the item and
+     * records the reviewer. */
+    ASSERT_EQ(CommandResult::Success,
+              workflow.overrideItem(instanceId, itemId, 30, true));
 
-//     // Check that the item is now Rejected.
-//     item = dynamic_cast<Item*>(root->getChildren()[0]->getChildren()[0]);
-//     ASSERT_NE(item, nullptr);
-//     ASSERT_EQ(item->getStateName(), "Rejected");
+    rejected = findItem(root, itemId);
+    ASSERT_NE(rejected, nullptr);
+    EXPECT_EQ(rejected->getStateName(), "Completed");
+    EXPECT_TRUE(rejected->isReviewed());
 
-//     // Override the rejection (accept the mark).
-//     CommandResult result = workflow.overrideItem(instanceId, itemId, 30, true);
-//     ASSERT_EQ(result, CommandResult::Success);
+    /* Container should now be ready to publish. */
+    EXPECT_EQ(container->getPhaseName(), "Publish");
+}
 
-//     // Check that the item is now considered reviewed and complete.
-//     item = dynamic_cast<Item*>(root->getChildren()[0]->getChildren()[0]);
-//     ASSERT_NE(item, nullptr);
-//     ASSERT_EQ(item->getStateName(), "Completed");
-//     ASSERT_TRUE(item->isReviewed());
-// }
+TEST(IntegrationTest, TwoInstancesAreIsolated)
+{
+    TividyWorkflow workflow;
+    const std::string id1 = workflow.startEducation("Isolation A");
+    const std::string id2 = workflow.startEducation("Isolation B");
+    ASSERT_FALSE(id1.empty());
+    ASSERT_FALSE(id2.empty());
+    ASSERT_NE(id1, id2);
 
-// TEST_F(IntegrationTest, TwoInstancesAreIsolated)
-// {
-//     // Create two separate education instances.
-//     std::string id1 = workflow.startEducation("Isolation A");
-//     std::string id2 = workflow.startEducation("Isolation B");
-//     ASSERT_FALSE(id1.empty());
-//     ASSERT_FALSE(id2.empty());
-//     ASSERT_NE(id1, id2);
+    Root* root1 = workflow.getTree(id1);
+    Root* root2 = workflow.getTree(id2);
+    ASSERT_NE(root1, nullptr);
+    ASSERT_NE(root2, nullptr);
 
-//     // Submit and modify work in the first instance.
-//     workflow.submit(id1, "Submission X");
-//     Root* root1 = workflow.getTree(id1);
-//     Container* container1 = dynamic_cast<Container*>(root1->getChildren()[0]);
-//     Item* item1 = dynamic_cast<Item*>(container1->getChildren()[0]);
+    Container* c1 = dynamic_cast<Container*>(root1->getChildren()[0]);
+    Container* c2 = dynamic_cast<Container*>(root2->getChildren()[0]);
+    ASSERT_NE(c1, nullptr);
+    ASSERT_NE(c2, nullptr);
 
-//     // The second instance should be untouched by the operations on the first.
-//     Root* root2 = workflow.getTree(id2);
-//     Container* container2 = dynamic_cast<Container*>(root2->getChildren()[0]);
-//     // Assuming the demo tree starts with a default container, which is empty.
-//     ASSERT_TRUE(container2->getChildren().empty());
-// }
+    /* Both start with the same demo director content; verify items are
+     * distinct objects. */
+    Item* item1 = dynamic_cast<Item*>(c1->getChildren()[0]);
+    Item* item2 = dynamic_cast<Item*>(c2->getChildren()[0]);
+    ASSERT_NE(item1, nullptr);
+    ASSERT_NE(item2, nullptr);
+    ASSERT_NE(item1, item2);
 
-// TEST_F(IntegrationTest, JsonSerializerProducesValidJson)
-// {
-//     std::string instanceId = workflow.startEducation("JSON Test");
-//     workflow.submit(instanceId, "JSON Submission");
-//     Root* root = workflow.getTree(instanceId);
+    /* Mutating item1 must not affect item2. */
+    const std::string originalState2 = item2->getStateName();
+    ASSERT_EQ(CommandResult::Success,
+              workflow.startItem(id1, item1->getId()));
+    EXPECT_EQ(item1->getStateName(), "InProgress");
+    EXPECT_EQ(item2->getStateName(), originalState2);
+}
 
-//     std::string json = JsonSerializer::serializeTree(root);
-//     ASSERT_FALSE(json.empty());
+TEST(IntegrationTest, JsonSerializerProducesValidJson)
+{
+    TividyWorkflow workflow;
+    const std::string instanceId = workflow.startEducation("JSON Test");
+    Root* root = workflow.getTree(instanceId);
+    ASSERT_NE(root, nullptr);
 
-//     // Use the serializer's own parser to verify the JSON.
-//     std::string rootId = JsonSerializer::getString(json, "id", "");
-//     ASSERT_FALSE(rootId.empty());
-// }
+    const std::string json = JsonSerializer::serializeTree(root);
+    ASSERT_FALSE(json.empty());
+
+    const std::string rootId = JsonSerializer::getString(json, "id", "");
+    ASSERT_FALSE(rootId.empty());
+}
