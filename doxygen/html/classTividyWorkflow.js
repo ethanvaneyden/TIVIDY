@@ -1,0 +1,26 @@
+var classTividyWorkflow =
+[
+    [ "TividyWorkflow", "classTividyWorkflow.html#ab1e5ab730f5b92c621aa4d42a369f8ae", null ],
+    [ "~TividyWorkflow", "classTividyWorkflow.html#ad4df5a649bbb0f406522625d9710b948", null ],
+    [ "TividyWorkflow", "classTividyWorkflow.html#a5e26123cec4c19a411f6f088f1c9c8be", null ],
+    [ "admitPatient", "classTividyWorkflow.html#aad39ca86f7afcc3f5cb36672ea850ace", null ],
+    [ "approveContainer", "classTividyWorkflow.html#a97787ed70143c1510611ed84c8cb4ca8", null ],
+    [ "completeItem", "classTividyWorkflow.html#a46cd3d2d9b00e02a530bb2a9b55491f2", null ],
+    [ "findFacade", "classTividyWorkflow.html#abcb867362834e70b9ad473fcb6cc798f", null ],
+    [ "getHistory", "classTividyWorkflow.html#afe760bee2d97877a59890426d0b1345e", null ],
+    [ "getStrategyName", "classTividyWorkflow.html#a99f4210430548d86e6dcb27c3dcbeca3", null ],
+    [ "getTree", "classTividyWorkflow.html#a9a6d9410d6b9493e3ab3d7ed7153f5df", null ],
+    [ "listEducationInstances", "classTividyWorkflow.html#aa8b93f2c462161d75c00263019228892", null ],
+    [ "listHealthcareInstances", "classTividyWorkflow.html#ad0d827cd16cdc30f8c3d31cdea923d74", null ],
+    [ "operator=", "classTividyWorkflow.html#aafe78d1d3eb5736e2f2ee49e6d5f8c73", null ],
+    [ "overrideItem", "classTividyWorkflow.html#a59830f82e24205f961915d064824b13c", null ],
+    [ "setStrategy", "classTividyWorkflow.html#a0e768bcdc11e48374019bacb8d11b76d", null ],
+    [ "startEducation", "classTividyWorkflow.html#ad44b8cd201f95635bd6099a49fea0d83", null ],
+    [ "startHealthcare", "classTividyWorkflow.html#a7bd7a4a9e2182cb21ceab33560bc7e9a", null ],
+    [ "startItem", "classTividyWorkflow.html#ab1a8c5e702fc4cbd1b6012bd617e4b02", null ],
+    [ "submit", "classTividyWorkflow.html#ad6b5a1849d3ee16fc298235dc1a5468b", null ],
+    [ "educationFacade", "classTividyWorkflow.html#a8d8627168154fb9dd26974a517a1e341", null ],
+    [ "healthcareFacade", "classTividyWorkflow.html#ae3860b924565866bf970fbd5021b3cc8", null ],
+    [ "instanceIndex", "classTividyWorkflow.html#a5a374cc7cc6a6f579c09344ad7332e4d", null ],
+    [ "participants", "classTividyWorkflow.html#a3482ed63bfe44d49566269ea72bcf8f1", null ]
+];
