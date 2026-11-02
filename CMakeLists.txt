@@ -60,6 +60,7 @@ add_library(tividy_core
     member4_services/RecordResultCommand.cpp
     member4_services/OverrideItemCommand.cpp
     member4_services/AssignItemCommand.cpp
+    member4_services/StartItemCommand.cpp
     member4_services/ApproveContainerCommand.cpp
     member4_services/AdvancePhaseCommand.cpp
     member4_services/SystemLogCommand.cpp

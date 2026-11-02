@@ -1,13 +1,17 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "Container.h"
+#include "AssignmentStrategy.h"
 #include "HospitalAdmissionBuilder.h"
 #include "HospitalAdmissionCoordinator.h"
 #include "HospitalAdmissionDirector.h"
+#include "HospitalPolicies.h"
 #include "HospitalSeed.h"
 #include "InvalidTransition.h"
 #include "Item.h"
@@ -19,6 +23,17 @@
 
 namespace
 {
+class LastParticipantStrategy : public AssignmentStrategy
+{
+public:
+    Participant* assign(const std::vector<Participant*>& pool) override
+    {
+        return pool.empty() ? nullptr : pool.back();
+    }
+
+    std::string name() const override { return "LastParticipant"; }
+};
+
 class TrackedStrategy : public WorkloadStrategy
 {
 public:
@@ -46,8 +61,11 @@ private:
 class TrackedCoordinator : public hospital::HospitalAdmissionCoordinator
 {
 public:
-    TrackedCoordinator(ParticipantRegistry& participants, bool& destroyed)
-        : HospitalAdmissionCoordinator(participants), destroyed(destroyed)
+    TrackedCoordinator(ParticipantRegistry& participants,
+                       std::unique_ptr<AssignmentStrategy> strategy,
+                       bool& destroyed)
+        : HospitalAdmissionCoordinator(participants, std::move(strategy)),
+          destroyed(destroyed)
     {
     }
 
@@ -73,8 +91,8 @@ std::unique_ptr<WorkflowInstance> makeHospitalInstance(
         std::move(registry),
         root,
         std::unique_ptr<WorkflowMediator>(
-            new hospital::HospitalAdmissionCoordinator(participants)),
-        std::unique_ptr<AssignmentStrategy>(new WorkloadStrategy()),
+            new hospital::HospitalAdmissionCoordinator(
+                participants, std::unique_ptr<AssignmentStrategy>(new WorkloadStrategy()))),
         std::move(builder),
         &participants));
 }
@@ -103,7 +121,6 @@ TEST(WorkflowInstanceTest, RejectsUnregisteredDescendants)
                          std::move(registry),
                          root,
                          std::move(coordinator),
-                         std::unique_ptr<AssignmentStrategy>(new WorkloadStrategy()),
                          std::move(builder),
                          &participants),
         std::invalid_argument);
@@ -151,10 +168,10 @@ TEST(WorkflowInstanceTest, OwnsItsCoordinatorStrategyAndBuilder)
             "healthcare",
             std::move(registry),
             root,
-            std::unique_ptr<WorkflowMediator>(
-                new TrackedCoordinator(participants, coordinatorDestroyed)),
-            std::unique_ptr<AssignmentStrategy>(
-                new TrackedStrategy(strategyDestroyed)),
+            std::unique_ptr<WorkflowMediator>(new TrackedCoordinator(
+                participants,
+                std::unique_ptr<AssignmentStrategy>(new TrackedStrategy(strategyDestroyed)),
+                coordinatorDestroyed)),
             std::move(builder),
             &participants);
 
@@ -166,4 +183,95 @@ TEST(WorkflowInstanceTest, OwnsItsCoordinatorStrategyAndBuilder)
     EXPECT_TRUE(coordinatorDestroyed);
     EXPECT_TRUE(strategyDestroyed);
     EXPECT_TRUE(builderDestroyed);
+}
+
+TEST(WorkflowInstanceTest, ReplacesCoordinatorStrategyAtRuntime)
+{
+    ParticipantRegistry participants;
+    hospital::HospitalSeed::seedParticipants(participants);
+    const std::vector<Participant*> doctors =
+        participants.getByRole(hospital::HospitalRoles::doctor());
+    ASSERT_GE(doctors.size(), 2u);
+
+    std::unique_ptr<WorkRegistry> registry(new WorkRegistry());
+    std::unique_ptr<hospital::HospitalAdmissionBuilder> builder(
+        new hospital::HospitalAdmissionBuilder(*registry));
+    hospital::HospitalAdmissionDirector(*builder).buildEmptyWard();
+    Root* root = builder->getRoot();
+
+    std::unique_ptr<hospital::HospitalAdmissionCoordinator> coordinator(
+        new hospital::HospitalAdmissionCoordinator(participants));
+    hospital::HospitalAdmissionCoordinator* coordinatorView = coordinator.get();
+    WorkflowInstance instance(
+        "runtime-strategy",
+        "healthcare",
+        std::move(registry),
+        root,
+        std::move(coordinator),
+        std::move(builder),
+        &participants);
+
+    instance.addItem("W1", "TRT-A", "Patient A", "P-A");
+    instance.addItem("W1", "TRT-B", "Patient B", "P-B");
+    EXPECT_THROW(instance.setAssignmentStrategy(nullptr), std::invalid_argument);
+    EXPECT_EQ(instance.getAssignmentStrategyName(), "Workload");
+    instance.setAssignmentStrategy(std::unique_ptr<AssignmentStrategy>(
+        new LastParticipantStrategy()));
+    EXPECT_EQ(instance.getAssignmentStrategyName(), "LastParticipant");
+
+    EXPECT_EQ(coordinatorView->openWard(*instance.getContainer("W1")), 2);
+    EXPECT_EQ(instance.getItem("TRT-A")->getAssignee(), doctors.back());
+    EXPECT_EQ(instance.getItem("TRT-B")->getAssignee(), doctors.back());
+
+    instance.startItem("TRT-A");
+    instance.completeItem("TRT-A", 2);
+    const std::vector<std::string> history = instance.getHistory();
+    EXPECT_NE(std::find(history.begin(), history.end(), "Started item TRT-A"), history.end());
+    EXPECT_NE(std::find(history.begin(), history.end(), "Recorded result: 2"), history.end());
+}
+
+TEST(WorkflowInstanceTest, HospitalCoordinatorWiresEventBusAndActionHistory)
+{
+    ParticipantRegistry participants;
+    hospital::HospitalSeed::seedParticipants(participants);
+    std::unique_ptr<WorkRegistry> registry(new WorkRegistry());
+    std::unique_ptr<hospital::HospitalAdmissionBuilder> builder(
+        new hospital::HospitalAdmissionBuilder(*registry));
+    hospital::HospitalAdmissionDirector(*builder).buildEmptyWard();
+    Root* root = builder->getRoot();
+
+    std::unique_ptr<hospital::HospitalAdmissionCoordinator> coordinator(
+        new hospital::HospitalAdmissionCoordinator(participants));
+    hospital::HospitalAdmissionCoordinator* coordinatorView = coordinator.get();
+    WorkflowInstance instance(
+        "hospital-events",
+        "healthcare",
+        std::move(registry),
+        root,
+        std::move(coordinator),
+        std::move(builder),
+        &participants);
+
+    instance.addItem("W1", "TRT-EVENT", "Patient Event", "P-EVENT");
+    Container* ward = instance.getContainer("W1");
+    ASSERT_NE(ward, nullptr);
+    ASSERT_EQ(coordinatorView->openWard(*ward), 1);
+
+    Item* treatment = instance.getItem("TRT-EVENT");
+    ASSERT_NE(treatment, nullptr);
+    treatment->start();
+    treatment->complete(2);
+
+    std::vector<Participant*> chiefs =
+        participants.getByRole(hospital::HospitalRoles::chiefOfMedicine());
+    ASSERT_FALSE(chiefs.empty());
+    coordinatorView->onContainerApprovalRequested(ward, chiefs.front());
+
+    const std::vector<std::string> history = instance.getHistory();
+    EXPECT_TRUE(std::any_of(history.begin(), history.end(), [](const std::string& entry) {
+        return entry.find("Billing information generated") != std::string::npos;
+    }));
+    EXPECT_TRUE(std::any_of(history.begin(), history.end(), [](const std::string& entry) {
+        return entry.find("moved to Publish") != std::string::npos;
+    }));
 }

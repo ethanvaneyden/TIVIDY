@@ -2,6 +2,7 @@
 #include "Participant.h"
 #include "Item.h"
 #include "WorkflowMediator.h"
+#include <stdexcept>
 #include <utility>
 
 AssignmentEngine::AssignmentEngine(std::unique_ptr<AssignmentStrategy> s) : strategy(std::move(s))
@@ -10,6 +11,9 @@ AssignmentEngine::AssignmentEngine(std::unique_ptr<AssignmentStrategy> s) : stra
 
 void AssignmentEngine::setStrategy(std::unique_ptr<AssignmentStrategy> s)
 {
+    if (!s)
+        throw std::invalid_argument("Assignment strategy cannot be null");
+
     strategy = std::move(s);
 }
 std::string AssignmentEngine::strategyName() const

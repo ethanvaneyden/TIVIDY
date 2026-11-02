@@ -19,6 +19,7 @@
 #include "AssignmentMarkingDirector.h"
 #include "EducationSeed.h"
 #include "EducationPolicies.h"
+#include "EducationWorkflowFactory.h"
 
 #include "WorkloadStrategy.h"
 #include "RoundRobinStrategy.h"
@@ -121,7 +122,6 @@ std::string EducationFacade::start(const std::string& name)
         std::move(registry),
         root,
         std::move(coordinator),
-        std::move(strategy),
         std::move(runtimeBuilder),
         participants));
 

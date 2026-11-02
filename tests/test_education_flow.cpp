@@ -8,6 +8,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include "AssignmentMarkingBuilder.h"
 #include "AssignmentMarkingCoordinator.h"
 #include "AssignmentMarkingDirector.h"
@@ -720,15 +721,15 @@ namespace
         director.buildDemoWorkflow();
         Root* root = builder.getRoot();
 
-        std::unique_ptr<WorkflowMediator> coordinator(
-            new AssignmentMarkingCoordinator(participants));
         std::unique_ptr<AssignmentStrategy> strategy(new WorkloadStrategy());
+        std::unique_ptr<WorkflowMediator> coordinator(
+            new AssignmentMarkingCoordinator(participants, std::move(strategy)));
         std::unique_ptr<WorkflowBuilder> runtimeBuilder(
             new AssignmentMarkingBuilder(*registry));
 
         return std::unique_ptr<WorkflowInstance>(new WorkflowInstance(
             "edu_1", "education", std::move(registry), root, std::move(coordinator),
-            std::move(strategy), std::move(runtimeBuilder), &participants));
+            std::move(runtimeBuilder), &participants));
     }
 }
 
@@ -767,6 +768,42 @@ TEST_F(EducationInstanceTest, AddItemWorksForAnAssignmentThatIsNotTheLastBuilt)
 
     EXPECT_EQ(AssignmentMarkingDirector::assignmentId(),
               instance->getItem("SUB-NEW")->getParent()->getId());
+}
+
+TEST(AssignmentMarkingEventIntegrationTest, PublicationIsAuditedAndObserved)
+{
+    ParticipantRegistry participants;
+    EducationSeed::seedParticipants(participants);
+    WorkRegistry registry;
+    AssignmentMarkingBuilder builder(registry);
+    builder.buildRoot("COS 214");
+    builder.buildContainer("A1", "Assignment 1");
+    builder.buildItem("SUB-EVENT", "Student Event");
+
+    AssignmentMarkingCoordinator coordinator(participants);
+    builder.getRoot()->setMediator(&coordinator);
+    Container* assignment = builder.getCurrentContainer();
+    Submission* submission =
+        dynamic_cast<Submission*>(registry.get("SUB-EVENT"));
+    ASSERT_NE(assignment, nullptr);
+    ASSERT_NE(submission, nullptr);
+
+    std::vector<Participant*> lecturers =
+        participants.getByRole(EducationRoles::lecturer());
+    ASSERT_FALSE(lecturers.empty());
+
+    ASSERT_EQ(coordinator.openAssignment(*assignment), 1);
+    submission->start();
+    submission->complete(85);
+    coordinator.onContainerApprovalRequested(assignment, lecturers.front());
+
+    const std::vector<std::string> history = coordinator.getHistoryAsStrings();
+    EXPECT_TRUE(std::any_of(history.begin(), history.end(), [](const std::string& entry) {
+        return entry.find("Marks released for all students") != std::string::npos;
+    }));
+    EXPECT_TRUE(std::any_of(history.begin(), history.end(), [](const std::string& entry) {
+        return entry.find("moved to Publish") != std::string::npos;
+    }));
 }
 
 TEST_F(EducationInstanceTest, AddItemToAnUnknownParentChangesNothing)
