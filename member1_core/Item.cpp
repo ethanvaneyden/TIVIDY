@@ -1,5 +1,6 @@
 
 #include "Item.h"
+#include "ComponentVisitor.h"
 #include "CreatedState.h"
 #include "ItemState.h"
 #include "InvalidTransition.h"
@@ -42,8 +43,25 @@ Iterator* Item::createIterator(const std::string& state) {
     return new StateFilterIterator(this, state);
 }
 
+void Item::accept(ComponentVisitor& visitor) const {
+    visitor.visitItem(*this);
+}
+
+void Item::setAttribute(const std::string& key, const std::string& value) {
+    if (key.empty()) throw std::invalid_argument("Attribute key cannot be empty");
+    attributes[key] = value;
+}
+
+std::map<std::string, std::string> Item::getAttributes() const {
+    return attributes;
+}
+
 bool Item::isCompleted() const {
     return state ? state->isCompleted() : false;
+}
+
+bool Item::isRejected() const {
+    return state ? state->isRejected() : false;
 }
 
 // ==========================================

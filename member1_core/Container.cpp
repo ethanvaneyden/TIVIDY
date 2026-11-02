@@ -1,5 +1,6 @@
 // Container.cpp
 #include "Container.h"
+#include "ComponentVisitor.h"
 #include "DepthFirstIterator.h"
 #include "IntakePhase.h"
 #include "InvalidTransition.h"
@@ -84,4 +85,8 @@ Iterator* Container::createIterator() { return new DepthFirstIterator(this); }
 
 Iterator* Container::createIterator(const std::string& state) {
     return new StateFilterIterator(this, state);
+}
+
+void Container::accept(ComponentVisitor& visitor) const {
+    visitor.visitContainer(*this);
 }

@@ -63,6 +63,11 @@ WorkflowInstance::WorkflowInstance(
     validateRegisteredComponents(this->root, *this->registry);
 
     this->root->setMediator(this->coordinator.get());
+
+    // A mediator that uses assignment strategies takes over the strategy so
+    // that changing it really changes who receives work. Mediators without
+    // strategy support leave it with the instance.
+    this->coordinator->setAssignmentStrategy(this->strategy);
 }
 
 WorkflowInstance::~WorkflowInstance() = default;
@@ -153,13 +158,26 @@ void WorkflowInstance::addItem(
     const std::string& name,
     const std::string& subjectId)
 {
+    addItem(parentContainerId, itemId, name, subjectId, std::map<std::string, std::string>());
+}
+
+void WorkflowInstance::addItem(
+    const std::string& parentContainerId,
+    const std::string& itemId,
+    const std::string& name,
+    const std::string& subjectId,
+    const std::map<std::string, std::string>& attributes)
+{
     if (!builder) throw std::runtime_error("No builder configured for dynamic items");
 
     Component* c = registry->get(parentContainerId);
     Container* parent = dynamic_cast<Container*>(c);
     if (!parent) throw std::runtime_error("Parent container not found: " + parentContainerId);
 
-    builder->buildItem(itemId, name);
+    std::map<std::string, std::string> buildAttributes(attributes);
+    if (!subjectId.empty() && buildAttributes.find("subjectId") == buildAttributes.end())
+        buildAttributes["subjectId"] = subjectId;
+    builder->buildItem(itemId, name, buildAttributes);
     Item* item = getItem(itemId);
     if (!item)
         throw std::logic_error("WorkflowBuilder did not register the created item");
@@ -181,6 +199,16 @@ void WorkflowInstance::addItem(
         throw std::logic_error("WorkflowBuilder attached the item to the wrong container");
     }
     coordinator->onItemAdded(item);
+}
+
+int WorkflowInstance::openContainer(const std::string& containerId) {
+    Container* container = getContainer(containerId);
+    if (!container) throw std::runtime_error("Container not found: " + containerId);
+    return coordinator->onContainerOpenRequested(container);
+}
+
+ActionHistory* WorkflowInstance::getActionHistory() const {
+    return coordinator->getActionHistory();
 }
 
 void WorkflowInstance::startItem(const std::string& itemId) {
@@ -247,10 +275,17 @@ void WorkflowInstance::setStrategy(std::unique_ptr<AssignmentStrategy> newStrate
     {
         throw std::invalid_argument("WorkflowInstance::setStrategy: null strategy");
     }
-    strategy = std::move(newStrategy);
+    // The mediator owns the strategy it assigns with; fall back to keeping
+    // it here when the mediator does not use strategies.
+    if (!coordinator->setAssignmentStrategy(newStrategy))
+    {
+        strategy = std::move(newStrategy);
+    }
 }
 
 std::string WorkflowInstance::getStrategyName() const
 {
-    return strategy != nullptr ? strategy->name() : "None";
+    if (strategy != nullptr)
+        return strategy->name();
+    return coordinator->assignmentStrategyName();
 }

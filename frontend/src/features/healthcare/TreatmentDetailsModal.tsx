@@ -4,11 +4,6 @@ import CompleteItemModal from '../../components/modals/CompleteItemModal';
 import OverrideItemModal from '../../components/modals/OverrideItemModal';
 import type { Treatment } from '../../types/types';
 
-// interface TreatmentDetailsModalProps {
-//     treatment?: Treatment;
-//     onHide: () => void;
-// }
-
 interface TreatmentDetailsModalProps {
     treatment?: Treatment;
     onHide: () => void;
@@ -17,35 +12,6 @@ interface TreatmentDetailsModalProps {
     onComplete?: (itemId: string, severity: number) => Promise<boolean>;
     onOverride?: (itemId: string, severity: number, accept: boolean) => Promise<boolean>;
 }
-
-// function TreatmentDetailsModal({ treatment, onHide }: TreatmentDetailsModalProps) {
-//     return (
-//         <Modal show={Boolean(treatment)} onHide={onHide} centered>
-//             <Modal.Header closeButton>
-//                 <Modal.Title>Treatment details</Modal.Title>
-//             </Modal.Header>
-//             <Modal.Body>
-//                 {treatment && (
-//                     <div className="submission-detail">
-//                         <span className="submission-detail-id">{treatment.id}</span>
-//                         <h3>{treatment.name}</h3>
-//                         <dl>
-//                             <div><dt>Age</dt><dd>{treatment.age}</dd></div>
-//                             <div><dt>Diagnosis</dt><dd>{treatment.diagnosis || 'Not recorded'}</dd></div>
-//                             <div><dt>Severity</dt><dd>{treatment.severity ?? 'Not recorded'}</dd></div>
-//                             <div><dt>Status</dt><dd>{formatState(treatment.state)}</dd></div>
-//                             <div><dt>Assigned worker</dt><dd>{treatment.assignee || 'Not assigned'}</dd></div>
-//                             <div><dt>Reviewer</dt><dd>{treatment.reviewer || 'Not reviewed'}</dd></div>
-//                         </dl>
-//                     </div>
-//                 )}
-//             </Modal.Body>
-//             <Modal.Footer>
-//                 <Button variant="secondary" onClick={onHide}>Close</Button>
-//             </Modal.Footer>
-//         </Modal>
-//     );
-// }
 
 function TreatmentDetailsModal({
     treatment,
@@ -74,7 +40,8 @@ function TreatmentDetailsModal({
         return onOverride(treatment.id, value, accept);
     }
 
-    const canStart = treatment?.state === 'available' || treatment?.state === 'assigned';
+    const canStart = treatment?.state === 'assigned';
+    const waitingForOpen = treatment?.state === 'available';
     const canComplete = treatment?.state === 'inprogress';
     const canOverride = treatment?.state === 'rejected';
 
@@ -90,13 +57,19 @@ function TreatmentDetailsModal({
                             <span className="submission-detail-id">{treatment.id}</span>
                             <h3>{treatment.name}</h3>
                             <dl>
-                                <div><dt>Age</dt><dd>{treatment.age}</dd></div>
+                                <div><dt>Age</dt><dd>{treatment.age ?? 'Not recorded'}</dd></div>
                                 <div><dt>Diagnosis</dt><dd>{treatment.diagnosis || 'Not recorded'}</dd></div>
                                 <div><dt>Severity</dt><dd>{treatment.severity ?? 'Not recorded'}</dd></div>
                                 <div><dt>Status</dt><dd>{formatState(treatment.state)}</dd></div>
                                 <div><dt>Assigned worker</dt><dd>{treatment.assignee || 'Not assigned'}</dd></div>
                                 <div><dt>Reviewer</dt><dd>{treatment.reviewer || 'Not reviewed'}</dd></div>
                             </dl>
+                            {waitingForOpen && (
+                                <p className="detail-hint">No doctor yet. Open the ward to assign doctors first.</p>
+                            )}
+                            {treatment.state === 'rejected' && treatment.rejectionReason && (
+                                <p className="detail-rejection">{treatment.rejectionReason}</p>
+                            )}
                         </div>
                     )}
                 </Modal.Body>
@@ -124,9 +97,9 @@ function TreatmentDetailsModal({
                 itemName={showCompleteModal ? treatment?.name : undefined}
                 title="Record severity"
                 label="Severity"
-                min={1}
+                min={0}
                 max={10}
-                hint="Severity 1-3 is approved by the triage nurse, 4-6 by the admitting doctor, 7-10 by the chief of medicine."
+                hint="Severity 1-3 is approved by the triage nurse, 4-6 by the admitting doctor, 7-10 by the chief of medicine. 0 cannot be approved and is sent to the chief of medicine."
                 busy={busy}
                 primaryClassName="healthcare-primary-button"
                 onHide={() => setShowCompleteModal(false)}
