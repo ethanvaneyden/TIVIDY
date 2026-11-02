@@ -21,7 +21,7 @@ demonstrated with two scenarios:
 | _Stefan van Staden_ (u25031784) | `member3_routing/`     | Assignment & traversal (Strategy, Iterator)                                               |
 | _Christian Nunes_ (u25138309)   | `member4_services/`    | Commands, events, history (Command, Abstract Mediator, Observer, Chain of Responsibility) |
 | _Kyle Pillay_ (u23545756)       | `member5_education/`   | Education scenario (Concrete Mediator, Concrete Leaf/Composite, Concrete Chain)           |
-| _Rochaan_ (u25045785)           | `member6_hospital/`    | Hospital scenario (Concrete Mediator, Concrete Leaf/Composite, Concrete Chain)            |
+| _Rochaan Verster_ (u25045785)           | `member6_hospital/`    | Hospital scenario (Concrete Mediator, Concrete Leaf/Composite, Concrete Chain)            |
 | _Lesego Tebeile_ (u25143230)    | `member7_integration/` | CI/CD, Scenario Setup factory, Builder, Facade                                            |
 
 ---

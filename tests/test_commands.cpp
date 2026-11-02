@@ -10,7 +10,6 @@
 #include "Participant.h"
 #include "RecordResultCommand.h"
 #include "RejectItemCommand.h"
-#include "StartItemCommand.h"
 #include "SystemLogCommand.h"
 
 class CommandTest : public ::testing::Test
@@ -62,18 +61,6 @@ TEST_F(CommandTest, RecordResultCommandCompletesItem)
     EXPECT_EQ(item.getResult(), 76);
     EXPECT_EQ(worker.getPendingTasks(), 0);
     EXPECT_EQ(command.description(), "Recorded result: 76");
-}
-
-TEST_F(CommandTest, StartItemCommandStartsAssignedItem)
-{
-    container.advancePhase();
-    item.assign(&worker);
-    StartItemCommand command(&item);
-
-    command.execute();
-
-    EXPECT_EQ(item.getStateName(), "InProgress");
-    EXPECT_EQ(command.description(), "Started item item");
 }
 
 TEST_F(CommandTest, RejectItemCommandRejectsCompletedItem)

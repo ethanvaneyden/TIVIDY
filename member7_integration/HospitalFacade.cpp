@@ -1,7 +1,7 @@
 /**
  * @file HospitalFacade.cpp
  * @brief Implementation of HospitalFacade.
-*/
+ */
 #include "HospitalFacade.h"
 
 #include "WorkflowInstance.h"
@@ -15,10 +15,9 @@
 
 #include "HospitalAdmissionBuilder.h"
 #include "HospitalAdmissionDirector.h"
-#include "HospitalAdmissionCoordinator.h"      
-#include "HospitalPolicies.h"         
-#include "HospitalSeed.h"             
-#include "HospitalWorkflowFactory.h"
+#include "HospitalAdmissionCoordinator.h"
+#include "HospitalPolicies.h"
+#include "HospitalSeed.h"
 
 #include "WorkflowMediator.h"
 #include "AssignmentStrategy.h"
@@ -27,7 +26,12 @@
 #include "RandomStrategy.h"
 #include "WorkflowBuilder.h"
 
+#include "ActionHistory.h"
+#include "OverrideItemCommand.h"
+#include "WorkCommand.h"
+
 #include <functional>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -74,6 +78,11 @@ HospitalFacade::HospitalFacade(ParticipantRegistry* participants)
     {
         throw std::invalid_argument("HospitalFacade: participant registry required");
     }
+
+    if(this->participants->getByRole(hospital::HospitalRoles::chiefOfMedicine()).empty())
+    {
+        hospital::HospitalSeed::seedParticipants(*this->participants);
+    }
 }
 
 HospitalFacade::~HospitalFacade() = default;
@@ -85,15 +94,12 @@ std::string HospitalFacade::scenarioName() const
 
 std::string HospitalFacade::start(const std::string& name)
 {
-    /* Static counter for instance IDs — matches EducationFacade.*/
     static int counter = 0;
     std::string instanceId = "hc_" + std::to_string(++counter);
 
-    /* 1. Build the tree into a fresh WorkRegistry.*/
     std::unique_ptr<WorkRegistry> registry(new WorkRegistry());
     hospital::HospitalAdmissionBuilder builder(*registry);
 
-    /* 2. Build the demo workflow via the scenario Director.*/
     hospital::HospitalAdmissionDirector director(builder);
     director.buildDemoWard();
 
@@ -103,27 +109,29 @@ std::string HospitalFacade::start(const std::string& name)
         throw std::runtime_error("HospitalFacade: builder produced no root");
     }
 
-    /* 3. Create the hospital mediator.*/
-    HospitalWorkflowFactory factory;
-    std::unique_ptr<AssignmentStrategy> strategy = factory.createStrategy();
-    std::unique_ptr<WorkflowMediator> coordinator(
-        new hospital::HospitalAdmissionCoordinator(*participants, std::move(strategy)));
+    hospital::HospitalAdmissionCoordinator* coordinatorPtr =
+        new hospital::HospitalAdmissionCoordinator(
+            *participants,
+            std::unique_ptr<AssignmentStrategy>(new WorkloadStrategy()));
+    std::unique_ptr<WorkflowMediator> coordinator(coordinatorPtr);
 
-    /* 4. Create a runtime builder (for addContainer/addItem during execution).*/
-    std::unique_ptr<WorkflowBuilder> runtimeBuilder = factory.createBuilder();
-    runtimeBuilder->setRegistry(*registry);
+    std::unique_ptr<AssignmentStrategy> strategy(new WorkloadStrategy());
 
-    /* 5. Assemble the instance.*/
+    std::unique_ptr<WorkflowBuilder> runtimeBuilder(
+        new hospital::HospitalAdmissionBuilder(*registry));
+
     std::unique_ptr<WorkflowInstance> instance(new WorkflowInstance(
         instanceId,
         name,
         std::move(registry),
         root,
         std::move(coordinator),
+        std::move(strategy),
         std::move(runtimeBuilder),
         participants));
 
     instances.push_back(std::move(instance));
+    coordinators[instanceId] = coordinatorPtr;
 
     return instanceId;
 }
@@ -175,12 +183,15 @@ CommandResult HospitalFacade::startItem(const std::string& instanceId,
                                         const std::string& itemId)
 {
     WorkflowInstance* instance = findInstance(instanceId);
-    if(instance == nullptr)
+    hospital::HospitalAdmissionCoordinator* coordinator = findCoordinator(instanceId);
+    if(instance == nullptr || coordinator == nullptr)
     {
         return CommandResult::NotFound;
     }
+
     return classify([&]()
     {
+        openIfNeeded(instance, coordinator);
         instance->startItem(itemId);
     });
 }
@@ -215,8 +226,7 @@ CommandResult HospitalFacade::approveContainer(const std::string& instanceId,
         return CommandResult::NotFound;
     }
 
-    /* The operator for container approval is the Chief of Medicine.*/
-    Participant* op = firstWithRole(participants, "Chief");
+    Participant* op = operatorParticipant();
     if(op == nullptr)
     {
         return CommandResult::NotFound;
@@ -239,7 +249,7 @@ CommandResult HospitalFacade::overrideItem(const std::string& instanceId,
         return CommandResult::NotFound;
     }
 
-    Participant* op = firstWithRole(participants, "Chief");
+    Participant* op = operatorParticipant();
     if(op == nullptr)
     {
         return CommandResult::NotFound;
@@ -257,10 +267,13 @@ CommandResult HospitalFacade::overrideItem(const std::string& instanceId,
         return CommandResult::InvalidTransition;
     }
 
+    const std::string reason = accept ? "Accepted" : "Overridden";
+
     return classify([&]()
     {
-        instance->overrideItem(itemId, op, effectiveValue,
-                               accept ? "Accepted" : "Overridden");
+        ActionHistory invoker;
+        invoker.execute(std::unique_ptr<WorkCommand>(
+            new OverrideItemCommand(item, op, effectiveValue, reason)));
     });
 }
 
@@ -276,9 +289,45 @@ WorkflowInstance* HospitalFacade::findInstance(const std::string& instanceId) co
     return nullptr;
 }
 
+hospital::HospitalAdmissionCoordinator* HospitalFacade::findCoordinator(const std::string& instanceId) const
+{
+    std::map<std::string, hospital::HospitalAdmissionCoordinator*>::const_iterator found =
+        coordinators.find(instanceId);
+    return found == coordinators.end() ? nullptr : found->second;
+}
+
 Participant* HospitalFacade::operatorParticipant() const
 {
-    return firstWithRole(participants, "Chief");
+    return firstWithRole(participants, hospital::HospitalRoles::chiefOfMedicine());
+}
+
+void HospitalFacade::openIfNeeded(WorkflowInstance* instance,
+                                  hospital::HospitalAdmissionCoordinator* coordinator)
+{
+    Container* ward = instance->getContainer(hospital::HospitalAdmissionDirector::wardId());
+    if(ward != nullptr &&
+       ward->getPhaseName() == "Intake" &&
+       !ward->getChildren().empty())
+    {
+        coordinator->openWard(*ward);
+    }
+}
+
+std::unique_ptr<AssignmentStrategy> HospitalFacade::makeStrategy(const std::string& strategyName)
+{
+    if (strategyName == "Workload")
+    {
+        return std::unique_ptr<AssignmentStrategy>(new WorkloadStrategy());
+    }
+    if (strategyName == "RoundRobin")
+    {
+        return std::unique_ptr<AssignmentStrategy>(new RoundRobinStrategy());
+    }
+    if (strategyName == "Random")
+    {
+        return std::unique_ptr<AssignmentStrategy>(new RandomStrategy());
+    }
+    return std::unique_ptr<AssignmentStrategy>();
 }
 
 CommandResult HospitalFacade::setStrategy(const std::string& instanceId,
@@ -290,25 +339,13 @@ CommandResult HospitalFacade::setStrategy(const std::string& instanceId,
         return CommandResult::NotFound;
     }
 
-    std::unique_ptr<AssignmentStrategy> newStrategy;
-    if (strategyName == "Workload")
-    {
-        newStrategy = std::unique_ptr<AssignmentStrategy>(new WorkloadStrategy());
-    }
-    else if (strategyName == "RoundRobin")
-    {
-        newStrategy = std::unique_ptr<AssignmentStrategy>(new RoundRobinStrategy());
-    }
-    else if (strategyName == "Random")
-    {
-        newStrategy = std::unique_ptr<AssignmentStrategy>(new RandomStrategy());
-    }
-    else
+    std::unique_ptr<AssignmentStrategy> s = makeStrategy(strategyName);
+    if (!s)
     {
         return CommandResult::NotFound;
     }
 
-    instance->setStrategy(std::move(newStrategy));
+    instance->setStrategy(std::move(s));
     return CommandResult::Success;
 }
 

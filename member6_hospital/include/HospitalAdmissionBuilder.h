@@ -43,7 +43,7 @@ class HospitalAdmissionBuilder : public WorkflowBuilder
         virtual ~HospitalAdmissionBuilder();
 
         /** @brief Set the registry that will own every node built from now on. */
-        void setRegistry(WorkRegistry& workRegistry) override;
+        void setRegistry(WorkRegistry& workRegistry);
 
         /**
          * @brief Start a new hospital.

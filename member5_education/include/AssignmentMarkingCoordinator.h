@@ -12,14 +12,13 @@
 #include "WorkflowMediator.h"
 #include "AssignmentStrategy.h"
 #include "EducationApprovalChain.h"
-#include "ActionHistory.h"
-#include "EventBus.h"
 
 #include <memory>
 #include <string>
 #include <vector>
 
 class AssignmentEngine;
+class EventBus;
 class ParticipantRegistry;
 
 namespace education
@@ -36,18 +35,18 @@ class AssignmentMarkingCoordinator : public WorkflowMediator
          */
         struct BatchResult
         {
-            std::vector<std::string> approvedIds; /* Approved by the chain. */
-            std::vector<std::string> rejectedIds; /* Chain could not approve. */
-            std::vector<std::string> pendingIds;  /* Not completed (no mark yet). */
-            std::vector<std::string> skippedIds;  /* Already reviewed, or rejected earlier. */
+            std::vector<std::string> approvedIds;
+            std::vector<std::string> rejectedIds;
+            std::vector<std::string> pendingIds;
+            std::vector<std::string> skippedIds;
         };
 
     private:
         EducationApprovalChain chain;
         std::unique_ptr<AssignmentEngine> engine;
+        std::unique_ptr<EventBus> eventBus;
         ParticipantRegistry* participants;
-        ActionHistory history;
-        EventBus eventBus;
+        std::vector<std::string> history;
         BatchResult lastBatch;
 
         void log(const std::string& line);
@@ -87,10 +86,6 @@ class AssignmentMarkingCoordinator : public WorkflowMediator
 
         // Utility
         virtual std::vector<std::string> getHistoryAsStrings() const;
-        virtual void setAssignmentStrategy(
-            std::unique_ptr<AssignmentStrategy> strategy) override;
-        virtual std::string getAssignmentStrategyName() const override;
-        virtual void executeCommand(std::unique_ptr<WorkCommand> command) override;
 
         // Education operations
 

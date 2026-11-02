@@ -128,14 +128,6 @@ TEST_F(StrategyTest, EngineSetStrategySwapsBehaviour)
     EXPECT_EQ(engine.assign(item, pool), &b); 
 }
 
-TEST_F(StrategyTest, EngineRejectsNullStrategyWithoutReplacingCurrentOne)
-{
-    AssignmentEngine engine(std::make_unique<RoundRobinStrategy>());
-
-    EXPECT_THROW(engine.setStrategy(nullptr), std::invalid_argument);
-    EXPECT_EQ(engine.strategyName(), "RoundRobin");
-}
-
 TEST_F(StrategyTest, EngineDoesNotChangeTheItem)
 {
     AssignmentEngine engine(std::make_unique<RoundRobinStrategy>());

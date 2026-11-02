@@ -19,12 +19,17 @@
 #include "AssignmentMarkingDirector.h"
 #include "EducationSeed.h"
 #include "EducationPolicies.h"
-#include "EducationWorkflowFactory.h"
 
 #include "WorkloadStrategy.h"
 #include "RoundRobinStrategy.h"
 #include "RandomStrategy.h"
 
+#include "ActionHistory.h"
+#include "OverrideItemCommand.h"
+#include "WorkCommand.h"
+
+#include <functional>
+#include <memory>
 #include <stdexcept>
 
 namespace
@@ -40,7 +45,6 @@ namespace
         return candidates.empty() ? nullptr : candidates.front();
     }
 
-    /* Shared helper: translate exceptions into CommandResult. */
     CommandResult classify(std::function<void()> body)
     {
         try
@@ -70,6 +74,11 @@ EducationFacade::EducationFacade(ParticipantRegistry* participants)
     {
         throw std::invalid_argument("EducationFacade: participant registry required");
     }
+
+    if(this->participants->getByRole(education::EducationRoles::lecturer()).empty())
+    {
+        education::EducationSeed::seedParticipants(*this->participants);
+    }
 }
 
 EducationFacade::~EducationFacade() = default;
@@ -81,15 +90,11 @@ std::string EducationFacade::scenarioName() const
 
 std::string EducationFacade::start(const std::string& name)
 {
-    /* Static counter for instance IDs — matches earlier behavior. */
     static int counter = 0;
     std::string instanceId = "edu_" + std::to_string(++counter);
 
-    /* 1. Build the tree into a fresh WorkRegistry using the education builder. */
     std::unique_ptr<WorkRegistry> registry(new WorkRegistry());
     education::AssignmentMarkingBuilder builder(*registry);
-
-    /* 2. Build the demo workflow (module + assignment + sample submissions). */
     education::AssignmentMarkingDirector director(builder);
     director.buildDemoWorkflow();
 
@@ -99,29 +104,29 @@ std::string EducationFacade::start(const std::string& name)
         throw std::runtime_error("EducationFacade: builder produced no root");
     }
 
-    /* 3. Create the education mediator. */
-    EducationWorkflowFactory factory;
-    std::unique_ptr<AssignmentStrategy> strategy = factory.createStrategy();
-    std::unique_ptr<WorkflowMediator> coordinator(
-        new education::AssignmentMarkingCoordinator(*participants, std::move(strategy)));
+    education::AssignmentMarkingCoordinator* coordinatorPtr =
+        new education::AssignmentMarkingCoordinator(
+            *participants,
+            std::unique_ptr<AssignmentStrategy>(new WorkloadStrategy()));
+    std::unique_ptr<WorkflowMediator> coordinator(coordinatorPtr);
 
-    /* 4. Create a builder to hand to the instance (a second one - the
-     *    instance's builder is used for later addContainer/addItem calls
-     *    during runtime, not tree construction). */
-    std::unique_ptr<WorkflowBuilder> runtimeBuilder = factory.createBuilder();
-    runtimeBuilder->setRegistry(*registry);
+    std::unique_ptr<AssignmentStrategy> strategy(new WorkloadStrategy());
 
-    /* 5. Assemble the instance. */
+    std::unique_ptr<WorkflowBuilder> runtimeBuilder(
+        new education::AssignmentMarkingBuilder(*registry));
+
     std::unique_ptr<WorkflowInstance> instance(new WorkflowInstance(
         instanceId,
         name,
         std::move(registry),
         root,
         std::move(coordinator),
+        std::move(strategy),
         std::move(runtimeBuilder),
         participants));
 
     instances.push_back(std::move(instance));
+    coordinators[instanceId] = coordinatorPtr;
 
     return instanceId;
 }
@@ -160,16 +165,17 @@ CommandResult EducationFacade::submit(const std::string& instanceId,
         return CommandResult::NotFound;
     }
 
-    /* Generate a unique container ID from a counter on the instance.
-     * The education tree in the demo already contains one container
-     * (ASSIGN-1) built by the director; new submissions extend it. */
     static int submissionCounter = 0;
-    std::string containerId =
-        "SUB-" + std::to_string(++submissionCounter);
+    std::string itemId;
+    do
+    {
+        itemId = "SUB-" + std::to_string(++submissionCounter);
+    } while (instance->getItem(itemId) != nullptr);
 
     return classify([&]()
     {
-        instance->addContainer(containerId, containerName);
+        instance->addItem(education::AssignmentMarkingDirector::assignmentId(),
+                          itemId, containerName, itemId);
     });
 }
 
@@ -177,13 +183,15 @@ CommandResult EducationFacade::startItem(const std::string& instanceId,
                                           const std::string& itemId)
 {
     WorkflowInstance* instance = findInstance(instanceId);
-    if(instance == nullptr)
+    education::AssignmentMarkingCoordinator* coordinator = findCoordinator(instanceId);
+    if(instance == nullptr || coordinator == nullptr)
     {
         return CommandResult::NotFound;
     }
 
     return classify([&]()
     {
+        openIfNeeded(instance, coordinator);
         instance->startItem(itemId);
     });
 }
@@ -198,7 +206,6 @@ CommandResult EducationFacade::completeItem(const std::string& instanceId,
         return CommandResult::NotFound;
     }
 
-    /* Range check before the engine sees the value. */
     if(!education::EducationPolicies::isValidMark(value))
     {
         return CommandResult::InvalidTransition;
@@ -219,8 +226,7 @@ CommandResult EducationFacade::approveContainer(const std::string& instanceId,
         return CommandResult::NotFound;
     }
 
-    /* The operator who runs the batch must be a lecturer. */
-    Participant* op = firstWithRole(participants, "Lecturer");
+    Participant* op = operatorParticipant();
     if(op == nullptr)
     {
         return CommandResult::NotFound;
@@ -243,16 +249,12 @@ CommandResult EducationFacade::overrideItem(const std::string& instanceId,
         return CommandResult::NotFound;
     }
 
-    /* The operator for an override must be a lecturer. */
-    Participant* op = firstWithRole(participants, "Lecturer");
+    Participant* op = operatorParticipant();
     if(op == nullptr)
     {
         return CommandResult::NotFound;
     }
 
-    /* accept == true means "keep the item's existing result" — pass it
-     * through as the new value. accept == false means "use the value I
-     * typed in" — the caller already put it in `value`. */
     Item* item = instance->getItem(itemId);
     if(item == nullptr)
     {
@@ -265,10 +267,16 @@ CommandResult EducationFacade::overrideItem(const std::string& instanceId,
         return CommandResult::InvalidTransition;
     }
 
+    const std::string reason = accept ? "Accepted" : "Overridden";
+
     return classify([&]()
     {
-        instance->overrideItem(itemId, op, effectiveValue,
-                               accept ? "Accepted" : "Overridden");
+        /* Command pattern in the demo path. The command notifies the
+         * mediator, which logs the override and checks whether the
+         * container can publish. */
+        ActionHistory invoker;
+        invoker.execute(std::unique_ptr<WorkCommand>(
+            new OverrideItemCommand(item, op, effectiveValue, reason)));
     });
 }
 
@@ -284,9 +292,45 @@ WorkflowInstance* EducationFacade::findInstance(const std::string& instanceId) c
     return nullptr;
 }
 
+education::AssignmentMarkingCoordinator* EducationFacade::findCoordinator(const std::string& instanceId) const
+{
+    std::map<std::string, education::AssignmentMarkingCoordinator*>::const_iterator found =
+        coordinators.find(instanceId);
+    return found == coordinators.end() ? nullptr : found->second;
+}
+
 Participant* EducationFacade::operatorParticipant() const
 {
-    return firstWithRole(participants, "Lecturer");
+    return firstWithRole(participants, education::EducationRoles::lecturer());
+}
+
+void EducationFacade::openIfNeeded(WorkflowInstance* instance,
+                                   education::AssignmentMarkingCoordinator* coordinator)
+{
+    Container* assignment = instance->getContainer(education::AssignmentMarkingDirector::assignmentId());
+    if(assignment != nullptr &&
+       assignment->getPhaseName() == "Intake" &&
+       !assignment->getChildren().empty())
+    {
+        coordinator->openAssignment(*assignment);
+    }
+}
+
+std::unique_ptr<AssignmentStrategy> EducationFacade::makeStrategy(const std::string& strategyName)
+{
+    if (strategyName == "Workload")
+    {
+        return std::unique_ptr<AssignmentStrategy>(new WorkloadStrategy());
+    }
+    if (strategyName == "RoundRobin")
+    {
+        return std::unique_ptr<AssignmentStrategy>(new RoundRobinStrategy());
+    }
+    if (strategyName == "Random")
+    {
+        return std::unique_ptr<AssignmentStrategy>(new RandomStrategy());
+    }
+    return std::unique_ptr<AssignmentStrategy>();
 }
 
 CommandResult EducationFacade::setStrategy(const std::string& instanceId,
@@ -298,25 +342,13 @@ CommandResult EducationFacade::setStrategy(const std::string& instanceId,
         return CommandResult::NotFound;
     }
 
-    std::unique_ptr<AssignmentStrategy> newStrategy;
-    if (strategyName == "Workload")
-    {
-        newStrategy = std::unique_ptr<AssignmentStrategy>(new WorkloadStrategy());
-    }
-    else if (strategyName == "RoundRobin")
-    {
-        newStrategy = std::unique_ptr<AssignmentStrategy>(new RoundRobinStrategy());
-    }
-    else if (strategyName == "Random")
-    {
-        newStrategy = std::unique_ptr<AssignmentStrategy>(new RandomStrategy());
-    }
-    else
+    std::unique_ptr<AssignmentStrategy> s = makeStrategy(strategyName);
+    if (!s)
     {
         return CommandResult::NotFound;
     }
 
-    instance->setStrategy(std::move(newStrategy));
+    instance->setStrategy(std::move(s));
     return CommandResult::Success;
 }
 
