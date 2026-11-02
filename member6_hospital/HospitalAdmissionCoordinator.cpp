@@ -9,6 +9,7 @@
 #include "WorkloadStrategy.h"
 
 #include "EventBus.h"
+#include "HealthcareObserver.h"
 #include "WorkflowEvent.h"
 
 #include <utility>
@@ -23,9 +24,6 @@ namespace
     const char* const INTAKE_PHASE = "Intake";
     const char* const ACTIVE_PHASE = "Active";
     const char* const REVIEW_PHASE = "Review";
-
-    const char* const RELEASE_MESSAGE =
-        "[System] Billing information generated and hospital records updated.";
 
     std::string describe(const Item* item)
     {
@@ -42,6 +40,10 @@ HospitalAdmissionCoordinator::HospitalAdmissionCoordinator(
     ParticipantRegistry& registry, std::unique_ptr<AssignmentStrategy> strategy)
     : chain(registry), eventBus(new EventBus())
 {
+    // Observer: the healthcare observer reacts to "WardPublished" and
+    // writes the billing/records notice into the audit trail.
+    eventBus->subscribe(std::unique_ptr<Observer>(new HealthcareObserver(&actions)));
+
     if (!strategy)
     {
         strategy.reset(new WorkloadStrategy());
@@ -54,7 +56,7 @@ HospitalAdmissionCoordinator::~HospitalAdmissionCoordinator() {}
 
 void HospitalAdmissionCoordinator::log(const std::string& line)
 {
-    history.push_back(line);
+    actions.log(line);
 }
 
 void HospitalAdmissionCoordinator::publishIfReady(Container* ward)
@@ -75,7 +77,6 @@ void HospitalAdmissionCoordinator::publishIfReady(Container* ward)
     ward->advancePhase();
     onPhaseAdvanced(ward);
 
-    log(RELEASE_MESSAGE);
     eventBus->publish(WorkflowEvent{"WardPublished", "", ward->getId()});
 }
 
@@ -189,7 +190,42 @@ void HospitalAdmissionCoordinator::onApprovalResolved(Item* item, bool approved)
 
 std::vector<std::string> HospitalAdmissionCoordinator::getHistoryAsStrings() const
 {
-    return history;
+    return actions.getHistoryAsStrings();
+}
+
+int HospitalAdmissionCoordinator::onContainerOpenRequested(Container* container)
+{
+    if (container == nullptr)
+    {
+        throw InvalidTransition("No ward to open");
+    }
+    return openWard(*container);
+}
+
+bool HospitalAdmissionCoordinator::setAssignmentStrategy(
+    std::unique_ptr<AssignmentStrategy>& strategy)
+{
+    if (!strategy)
+    {
+        return false;
+    }
+    const std::string before = engine->strategyName();
+        engine->setStrategy(std::move(strategy));
+        if (before != engine->strategyName())
+        {
+            log("Doctor assignment strategy changed from " + before + " to " + engine->strategyName());
+        }
+    return true;
+}
+
+std::string HospitalAdmissionCoordinator::assignmentStrategyName() const
+{
+    return engine->strategyName();
+}
+
+ActionHistory* HospitalAdmissionCoordinator::getActionHistory()
+{
+    return &actions;
 }
 
 int HospitalAdmissionCoordinator::openWard(Container& ward)

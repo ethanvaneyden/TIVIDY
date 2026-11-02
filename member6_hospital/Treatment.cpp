@@ -33,6 +33,17 @@ const std::string& Treatment::getDiagnosis() const
     return diagnosis;
 }
 
+std::map<std::string, std::string> Treatment::getAttributes() const
+{
+    std::map<std::string, std::string> all = Item::getAttributes();
+    all["patientId"] = patientId;
+    if (!diagnosis.empty())
+    {
+        all["diagnosis"] = diagnosis;
+    }
+    return all;
+}
+
 void Treatment::setDiagnosis(const std::string& value)
 {
     diagnosis = value;

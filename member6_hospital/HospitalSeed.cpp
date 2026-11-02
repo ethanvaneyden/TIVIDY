@@ -18,11 +18,11 @@ void HospitalSeed::seedParticipants(ParticipantRegistry& registry)
 std::vector<DemoPatient> HospitalSeed::demoPatients()
 {
     struct Row { const char* id; const char* name; const char* patientId;
-                 const char* diagnosis; int severity; };
+                 const char* diagnosis; int severity; int age; };
     static const Row rows[] = {
-        { "TRT-1", "Karabo Sithole", "P-1001", "Sprained ankle",    2 },
-        { "TRT-2", "Anele Zulu",     "P-1002", "Pneumonia",         5 },
-        { "TRT-3", "Thabo Molefe",   "P-1003", "Cardiac arrhythmia", 9 }
+        { "TRT-1", "Karabo Sithole", "P-1001", "Sprained ankle",    2, 34 },
+        { "TRT-2", "Anele Zulu",     "P-1002", "Pneumonia",         5, 58 },
+        { "TRT-3", "Thabo Molefe",   "P-1003", "Cardiac arrhythmia", 9, 71 }
     };
 
     std::vector<DemoPatient> result;
@@ -34,6 +34,7 @@ std::vector<DemoPatient> HospitalSeed::demoPatients()
         p.patientId = rows[i].patientId;
         p.diagnosis = rows[i].diagnosis;
         p.severity = rows[i].severity;
+        p.age = rows[i].age;
         result.push_back(p);
     }
     return result;
@@ -47,6 +48,7 @@ DemoPatient HospitalSeed::invalidSeverityPatient()
     p.patientId = "P-1099";
     p.diagnosis = "Unassessed";
     p.severity = 0;
+    p.age = 29;
     return p;
 }
 

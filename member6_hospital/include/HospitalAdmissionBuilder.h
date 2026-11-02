@@ -43,7 +43,7 @@ class HospitalAdmissionBuilder : public WorkflowBuilder
         virtual ~HospitalAdmissionBuilder();
 
         /** @brief Set the registry that will own every node built from now on. */
-        void setRegistry(WorkRegistry& workRegistry);
+        virtual void setRegistry(WorkRegistry& workRegistry) override;
 
         /**
          * @brief Start a new hospital.
@@ -70,6 +70,19 @@ class HospitalAdmissionBuilder : public WorkflowBuilder
          */
         virtual void buildItem(const std::string& itemId,
                                const std::string& name) override;
+
+        using WorkflowBuilder::buildItem;
+
+        /**
+         * @brief Build a treatment from generic attributes.
+         *
+         * "subjectId" (or "patientId") is the patient identifier and
+         * "diagnosis" the working diagnosis. Other attributes (for example
+         * "age") are stored on the treatment for display.
+         */
+        virtual void buildItem(const std::string& itemId,
+                               const std::string& name,
+                               const std::map<std::string, std::string>& attributes) override;
 
         /**
          * @brief Add a treatment with full patient data under the current ward.
