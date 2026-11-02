@@ -516,13 +516,12 @@ TEST(HospitalInstance, RunsThroughTheGenericWorkflowInstance)
     HospitalAdmissionDirector(*builder).buildEmptyWard();
     Root* root = builder->getRoot();
 
-    std::unique_ptr<HospitalAdmissionCoordinator> coordinator(
-        new HospitalAdmissionCoordinator(
-            people, std::unique_ptr<AssignmentStrategy>(new WorkloadStrategy())));
+    std::unique_ptr<HospitalAdmissionCoordinator> coordinator(new HospitalAdmissionCoordinator(people));
     HospitalAdmissionCoordinator* coordinatorView = coordinator.get();
 
     WorkflowInstance instance("hc-1", "healthcare", std::move(registry), root,
                               std::move(coordinator),
+                              std::unique_ptr<AssignmentStrategy>(new WorkloadStrategy()),
                               std::move(builder), &people);
 
     instance.addItem("W1", "TRT-9", "Zanele", "P-9");

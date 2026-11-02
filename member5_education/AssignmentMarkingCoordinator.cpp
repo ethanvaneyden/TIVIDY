@@ -7,15 +7,7 @@
 #include "ParticipantRegistry.h"
 #include "Submission.h"
 #include "AssignmentEngine.h"
-#include "ApproveContainerCommand.h"
-#include "AdvancePhaseCommand.h"
-#include "AssignItemCommand.h"
-#include "EducationObserver.h"
-#include "OverrideItemCommand.h"
-#include "RejectItemCommand.h"
 #include "RoundRobinStrategy.h"
-#include "SystemLogCommand.h"
-#include "WorkflowEvent.h"
 
 #include "EventBus.h"
 #include "EducationObserver.h"
@@ -54,36 +46,13 @@ namespace education
         }
         engine.reset(new AssignmentEngine(std::move(strategy)));
         participants = &registry;
-        eventBus.subscribe(std::unique_ptr<Observer>(new EducationObserver(&history)));
     }
 
     AssignmentMarkingCoordinator::~AssignmentMarkingCoordinator() {}
 
-    void AssignmentMarkingCoordinator::setAssignmentStrategy(
-        std::unique_ptr<AssignmentStrategy> strategy)
-    {
-        engine->setStrategy(std::move(strategy));
-    }
-
-    std::string AssignmentMarkingCoordinator::getAssignmentStrategyName() const
-    {
-        return engine->strategyName();
-    }
-
-    void AssignmentMarkingCoordinator::executeCommand(
-        std::unique_ptr<WorkCommand> command)
-    {
-        history.execute(std::move(command));
-    }
-
     void AssignmentMarkingCoordinator::log(const std::string &line)
     {
-        history.execute(std::unique_ptr<WorkCommand>(new SystemLogCommand(line)));
-
-        WorkflowEvent event;
-        event.type = "education.workflow.action";
-        event.payload = line;
-        eventBus.publish(event);
+        history.push_back(line);
     }
 
     void AssignmentMarkingCoordinator::assignMarkers(const Container &assignment)
@@ -103,8 +72,7 @@ namespace education
             Participant *marker = engine->assign(*submission, markers);
             if (marker != nullptr)
             {
-                executeCommand(std::unique_ptr<WorkCommand>(
-                    new AssignItemCommand(submission, marker)));
+                submission->assign(marker);
             }
             else if (submission->getMediator() == nullptr)
             {
@@ -197,15 +165,6 @@ namespace education
         }
         log("Assignment " + container->getId() + " moved to " + container->getPhaseName());
 
-        if (container->getPhaseName() == "Publish")
-        {
-            WorkflowEvent event;
-            event.type = "ResultsPublished";
-            event.recipientId = container->getId();
-            event.payload = "Results published for " + container->getId();
-            eventBus.publish(event);
-        }
-
         if (container->getPhaseName() == ACTIVE_PHASE)
         {
             assignMarkers(*container);
@@ -262,7 +221,7 @@ namespace education
 
     std::vector<std::string> AssignmentMarkingCoordinator::getHistoryAsStrings() const
     {
-        return history.getHistoryAsStrings();
+        return history;
     }
 
     int AssignmentMarkingCoordinator::openAssignment(Container &assignment)
@@ -339,9 +298,8 @@ namespace education
                 }
                 else
                 {
-                    executeCommand(std::unique_ptr<WorkCommand>(new RejectItemCommand(
-                        submission, "Mark " + std::to_string(mark) +
-                                        " cannot be auto-approved")));
+                    submission->reject("Mark " + std::to_string(mark) +
+                                       " cannot be auto-approved");
                     result.rejectedIds.push_back(id);
                     onApprovalResolved(submission, false);
                 }
@@ -373,8 +331,7 @@ namespace education
             return false;
         }
 
-        executeCommand(std::unique_ptr<WorkCommand>(new OverrideItemCommand(
-            &item, lecturer, finalMark, "Lecturer override")));
+        item.resolveReview(lecturer, finalMark, "Lecturer override");
         item.setMark(finalMark);
 
         publishIfReady(dynamic_cast<Container *>(item.getParent()));
