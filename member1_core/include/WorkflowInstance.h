@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -13,6 +14,7 @@ class AssignmentStrategy;
 class WorkflowBuilder;
 class ParticipantRegistry;
 class Participant;
+class ActionHistory;
 
 /**
  * @brief Represents a single, independent running workflow instance.
@@ -141,6 +143,33 @@ public:
                  const std::string& itemId,
                  const std::string& name,
                  const std::string& subjectId);
+
+    /**
+     * @brief Builds and attaches a leaf item that carries scenario data.
+     * @param attributes Generic attributes handed to the builder (for example
+     *        "diagnosis" or "age"). "subjectId" is added from subjectId.
+     */
+    void addItem(const std::string& parentContainerId,
+                 const std::string& itemId,
+                 const std::string& name,
+                 const std::string& subjectId,
+                 const std::map<std::string, std::string>& attributes);
+
+    /**
+     * @brief Opens a container through the mediator (Intake -> Active) so
+     *        that every item is assigned a worker by the active strategy.
+     * @param containerId Container ID.
+     * @return Number of items that received a worker.
+     * @throws std::runtime_error If no container with the ID exists.
+     * @throws InvalidTransition If the container cannot be opened.
+     */
+    int openContainer(const std::string& containerId);
+
+    /**
+     * @brief The Command invoker holding this instance's audit trail.
+     * @return Non-owning pointer, or nullptr if the mediator keeps none.
+     */
+    ActionHistory* getActionHistory() const;
 
     /**
      * @brief Looks up an item using the registry.

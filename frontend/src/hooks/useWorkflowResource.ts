@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { messageOf } from '../api/client';
-import { getHistory, getState, getStrategy, setStrategy, type ApiRoot } from '../api/workflow';
-import type { ScenarioId } from '../types/types';
+import { getHistory, getProgress, getState, getStrategy, setStrategy, type ApiRoot } from '../api/workflow';
+import type { ProgressReport, ScenarioId } from '../types/types';
 
 export interface WorkflowResource<T> {
     data?: T;
     history: string[];
+    progress?: ProgressReport;
     loading: boolean;
     busy: boolean;
     loadError?: string;
@@ -24,6 +25,7 @@ export function useWorkflowResource<T>(
 ): WorkflowResource<T> {
     const [data, setData] = useState<T>();
     const [history, setHistory] = useState<string[]>([]);
+    const [progress, setProgress] = useState<ProgressReport>();
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
     const [loadError, setLoadError] = useState<string>();
@@ -55,17 +57,19 @@ export function useWorkflowResource<T>(
     }, [scenario, instanceId]);
 
     const fetchSnapshot = useCallback(async () => {
-        const [root, entries] = await Promise.all([
+        const [root, entries, report] = await Promise.all([
             getState(scenario, instanceId),
             getHistory(scenario, instanceId),
+            getProgress(scenario, instanceId).catch(() => undefined), // monitoring is optional
         ]);
-        return { data: map(root), history: entries };
+        return { data: map(root), history: entries, progress: report };
     }, [scenario, instanceId, map]);
 
     const load = useCallback(async () => {
         const snapshot = await fetchSnapshot();
         setData(snapshot.data);
         setHistory(snapshot.history);
+        setProgress(snapshot.progress);
         setLoadError(undefined);
     }, [fetchSnapshot]);
 
@@ -76,6 +80,7 @@ export function useWorkflowResource<T>(
                 if (cancelled) return;
                 setData(snapshot.data);
                 setHistory(snapshot.history);
+                setProgress(snapshot.progress);
                 setLoadError(undefined);
             })
             .catch((error: unknown) => {
@@ -124,6 +129,7 @@ export function useWorkflowResource<T>(
     return {
         data,
         history,
+        progress,
         loading,
         busy,
         loadError,

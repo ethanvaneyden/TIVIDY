@@ -10,6 +10,7 @@
 
 #include "Item.h"
 
+#include <map>
 #include <string>
 
 namespace education
@@ -34,6 +35,9 @@ class Submission : public Item
                    const std::string& studentName,
                    const std::string& studentId = std::string());
         virtual ~Submission();
+
+        /** @brief Stored attributes plus the student number. */
+        std::map<std::string, std::string> getAttributes() const override;
 
         const std::string& getStudentName() const;
         const std::string& getStudentId() const;

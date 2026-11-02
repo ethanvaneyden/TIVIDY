@@ -1,6 +1,7 @@
 // Root.cpp
 #include "Root.h"
 #include "Container.h"
+#include "ComponentVisitor.h"
 #include "DepthFirstIterator.h"
 #include "Iterator.h"
 #include "InvalidTransition.h"
@@ -58,4 +59,8 @@ Iterator* Root::createIterator() {
 
 Iterator* Root::createIterator(const std::string& state) {
     return new StateFilterIterator(this, state);
+}
+
+void Root::accept(ComponentVisitor& visitor) const {
+    visitor.visitRoot(*this);
 }

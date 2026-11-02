@@ -25,6 +25,7 @@ struct DemoPatient
     std::string name;      /* Patient name. */
     std::string patientId; /* Patient identifier, e.g. "P-1001". */
     std::string diagnosis; /* Working diagnosis. */
+    int age;               /* Patient age in years. */
     int severity;          /* Severity the doctor will enter on completion. */
 };
 

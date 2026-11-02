@@ -9,37 +9,39 @@ export interface FilteredItemsState {
     error?: string;
 }
 
+interface Loaded {
+    key: string;
+    items: FilteredItem[];
+    error?: string;
+}
+
+/**
+ * Items in a given lifecycle state, fetched from the backend's
+ * StateFilterIterator. Loading is derived from the request key, so the
+ * effect only ever sets state from the asynchronous result.
+ */
 export function useFilteredItems(
     scenario: ScenarioId,
     instanceId: string,
     state: string,
 ): FilteredItemsState {
-    const [items, setItems] = useState<FilteredItem[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string>();
+    const [loaded, setLoaded] = useState<Loaded>();
+    const key = `${scenario}|${instanceId}|${state}`;
 
     useEffect(() => {
-        if (!state) {
-            setItems([]);
-            setError(undefined);
-            return;
-        }
+        if (!state) return;
         let cancelled = false;
-        setLoading(true);
         getFilteredItems(scenario, instanceId, state)
-            .then((res) => {
-                if (cancelled) return;
-                setItems(res);
-                setError(undefined);
+            .then((items) => {
+                if (!cancelled) setLoaded({ key, items });
             })
-            .catch((err: unknown) => {
-                if (!cancelled) setError(messageOf(err));
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false);
+            .catch((error: unknown) => {
+                if (!cancelled) setLoaded({ key, items: [], error: messageOf(error) });
             });
         return () => { cancelled = true; };
-    }, [scenario, instanceId, state]);
+    }, [scenario, instanceId, state, key]);
 
-    return { items, loading, error };
+    if (!state) return { items: [], loading: false };
+    if (loaded?.key !== key) return { items: [], loading: true };
+    return { items: loaded.items, loading: false, error: loaded.error };
 }

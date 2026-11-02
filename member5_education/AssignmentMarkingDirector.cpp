@@ -4,12 +4,13 @@
 #include "EducationSeed.h"
 #include "WorkflowBuilder.h"
 
+#include <map>
 #include <stdexcept>
 
 namespace education
 {
 
-AssignmentMarkingDirector::AssignmentMarkingDirector(AssignmentMarkingBuilder& workflowBuilder)
+AssignmentMarkingDirector::AssignmentMarkingDirector(WorkflowBuilder& workflowBuilder)
     : builder(workflowBuilder)
 {
 }
@@ -42,21 +43,15 @@ void AssignmentMarkingDirector::buildDemo(WorkflowBuilder& target, const std::st
     target.buildRoot(rootName);
     target.buildContainer(assignmentId(), "Assignment 1");
 
-    // Only our own builder can keep the student number.
-    AssignmentMarkingBuilder* education = dynamic_cast<AssignmentMarkingBuilder*>(&target);
-
+    // The student number travels as a generic attribute, so any
+    // WorkflowBuilder can be driven and no type check is needed.
     const std::vector<DemoSubmission> submissions = EducationSeed::demoSubmissions();
     for (std::vector<DemoSubmission>::const_iterator s = submissions.begin();
          s != submissions.end(); ++s)
     {
-        if (education != nullptr)
-        {
-            education->buildSubmission(s->itemId, s->studentName, s->studentId);
-        }
-        else
-        {
-            target.buildItem(s->itemId, s->studentName);
-        }
+        std::map<std::string, std::string> attributes;
+        attributes["studentId"] = s->studentId;
+        target.buildItem(s->itemId, s->studentName, attributes);
     }
 }
 

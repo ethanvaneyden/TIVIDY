@@ -9,12 +9,13 @@ import {
     type NewSubmission,
 } from '../api/workflow';
 import { mapEducation } from '../api/mapWorkflow';
-import type { EducationInstanceData } from '../types/types';
+import type { ProgressReport, EducationInstanceData } from '../types/types';
 import { useWorkflowResource } from './useWorkflowResource';
 
 export interface EducationController {
     education?: EducationInstanceData;
     history: string[];
+    progress?: ProgressReport;
     loading: boolean;
     busy: boolean;
     loadError?: string;
@@ -39,6 +40,7 @@ export function useEducation(instanceId: string): EducationController {
     return {
         education: resource.data,
         history: resource.history,
+        progress: resource.progress,
         loading: resource.loading,
         busy: resource.busy,
         loadError: resource.loadError,

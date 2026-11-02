@@ -6,8 +6,8 @@ import TreatmentDetailsModal from './TreatmentDetailsModal';
 import WardCard from './WardCard';
 import HistoryPanel from '../../components/shared/HistoryPanel';
 import FilteredItemList from '../../components/shared/FilteredItemList';
+import ProgressSummary from '../../components/shared/ProgressSummary';
 import StateFilter from '../../components/shared/StateFilter';
-// import { getMockHospital } from '../../data/mockData';
 import { useHospital } from '../../hooks/useHospital';
 import { useFilteredItems } from '../../hooks/useFilteredItems';
 import type { Treatment, TreatmentContainer, WorkflowItemState } from '../../types/types';
@@ -50,62 +50,11 @@ function capitalize(s: string): string {
     return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-// function HealthcareWorkflow({ instanceId }: HealthcareWorkflowProps) {
-//     const hospital = getMockHospital(instanceId);
-//     const [selectedTreatment, setSelectedTreatment] = useState<Treatment>();
-//     const [showAddWardModal, setShowAddWardModal] = useState(false);
-//     const [showAddPatientModal, setShowAddPatientModal] = useState(false);
-
-//     return (
-//         <div className="workflow-content healthcare-content">
-//             <header className="workflow-instance-heading">
-//                 <div>
-//                     <p className="workflow-instance-kicker">HOSPITAL</p>
-//                     <h2>{hospital.name}</h2>
-//                     <p>Wards and their treatment items.</p>
-//                 </div>
-//                 <Button className="healthcare-primary-button" onClick={() => setShowAddWardModal(true)}>
-//                     + Add ward
-//                 </Button>
-//             </header>
-
-//             <section className="ward-container-list" aria-label="Hospital wards">
-//                 {hospital.wards.map((ward: TreatmentContainer) => (
-//                     <WardCard
-//                         key={ward.id}
-//                         ward={ward}
-//                         onViewTreatment={setSelectedTreatment}
-//                         onAddPatient={() => setShowAddPatientModal(true)}
-//                     />
-//                 ))}
-//                 {hospital.wards.length === 0 && (
-//                     <div className="workflow-empty-state">
-//                         <h4>No wards yet</h4>
-//                         <p>No ward containers are available.</p>
-//                     </div>
-//                 )}
-//             </section>
-
-//             <TreatmentDetailsModal
-//                 treatment={selectedTreatment}
-//                 onHide={() => setSelectedTreatment(undefined)}
-//             />
-//             <AddWardModal
-//                 show={showAddWardModal}
-//                 onHide={() => setShowAddWardModal(false)}
-//             />
-//             <AddPatientModal
-//                 show={showAddPatientModal}
-//                 onHide={() => setShowAddPatientModal(false)}
-//             />
-//         </div>
-//     );
-// }
-
 function HealthcareWorkflow({ instanceId }: HealthcareWorkflowProps) {
     const {
         hospital,
         history,
+        progress,
         loading,
         busy,
         loadError,
@@ -115,6 +64,7 @@ function HealthcareWorkflow({ instanceId }: HealthcareWorkflowProps) {
         changeStrategy,
         addWard,
         addPatient,
+        openWard,
         startTreatment,
         completeTreatment,
         approveWard,
@@ -164,6 +114,8 @@ function HealthcareWorkflow({ instanceId }: HealthcareWorkflowProps) {
                 </Alert>
             )}
 
+            <ProgressSummary report={progress} itemLabel="patients" />
+
             <div className="workflow-filter-row d-flex justify-content-between align-items-end gap-3 mb-4">
                 <StateFilter value={stateFilter} onChange={setStateFilter} />
                 <StrategySelector
@@ -203,6 +155,8 @@ function HealthcareWorkflow({ instanceId }: HealthcareWorkflowProps) {
                                 setShowAddPatientModal(true);
                             }}
                             onApprove={() => approveWard(ward.id)}
+                            onOpen={() => openWard(ward.id)}
+                            busy={busy}
                         />
                     ))}
                     {hospital.wards.length === 0 && (
@@ -234,9 +188,9 @@ function HealthcareWorkflow({ instanceId }: HealthcareWorkflowProps) {
             <AddPatientModal
                 show={showAddPatientModal}
                 onHide={() => setShowAddPatientModal(false)}
-                onSubmit={async (name: string, age: number) => {
+                onSubmit={async (name: string, age: number, diagnosis: string) => {
                     if (!activeWardId) return false;
-                    return addPatient(activeWardId, { name, age, diagnosis: '' });
+                    return addPatient(activeWardId, { name, age, diagnosis });
                 }}
             />
         </div>

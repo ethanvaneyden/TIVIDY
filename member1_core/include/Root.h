@@ -49,6 +49,9 @@ public:
      */
     std::vector<Component*> getChildren() const override;
 
+    /** @brief Dispatches to ComponentVisitor::visitRoot. */
+    void accept(ComponentVisitor& visitor) const override;
+
     /**
      * @brief Checks whether every child container is complete.
      * @return True when the non-empty root's containers are complete.

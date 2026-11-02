@@ -4,6 +4,7 @@
 */
 #pragma once
 
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -33,6 +34,8 @@ class TividyWorkflow
 
         // Maps an instance ID to the facade that owns it.
         std::unordered_map<std::string, ScenarioFacade*> instanceIndex;
+        mutable ScenarioFacade* lastFacade = nullptr;   ///< facade that served the last call
+        mutable std::string missingInstance;            ///< id of the last unknown instance
 
         /**
          * @brief Finds the owning facade for a given instance ID.
@@ -129,6 +132,29 @@ class TividyWorkflow
         */
         CommandResult admitPatient(const std::string& instanceId,
                                     const std::string& containerName);
+
+        /** @brief Add a container (assignment / ward) to an instance. */
+        CommandResult addContainer(const std::string& instanceId, const std::string& name);
+
+        /** @brief Add a work item (submission / patient) to a container. */
+        CommandResult addItem(const std::string& instanceId, const std::string& containerId,
+                              const std::string& name,
+                              const std::map<std::string, std::string>& attributes);
+
+        /** @brief Open a container: Intake -> Active and assign workers. */
+        CommandResult openContainer(const std::string& instanceId, const std::string& containerId);
+
+        /** @brief Delete an instance. */
+        CommandResult removeInstance(const std::string& instanceId);
+
+        /** @brief Why the last command was refused (empty after success). */
+        std::string lastMessage() const;
+
+        /** @brief True if the scenario name ("education"/"healthcare") is known. */
+        bool hasScenario(const std::string& scenario) const;
+
+        /** @brief True if the instance exists and belongs to the scenario. */
+        bool ownsInstance(const std::string& scenario, const std::string& instanceId) const;
 
         CommandResult setStrategy(const std::string& instanceId, const std::string& strategyName);
         std::string getStrategyName(const std::string& instanceId) const;

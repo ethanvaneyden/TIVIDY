@@ -2,7 +2,6 @@
 
 #include "Item.h"
 #include "Participant.h"
-#include "WorkflowMediator.h"
 
 OverrideItemCommand::OverrideItemCommand(Item* item, Participant* operatorParticipant, int newValue, const std::string& reason)
     : item(item),
@@ -19,16 +18,11 @@ void OverrideItemCommand::execute()
         return;
     }
 
-    /* 1. Apply the state change to the item. */
+    /* Item::resolveReview() changes the state and notifies the Mediator
+     * itself (onItemOverridden), which logs the override and publishes the
+     * container when every item is settled. Notifying again here would log
+     * the override twice. */
     item->resolveReview(operatorParticipant, newValue, reason);
-
-    /* 2. Notify the mediator so it can log the override and check
-     *    whether the container is now ready to publish. */
-    WorkflowMediator* mediator = item->getMediator();
-    if(mediator != nullptr)
-    {
-        mediator->onItemOverridden(item, operatorParticipant, newValue, reason);
-    }
 }
 
 std::string OverrideItemCommand::description() const {
@@ -36,5 +30,5 @@ std::string OverrideItemCommand::description() const {
         return "Invalid item override";
     }
 
-    return "Result overridden by " + operatorParticipant->getName() + ". Reason: " + reason;
+    return "Result of " + item->getId() + " overridden by " + operatorParticipant->getName() + ". Reason: " + reason;
 }

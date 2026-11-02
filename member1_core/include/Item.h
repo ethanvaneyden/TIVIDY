@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Component.h"
+#include <map>
 #include <memory>
 #include <string>
 
@@ -56,6 +57,9 @@ private:
     /// @brief Reason retained when a result is rejected or overridden.
     std::string rejectionReason;
 
+    /// @brief Free-form descriptive attributes supplied by the scenario.
+    std::map<std::string, std::string> attributes;
+
 public:
     /**
      * @brief Constructs an item in its initial state (usually Available).
@@ -77,10 +81,16 @@ public:
     Iterator* createIterator() override;
      Iterator* createIterator(const std::string& state) override;
 
+    /** @brief Dispatches to ComponentVisitor::visitItem. */
+    void accept(ComponentVisitor& visitor) const override;
+
     /**
      * @brief Checks whether the current lifecycle state is "Completed".
      */
     bool isCompleted() const override;
+
+    /// @brief Checks whether the current lifecycle state is "Rejected".
+    bool isRejected() const;
 
     // ==========================================
     // STATE TRANSITIONS (Delegates to ItemState)
@@ -162,6 +172,22 @@ public:
 
     /// @brief Checks whether the item is completed and has a recorded review.
     bool isReviewed() const;
+
+    /**
+     * @brief Stores a scenario-specific descriptive attribute (e.g. "age").
+     *
+     * Attributes let any scenario attach display data to an item without the
+     * serializers or the REST layer needing to know the concrete item class.
+     */
+    void setAttribute(const std::string& key, const std::string& value);
+
+    /**
+     * @brief All descriptive attributes of this item.
+     *
+     * Concrete items (Submission, Treatment) extend the stored attributes
+     * with their own fields.
+     */
+    virtual std::map<std::string, std::string> getAttributes() const;
 
     // ==========================================
     // SETTERS (Called by State classes & Mediator)
