@@ -33,7 +33,23 @@ namespace
 }
 
 WorkRegistry::WorkRegistry() = default;
-WorkRegistry::~WorkRegistry() = default;
+WorkRegistry::~WorkRegistry()
+{
+    // Destroy parents before their children: Root and Container destructors
+    // detach their children, so those children must still be alive.
+    bool erased = true;
+    while (erased && !components.empty())
+    {
+        erased = false;
+        for (auto it = components.begin(); it != components.end(); )
+        {
+            if (it->second->getParent() == nullptr)
+            { it = components.erase(it); erased = true; }
+            else { ++it; }
+        }
+    }
+    components.clear();
+}
 
 Component* WorkRegistry::add(std::unique_ptr<Component> item) {
     if (!item) throw std::invalid_argument("Cannot register null component");
