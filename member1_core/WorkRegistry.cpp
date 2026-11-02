@@ -1,0 +1,99 @@
+// WorkRegistry.cpp
+#include "WorkRegistry.h"
+#include "Container.h"
+#include "InvalidTransition.h"
+#include <stdexcept>
+
+namespace
+{
+    void validateRemoval(const Component* component)
+    {
+        const Container* removingContainer = dynamic_cast<const Container*>(component);
+        if (removingContainer != nullptr &&
+            removingContainer->getPhaseName() != "Intake")
+        {
+            throw InvalidTransition("Containers can only be removed during the Intake phase");
+        }
+
+        const Component* parent = component->getParent();
+        const Container* parentContainer = dynamic_cast<const Container*>(parent);
+        if (parentContainer != nullptr &&
+            parentContainer->getPhaseName() != "Intake")
+        {
+            throw InvalidTransition("Work can only be removed during the Intake phase");
+        }
+
+        const std::vector<Component*> children = component->getChildren();
+        for (std::vector<Component*>::const_iterator child = children.begin();
+             child != children.end(); ++child)
+        {
+            validateRemoval(*child);
+        }
+    }
+}
+
+WorkRegistry::WorkRegistry() = default;
+WorkRegistry::~WorkRegistry()
+{
+    // Destroy parents before their children: Root and Container destructors
+    // detach their children, so those children must still be alive.
+    bool erased = true;
+    while (erased && !components.empty())
+    {
+        erased = false;
+        for (auto it = components.begin(); it != components.end(); )
+        {
+            if (it->second->getParent() == nullptr)
+            { it = components.erase(it); erased = true; }
+            else { ++it; }
+        }
+    }
+    components.clear();
+}
+
+Component* WorkRegistry::add(std::unique_ptr<Component> item) {
+    if (!item) throw std::invalid_argument("Cannot register null component");
+    std::string id = item->getId();
+    if (components.count(id)) throw std::invalid_argument("Duplicate ID: " + id);
+    
+    Component* raw = item.get();
+    components.emplace(id, std::move(item));
+    return raw;
+}
+
+Component* WorkRegistry::get(const std::string& id) const {
+    auto it = components.find(id);
+    return it != components.end() ? it->second.get() : nullptr;
+}
+
+void WorkRegistry::remove(const std::string& id) {
+    auto it = components.find(id);
+    if (it == components.end()) return;
+
+    validateRemoval(it->second.get());
+
+    // Detach from parent
+    if (it->second->getParent()) {
+        it->second->getParent()->remove(id);
+    }
+
+    // Recursively remove children
+    auto children = it->second->getChildren();
+    for (auto* child : children) {
+        remove(child->getId());
+    }
+
+    components.erase(it);
+}
+
+bool WorkRegistry::contains(const std::string& id) const {
+    return components.count(id) > 0;
+}
+
+size_t WorkRegistry::size() const { return components.size(); }
+
+std::vector<std::string> WorkRegistry::getAllIds() const {
+    std::vector<std::string> ids;
+    for (const auto& pair : components) ids.push_back(pair.first);
+    return ids;
+}

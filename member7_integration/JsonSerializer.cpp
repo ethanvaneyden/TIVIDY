@@ -1,0 +1,138 @@
+/**
+ * @file JsonSerializer.cpp
+ * @brief Implementation of JsonSerializer using nlohmann/json.
+ */
+
+#include "JsonSerializer.h"
+#include "Component.h"
+#include "Item.h"
+#include "Participant.h"
+#include "JsonTreeVisitor.h"
+#include "ProgressReportVisitor.h"
+
+#include "json.h"
+#include <limits>
+#include <utility>
+
+namespace
+{
+    using Json = nlohmann::json;
+
+    Json parseObject(const std::string& input)
+    {
+        Json value = Json::parse(input);
+        return value.is_object() ? value : Json::object();
+    }
+
+    /// Renders any component through the Visitor; null stays JSON null.
+    std::string render(const Component* component)
+    {
+        if(component == nullptr)
+            return "null";
+
+        JsonTreeVisitor visitor;
+        component->accept(visitor);
+        return visitor.result();
+    }
+}
+
+std::string JsonSerializer::serializeItem(const Item* item)
+{
+    return render(item);
+}
+
+std::string JsonSerializer::serializeTree(const Component* root)
+{
+    return render(root);
+}
+
+std::string JsonSerializer::serializeProgress(const Component* root)
+{
+    ProgressReportVisitor report;
+    if(root != nullptr)
+        root->accept(report);
+    return report.toJson();
+}
+
+std::string JsonSerializer::serializeParticipant(const Participant* participant)
+{
+    if(participant == nullptr)
+        return "null";
+
+    return nlohmann::json{
+        {"id", participant->getId()},
+        {"name", participant->getName()},
+        {"role", participant->getRole()}
+    }.dump();
+}
+
+std::string JsonSerializer::serializeHistory(
+    const std::vector<std::string>& records)
+{
+    return nlohmann::json(records).dump();
+}
+
+std::string JsonSerializer::serializeError(
+    const std::string& error,
+    const std::string& message)
+{
+    return nlohmann::json{
+        {"error", error},
+        {"message", message}
+    }.dump();
+}
+
+std::string JsonSerializer::getString(
+    const std::string& input,
+    const std::string& field,
+    const std::string& fallback)
+{
+    const nlohmann::json object = parseObject(input);
+    const nlohmann::json::const_iterator value = object.find(field);
+    if(value == object.end() || !value->is_string())
+        return fallback;
+
+    return value->get<std::string>();
+}
+
+int JsonSerializer::getInt(
+    const std::string& input,
+    const std::string& field,
+    int fallback)
+{
+    const nlohmann::json object = parseObject(input);
+    const nlohmann::json::const_iterator value = object.find(field);
+    if(value == object.end() || !value->is_number_integer())
+        return fallback;
+
+    if(value->is_number_unsigned())
+    {
+        const unsigned long long number = value->get<unsigned long long>();
+        if(number > static_cast<unsigned long long>(
+                         std::numeric_limits<int>::max()))
+            return fallback;
+        return static_cast<int>(number);
+    }
+
+    const long long number = value->get<long long>();
+    if(number < std::numeric_limits<int>::min() ||
+        number > std::numeric_limits<int>::max())
+        return fallback;
+    return static_cast<int>(number);
+}
+
+std::string JsonSerializer::serializeItemList(const std::vector<const Item*>& items)
+{
+    Json array = Json::array();
+    for(const Item* item : items)
+    {
+        if(item == nullptr) continue;
+        Json entry = Json::parse(render(item));
+        // Add owning container id so the frontend can group results.
+        const Component* parent = item->getParent();
+        entry["containerId"] = parent != nullptr ? parent->getId() : "";
+        entry["containerName"] = parent != nullptr ? parent->getName() : "";
+        array.push_back(std::move(entry));
+    }
+    return array.dump();
+}

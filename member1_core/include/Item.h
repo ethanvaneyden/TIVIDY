@@ -1,0 +1,215 @@
+#pragma once
+
+#include "Component.h"
+#include <map>
+#include <memory>
+#include <string>
+
+class ItemState;
+class Participant;
+class Container;
+
+/**
+ * @brief A leaf workflow component with an execution and review lifecycle.
+ * 
+ * This class acts as the **Context** in the State pattern and the **Leaf** 
+ * in the Composite pattern.
+ * 
+ * It owns its lifecycle state (via std::unique_ptr) but does NOT own its
+ * assignee or reviewer. The ParticipantRegistry must outlive this item.
+ * 
+ * Operations like start() and complete() delegate to the current ItemState. 
+ * If an operation is invalid for the current state, the state class will throw 
+ * a std::logic_error.
+ */
+class Item : public Component {
+private:
+    /**
+     * @brief Installs a state returned by the current state transition.
+     * @param next Owning pointer to the next state.
+     * @throws std::invalid_argument If next is null.
+     */
+    void setState(std::unique_ptr<ItemState> next);
+    void setAssignee(Participant* p);
+    void setReviewer(Participant* p, const std::string& method);
+    void setResult(int value);
+    void setRejectionReason(const std::string& reason);
+    bool taskPending;
+
+    /// @brief Owned lifecycle state for this item (e.g., Available, Assigned).
+    std::unique_ptr<ItemState> state;
+    
+    /// @brief Non-owning participant assigned to perform the work.
+    Participant* assignee;
+    
+    /// @brief Non-owning participant who reviewed or resolved the result.
+    Participant* reviewer;
+    
+    /// @brief Review method ("Batch" or "Personal"), or empty if not reviewed.
+    std::string reviewMethod;
+
+    /// @brief Recorded result value (mark or severity).
+    int result;
+    
+    /// @brief Flag indicating if a result has been recorded.
+    bool resultRecorded;
+    
+    /// @brief Reason retained when a result is rejected or overridden.
+    std::string rejectionReason;
+
+    /// @brief Free-form descriptive attributes supplied by the scenario.
+    std::map<std::string, std::string> attributes;
+
+public:
+    /**
+     * @brief Constructs an item in its initial state (usually Available).
+     * @param id Unique identifier for this component.
+     * @param type Item type (e.g., "Submission", "Treatment").
+     * @param name Display name for the UI.
+     */
+    Item(std::string id, std::string type, std::string name);
+
+    /**
+     * @brief Destroys the item and its owned state object.
+     */
+    virtual ~Item();
+
+    /**
+     * @brief Creates an iterator for traversing this leaf.
+     * @return A SingleItemIterator.
+     */
+    Iterator* createIterator() override;
+     Iterator* createIterator(const std::string& state) override;
+
+    /** @brief Dispatches to ComponentVisitor::visitItem. */
+    void accept(ComponentVisitor& visitor) const override;
+
+    /**
+     * @brief Checks whether the current lifecycle state is "Completed".
+     */
+    bool isCompleted() const override;
+
+    /// @brief Checks whether the current lifecycle state is "Rejected".
+    bool isRejected() const;
+
+    // ==========================================
+    // STATE TRANSITIONS (Delegates to ItemState)
+    // ==========================================
+
+    /**
+     * @brief Assigns this item to a participant.
+     * @param p Non-null participant to assign.
+     * @throws std::invalid_argument If p is null.
+     * @throws std::logic_error If the current state does not allow assignment.
+     */
+    void assign(Participant* p);
+
+    /**
+     * @brief Starts work on this item.
+     * @throws std::logic_error If the current state does not allow starting.
+     */
+    void start();
+
+    /**
+     * @brief Records completion with a result value.
+     * @param value Result value to record (mark or severity).
+     * @throws std::logic_error If the current state does not allow completion.
+     */
+    void complete(int value);
+
+    /**
+     * @brief Rejects a result during the Review phase.
+     * @param reason Explanation for the rejection.
+     * @throws std::logic_error If the current state does not allow rejection.
+     */
+    void reject(const std::string& reason);
+
+    /**
+     * @brief Resolves a rejected result through personal review.
+     * @param reviewer Non-null participant resolving the rejection.
+     * @param value Replacement result value.
+     * @throws std::invalid_argument If reviewer is null.
+     * @throws std::logic_error If there is no rejected result to resolve.
+     */
+    void resolveReview(
+        Participant* reviewer,
+        int value,
+        const std::string& reason = std::string());
+
+    // ==========================================
+    // STATE MANAGEMENT
+    // ==========================================
+
+    /**
+     * @brief Returns the name of the current lifecycle state.
+     */
+    std::string getStateName() const;
+
+    // ==========================================
+    // DATA ACCESSORS
+    // ==========================================
+
+    /// @brief Returns the non-owning assignee, or nullptr if none is set.
+    Participant* getAssignee() const;
+
+    /// @brief Returns the non-owning reviewer, or nullptr if not reviewed.
+    Participant* getReviewer() const;
+
+    /// @brief Returns the review method, or an empty string if not reviewed.
+    const std::string& getReviewMethod() const;
+
+    /// @brief Checks whether a result value has been recorded.
+    bool hasResult() const;
+
+    /**
+     * @brief Returns the recorded result.
+     * @throws std::logic_error If no result has been recorded yet.
+     */
+    int getResult() const;
+
+    /// @brief Returns the rejection reason, or an empty string if never rejected.
+    const std::string& getRejectionReason() const;
+
+    /// @brief Checks whether the item is completed and has a recorded review.
+    bool isReviewed() const;
+
+    /**
+     * @brief Stores a scenario-specific descriptive attribute (e.g. "age").
+     *
+     * Attributes let any scenario attach display data to an item without the
+     * serializers or the REST layer needing to know the concrete item class.
+     */
+    void setAttribute(const std::string& key, const std::string& value);
+
+    /**
+     * @brief All descriptive attributes of this item.
+     *
+     * Concrete items (Submission, Treatment) extend the stored attributes
+     * with their own fields.
+     */
+    virtual std::map<std::string, std::string> getAttributes() const;
+
+    // ==========================================
+    // SETTERS (Called by State classes & Mediator)
+    // ==========================================
+
+    /**
+     * @brief Records an approved review without changing the item state.
+     * @param p Non-owning reviewer pointer.
+     * @param method Review method, such as "Batch".
+     * @throws std::invalid_argument If p is null or method is empty.
+     * @throws InvalidTransition If this item is not completed.
+     */
+    void recordReview(Participant* p, const std::string& method);
+
+    // ==========================================
+    // PHASE ENFORCEMENT
+    // ==========================================
+
+    /**
+     * @brief Ensures the parent container is in the expected phase.
+     * @param expected The required phase name (e.g., "Active" or "Review").
+     * @throws std::logic_error If the parent container is not in that phase.
+     */
+    void requirePhase(const std::string& expected) const;
+};
