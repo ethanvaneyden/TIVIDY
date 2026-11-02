@@ -1,4 +1,4 @@
-import type { ScenarioId } from '../types/types';
+import type { ProgressReport, ScenarioId } from '../types/types';
 import { del, get, post, put } from './client';
 
 export interface ApiItem {
@@ -10,6 +10,7 @@ export interface ApiItem {
     assignee: string | null;
     reviewer: string | null;
     result?: number;
+    rejectionReason?: string;
     diagnosis?: string;
     age?: number;
     bed?: string;
@@ -45,7 +46,8 @@ export interface NewSubmission {
     studentName: string;
 }
 
-export const INSTANCE_DELETE_ENABLED: boolean = import.meta.env.VITE_INSTANCE_DELETE === 'true';
+/** The backend supports DELETE; set VITE_INSTANCE_DELETE=false to hide the buttons. */
+export const INSTANCE_DELETE_ENABLED: boolean = import.meta.env.VITE_INSTANCE_DELETE !== 'false';
 
 const CONTAINER_ROUTE: Record<ScenarioId, string> = {
     education: 'submit',
@@ -93,6 +95,10 @@ export function deleteInstance(scenario: ScenarioId, instanceId: string): Promis
 
 export function getState(scenario: ScenarioId, instanceId: string): Promise<ApiRoot> {
     return get<ApiRoot>(`${instanceBase(scenario, instanceId)}/state`);
+}
+
+export function getProgress(scenario: ScenarioId, instanceId: string): Promise<ProgressReport> {
+    return get<ProgressReport>(`${instanceBase(scenario, instanceId)}/progress`);
 }
 
 export function getHistory(scenario: ScenarioId, instanceId: string): Promise<string[]> {

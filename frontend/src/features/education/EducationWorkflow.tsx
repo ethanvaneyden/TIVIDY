@@ -6,8 +6,8 @@ import ContainerCard from './ContainerCard';
 import SubmissionDetailsModal from './SubmissionDetailsModal';
 import HistoryPanel from '../../components/shared/HistoryPanel';
 import FilteredItemList from '../../components/shared/FilteredItemList';
+import ProgressSummary from '../../components/shared/ProgressSummary';
 import StateFilter from '../../components/shared/StateFilter';
-// import { getMockEducationInstance } from '../../data/mockData';
 import { useEducation } from '../../hooks/useEducation';
 import { useFilteredItems } from '../../hooks/useFilteredItems';
 import type { Assignment, Submission, WorkflowItemState } from '../../types/types';
@@ -45,62 +45,11 @@ function capitalize(s: string): string {
     return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-// function EducationWorkflow({ instanceId }: EducationWorkflowProps) {
-//     const instance = getMockEducationInstance(instanceId);
-//     const [selectedSubmission, setSelectedSubmission] = useState<Submission>();
-//     const [showAddAssignmentModal, setShowAddAssignmentModal] = useState(false);
-//     const [showAddSubmissionModal, setShowAddSubmissionModal] = useState(false);
-
-//     return (
-//         <div className="workflow-content">
-//             <header className="workflow-instance-heading">
-//                 <div>
-//                     <p className="workflow-instance-kicker">INSTANCE</p>
-//                     <h2>{instance.name}</h2>
-//                     <p>Assignments and tests within this instance.</p>
-//                 </div>
-//                 <Button className="workflow-primary-button" onClick={() => setShowAddAssignmentModal(true)}>
-//                     + Add assignment / test
-//                 </Button>
-//             </header>
-
-//             <section className="assignment-container-list" aria-label="Assignments and tests">
-//                 {instance.assignments.map((assignment: Assignment) => (
-//                     <ContainerCard
-//                         key={assignment.id}
-//                         assignment={assignment}
-//                         onViewSubmission={setSelectedSubmission}
-//                         onAddSubmission={() => setShowAddSubmissionModal(true)}
-//                     />
-//                 ))}
-//                 {instance.assignments.length === 0 && (
-//                     <div className="workflow-empty-state">
-//                         <h4>No assignments or tests yet</h4>
-//                         <p>No assignment or test containers are available.</p>
-//                     </div>
-//                 )}
-//             </section>
-
-//             <SubmissionDetailsModal
-//                 submission={selectedSubmission}
-//                 onHide={() => setSelectedSubmission(undefined)}
-//             />
-//             <AddAssignmentModal
-//                 show={showAddAssignmentModal}
-//                 onHide={() => setShowAddAssignmentModal(false)}
-//             />
-//             <AddSubmissionModal
-//                 show={showAddSubmissionModal}
-//                 onHide={() => setShowAddSubmissionModal(false)}
-//             />
-//         </div>
-//     );
-// }
-
 function EducationWorkflow({ instanceId }: EducationWorkflowProps) {
     const {
         education,
         history,
+        progress,
         loading,
         busy,
         loadError,
@@ -110,6 +59,7 @@ function EducationWorkflow({ instanceId }: EducationWorkflowProps) {
         changeStrategy,
         addAssignment,
         addSubmission,
+        openAssignment,
         startSubmission,
         completeSubmission,
         approveAssignment,
@@ -159,6 +109,8 @@ function EducationWorkflow({ instanceId }: EducationWorkflowProps) {
                 </Alert>
             )}
 
+            <ProgressSummary report={progress} itemLabel="submissions" />
+
             <div className="workflow-filter-row d-flex justify-content-between align-items-end gap-3 mb-4">
                 <StateFilter value={stateFilter} onChange={setStateFilter} />
                 <StrategySelector
@@ -198,6 +150,8 @@ function EducationWorkflow({ instanceId }: EducationWorkflowProps) {
                                 setShowAddSubmissionModal(true);
                             }}
                             onApprove={() => approveAssignment(assignment.id)}
+                            onOpen={() => openAssignment(assignment.id)}
+                            busy={busy}
                         />
                     ))}
                     {education.assignments.length === 0 && (
@@ -237,12 +191,5 @@ function EducationWorkflow({ instanceId }: EducationWorkflowProps) {
         </div>
     );
 }
-
-// function findAssignmentId(instance: { assignments: Assignment[] }, submission: Submission | undefined): string | undefined {
-//     if (!submission) return undefined;
-//     return instance.assignments.find((assignment) =>
-//         assignment.items.some((item) => item.id === submission.id)
-//     )?.id;
-// }
 
 export default EducationWorkflow;

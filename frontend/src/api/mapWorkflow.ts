@@ -48,6 +48,7 @@ export function mapTreatment(item: ApiItem): Treatment {
         assignee: item.assignee ?? '',
         reviewer: item.reviewer ?? '',
         severity: item.result,
+        rejectionReason: item.rejectionReason,
         bed: item.bed,
         discharged: item.discharged,
     };
@@ -61,6 +62,7 @@ export function mapSubmission(item: ApiItem): Submission {
         assignee: item.assignee ?? '',
         reviewer: item.reviewer ?? '',
         mark: item.result,
+        rejectionReason: item.rejectionReason,
     };
 }
 
